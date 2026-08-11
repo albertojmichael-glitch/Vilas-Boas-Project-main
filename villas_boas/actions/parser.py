@@ -161,5 +161,19 @@ def processar_comando(comando, jogo, mapa):
         return True
         
     else:
+        
+        erros = getattr(jogo, 'erros_consecutivos', 0) + 1
+        jogo.erros_consecutivos = erros
+        
         ui.exibir("Comando não reconhecido.")
+        
+        if erros >= 3:
+            ui.pausar(0.5)
+            ui.exibir(f"\n{DOS_AMARELO}[DICA DO SISTEMA] Parece que você está com dificuldades. Tente verbos simples:{RESET}")
+            ui.exibir(f"{DOS_BRANCO} ☞ 'olhar' {DOS_AMARELO}(para examinar a sala){RESET}")
+            ui.exibir(f"{DOS_BRANCO} ☞ 'ir frente / trás / esquerda / direita'{RESET}")
+            ui.exibir(f"{DOS_BRANCO} ☞ 'pegar [item]' ou 'usar [item]'{RESET}")
+            ui.exibir(f"{DOS_BRANCO} ☞ 'inventario' {DOS_AMARELO}(para ver sua mochila){RESET}")
+            jogo.erros_consecutivos = 0  # Reseta o contador após ajudar
+            
         return False

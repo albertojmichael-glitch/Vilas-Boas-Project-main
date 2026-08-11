@@ -317,6 +317,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
             if gastou_turno:
                 atualizar_eventos_de_tempo(jogo)
+                jogo.erros_consecutivos = 0
             
             
             if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
