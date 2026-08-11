@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_SECRET_KEY=producao_secreta_super_segura_1982
+      - ADMIN_TOKEN=admin_senha_super_secreta
+      - MONGO_URI=mongodb://mongo:27017/
+      - REDIS_URL=redis://redis:6379/0
+      - PROD=true # Ativa as flags de cookie seguro (Secure=True)
+    depends_on:
+      - redis
+      - mongo
+    restart: always
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: always
+
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+
+volumes:
+  mongo_data:

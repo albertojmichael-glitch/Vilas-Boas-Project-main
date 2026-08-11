@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+
+# --- Variáveis de Ambiente ---
+.env
+.env.local
+.env.*
+
+# --- Logs ---
+*.log
+villas_boas.log*
+
+# --- Saves e Dados Dinâmicos do Jogo ---
+saves/
+sessions/
+conquistas.json
+autosave*.json
+
+# --- OS / IDEs ---
+.DS_Store
+.vscode/
+.idea/
+

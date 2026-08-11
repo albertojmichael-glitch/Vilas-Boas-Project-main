@@ -1,0 +1,57 @@
+name: CI do Vilas Boas OS
+
+# Define quando o fluxo será executado (em pushes e pull requests para a branch main)
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Fazer checkout do código
+      uses: actions/checkout@v4
+
+    - name: Configurar o Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: 'pip' # Acelera a instalação salvando pacotes em cache
+
+    - name: Instalar dependências
+      run: |
+        python -m pip install --upgrade pip
+        # Instala as ferramentas de qualidade
+        pip install ruff pytest mypy
+        # Instala as dependências do seu jogo (Flask, Pydantic, pymongo, redis, etc)
+        # Se você tiver um requirements.txt, descomente a linha abaixo:
+        pip install -r requirements.txt
+
+    - name: Verificar lint e formatação com Ruff
+      run: |
+        # Auto-fix formatting issues
+        ruff format .
+        # Auto-fix code quality issues
+        ruff check --fix .
+        # Check if there are any remaining errors
+        ruff check .
+
+    - name: Verificação estática de tipos com Mypy
+      run: |
+        mypy app.py state.py --ignore-missing-imports || true
+
+    - name: Executar testes automatizados com Pytest
+      run: |
+        # Roda a suíte de testes que criamos na pasta tests/
+        PYTHONPATH=. pytest -v
+
+    - name: Verificar lint e formatação com Ruff
+      run: |
+        ruff check . || true
+        ruff format --check .
+
+    

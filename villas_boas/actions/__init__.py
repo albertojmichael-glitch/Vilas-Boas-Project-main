@@ -1,0 +1,1 @@
+from .parser import processar_comando as processar_comando

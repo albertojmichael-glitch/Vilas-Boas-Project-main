@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistema Villas-Boas 1982</title>
+    <link rel="stylesheet" href="style.css?v=1.3.0" />
+</head>
+<body>
+
+    <a href="#comando" class="skip-link">Pular direto para o terminal</a>
+
+    <div class="container">
+        <main class="terminal-section" id="terminal" role="main" aria-label="Terminal do Jogo">
+            <div id="output" role="log" aria-live="polite" aria-label="Saída do Jogo"></div>
+            
+            <div class="input-line">
+                <span class="prompt">C:\></span>
+                <input type="text" id="comando" autocomplete="off" spellcheck="false" aria-label="Digite seu comando aqui" aria-describedby="help-btn" placeholder="">
+            </div>
+
+            <div class="mobile-controls">
+                <button onclick="executarAtalho('olhar')" aria-label="Olhar a sala">⏿ OLHAR</button>
+                <button onclick="executarAtalho('inventario')" aria-label="Ver inventário"> INV</button>
+                <button onclick="executarAtalho('ir frente')">▲</button>
+                <button onclick="executarAtalho('ir esquerda')">◀</button>
+                <button onclick="executarAtalho('ir trás')">▼</button>
+                <button onclick="executarAtalho('ir direita')">▶</button>
+            </div>
+
+
+
+            
+            <div id="loading" class="spinner-container hidden" role="status" aria-label="Processando comando...">
+                <div class="spinner" aria-hidden="true"></div>
+                <span class="sr-only">Carregando...</span>
+            </div>
+        </main>
+
+        <aside class="sidebar">
+            <div class="panel">
+                <h2>[ SISTEMA v20.08 ]</h2>
+                <div class="status-grid">
+                    <div class="status-item">HP: <span id="hp-val">...</span></div>
+                    <div class="status-item">LUZ: <span id="luz-val">...</span></div>
+                </div>
+                <div class="inventory-box">
+                    <h3>INV:</h3>
+                    <ul id="inv-list"></ul>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+        <!-- Botões existentes[cite: 15] -->
+        <button id="help-btn" class="help-float" onclick="openHelp()" aria-label="Abrir menu de ajuda">?</button>
+        <button id="settings-btn" class="help-float" style="right: 70px;" onclick="openSettings()" aria-label="Abrir configurações">⚙</button>
+        
+        <!-- NOVO: Botão de Saves -->
+        <button id="saves-btn" class="help-float" style="right: 130px;" onclick="openSaves()" aria-label="Gerenciar Saves">💾</button>
+
+    <!-- ... Seus Modais de Ajuda e Configurações já existentes ... -->
+
+    <!-- NOVO: Modal de Gerenciamento de Saves -->
+    <div id="saves-modal" class="modal hidden" role="dialog" aria-modal="true">
+        <h2>[ GERENCIADOR DE SAVES ]</h2>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+            <!-- Exportar (Download) -->
+            <button onclick="exportarSave()" style="padding: 10px; background: #222; color: #4aff4a; border: 1px solid #4aff4a; cursor: pointer; font-family: monospace;">⬇ Exportar Save Atual (JSON)</button>
+            
+            <!-- Importar (Upload) -->
+            <button onclick="document.getElementById('import-file').click()" style="padding: 10px; background: #222; color: #ffda33; border: 1px solid #ffda33; cursor: pointer; font-family: monospace;">⬆ Importar Save (JSON)</button>
+            <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importarSave(event)">
+            
+            <!-- Compartilhar (Link TTL) -->
+            <button onclick="gerarLinkCompartilhamentoUI()" style="padding: 10px; background: #222; color: #00ffff; border: 1px solid #00ffff; cursor: pointer; font-family: monospace;">🔗 Gerar Link de Compartilhamento</button>
+            
+            <div id="share-link-container" class="hidden" style="margin-top: 10px; background: #111; padding: 10px; border: 1px dashed #00ffff;">
+                <input type="text" id="share-link-input" readonly style="width: 100%; background: transparent; color: #00ffff; border: none; outline: none; margin-bottom: 5px;">
+                <p id="share-link-msg" style="font-size: 0.8rem; color: #aaa; margin: 0;"></p>
+            </div>
+        </div>
+        
+        <button class="close-btn" onclick="closeSaves()" style="margin-top: 20px;">FECHAR (ESC)</button>
+    </div>
+
+    
+        <div style="margin: 20px 0; display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="telemetry-checkbox" checked style="width: 20px; height: 20px;">
+            <label for="telemetry-checkbox" style="color: #fff;">
+                Enviar dados anônimos de jogo (Telemetria)
+                <span style="display: block; font-size: 0.75rem; color: #888;">Ajuda o desenvolvedor a balancear a dificuldade do jogo. Nenhuma informação pessoal é coletada.</span>
+            </label>
+        </div>
+
+
+    <div id="save-indicator" class="hidden">[ SALVANDO NA BIOS... ]</div>
+    
+    <div id="jumpscare-overlay" class="hidden">
+        <pre id="jumpscare-ascii">
+    ▄██████████████▄▐█▄▄▄▄█▌
+   ██████▌▄▌▄▐▐▌███▌▀▀██▀▀
+   ████▄█▌▄▌▄▐▐▌▀███▄▄█▌
+   ▄▄▄▄▄██████████████▀
+        </pre>
+    </div>
+
+
+
+
+
+    <script src="script.js?v=1.3.0"></script>
+</body>
+</html>
