@@ -1,0 +1,340 @@
+{
+    "constantes": {
+        "max_inventario": 3,
+        "cofre_senha": "1994",
+        "vida_normal": 3,
+        "vida_pesadelo": 2,
+        "turnos_bateria": 12,
+        "energia_min_noite": 100,
+        "energia_max_noite": 100
+    },
+    "mapa_original": {
+        "entrada": {
+            "descrição": "você está na entrada do restaurante, está muito escuro, e as luzes piscam de forma ordenada, cheira mal",
+            "frente": "sala de jantar",
+            "inspecionaveis": {
+                "poster": "Um pôster desbotado com os animatrônicos sorrindo: 'Bem-vindo ao Vilas Boas! Trazendo alegria desde 1982.'"
+            },
+            "direita": "hall de entrada",
+            "atrás": "saida",
+            "esquerda": "parede velha",
+            "itens": [
+                "tabua pequena de madeira"
+            ]
+        },
+        "hall de entrada": {
+            "descrição": "voce entra no hall de entrada, está um pouco mais claro, tem mesas de jantar, um balcão, e uma sala no fundo",
+            "frente": "quarto de refrigeração",
+            "direita": "balcão",
+            "esquerda": "mesas de jantar",
+            "atrás": "entrada",
+            "itens": [
+                "papel",
+                "recorte 1"
+            ],
+            "inspecionaveis": {}
+        },
+        "mesas de jantar": {
+            "descrição": "São mesas circulares de jantar, ainda tem pratos com restos largados, e está cheio de baratas. Nojento.",
+            "atrás": "hall de entrada",
+            "direita": "quarto de refrigeração",
+            "esquerda": "entrada",
+            "itens": [
+                "remedio"
+            ],
+            "inspecionaveis": {}
+        },
+        "balcão": {
+            "descrição": "tem presentes, confetes, doces de áçucar e pelucias",
+            "frente": "balcão",
+            "direita": "balcão",
+            "atrás": "hall de entrada",
+            "esquerda": "balcão",
+            "itens": [
+                "tesoura quebrada",
+                "pelucias",
+                "doce",
+                "moeda velha",
+                "disquete",
+                "bolsa"
+            ],
+            "inspecionaveis": {}
+        },
+        "quarto de refrigeração": {
+            "descrição": "voce entra no quarto, está muito frio e os ventiladores fazem um barulho alto, tem um tubo de ventilação no centro da sala",
+            "frente": "tubo de ventilação",
+            "direita": "parede de ventiladores",
+            "atrás": "hall de entrada",
+            "esquerda": "parede de ventiladores",
+            "itens": [
+                "bateria nova"
+            ],
+            "inspecionaveis": {}
+        },
+        "tubo de ventilação": {
+            "descrição": "você rasteja pelo aluminio gelado, você sente muito frio",
+            "frente": "morte",
+            "direita": "aluminio",
+            "atrás": "quarto de refrigeração",
+            "esquerda": "aluminio",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "sala de jantar": {
+            "descrição": "tem varias mesas de jantar com confetes, é um lugar bem grande, está bem sujo",
+            "inspecionaveis": {
+                "jornal": "Caso Vilas Boas: Três desaparecimentos em 1994, seguem sem solução",
+                "mesas": "Tem pedaços de papel, confetes coloridos, sujeira e algumas baratas."
+            },
+            "frente": "duas salas de festas",
+            "direita": "corredor",
+            "atrás": "entrada",
+            "esquerda": "porta dos fundos",
+            "itens": [
+                "confete",
+                "isqueiro"
+            ]
+        },
+        "porta dos fundos": {
+            "descrição": "Uma pesada porta de metal. Está trancada a chave.",
+            "atrás": "sala de jantar",
+            "frente": "Você empurra, mas não cede.",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "corredor": {
+            "descrição": "tem quatro portas, 01-sala de segurança | 02-porta trancada | 03-porta emperrada | 04-sala de intervalo",
+            "01": "01",
+            "02": "02",
+            "03": "03",
+            "04": "04",
+            "atrás": "sala de jantar",
+            "frente": "parede",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "01": {
+            "descrição": "voce entra na sala de segurança, tem um tubo de ventilação do canto esquerdo da sala, e tem uma mesa com ferramentas de segurança. Tem um cofre do seu lado.",
+            "frente": "cadeira",
+            "cadeira": "cadeira",
+            "atrás": "corredor",
+            "inspecionaveis": {
+                "papeis": "Tem muitos papeis encima da segunda mesa, emails e memorandos... algo chama atenção '1994..' são de 2007"
+            },
+            "esquerda": "nada",
+            "direita": "nada",
+            "cofre_important": "cofre",
+            "itens": [
+                "recorte 3",
+                "disquete"
+            ]
+        },
+        "02": {
+            "descrição": "porta trancada",
+            "atrás": "corredor",
+            "frente": "A porta te impede de avançar.",
+            "esquerda": "parede",
+            "direita": "corredor",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "03": {
+            "descrição": "porta emperrada",
+            "atrás": "corredor",
+            "frente": "Você força a porta com o braço, nada acontece.",
+            "esquerda": "corredor",
+            "direita": "parede",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "04": {
+            "descrição": "voce força a porta e consegue entrar, está escuro e você enxerga apenas a tubulação funcionando",
+            "atrás": "corredor",
+            "frente": "cama",
+            "esquerda": "parede",
+            "direita": "parede",
+            "itens": [
+                "pano",
+                "fosforo",
+                "garrafa vazia",
+                "bolsa"
+            ],
+            "inspecionaveis": {}
+        },
+        "sala do gerador": {
+            "descrição": "A antiga sala de energia (porta 03). O gerador principal está aqui. Há fios soltos e um painel exposto.",
+            "atrás": "corredor",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "cozinha privada": {
+            "descrição": "Uma cozinha industrial imunda. O cheiro do mofo é insuportável.",
+            "atrás": "corredor",
+            "itens": [
+                "fita isolante"
+            ],
+            "inspecionaveis": {}
+        },
+        "duas salas de festas": {
+            "descrição": "voce avança e encontra duas salas festas, a sala 1 e sala 2, a sala 1 parece mais calma",
+            "atrás": "sala de jantar",
+            "sala 1": "sala 1",
+            "sala 2": "sala 2",
+            "esquerda": "corredor",
+            "direita": "parede",
+            "itens": [
+                "pedra"
+            ],
+            "inspecionaveis": {}
+        },
+        "sala 1": {
+            "descrição": "voce entra na sala de festas 1, está tudo parado e calmo. A uma sala de fliperamas a sua esquerda",
+            "atrás": "duas salas de festas",
+            "frente": "palco",
+            "direita": "sala 2",
+            "esquerda": "sala de fliperamas",
+            "itens": [
+                "recorte 2"
+            ],
+            "inspecionaveis": {}
+        },
+        "sala de fliperamas": {
+            "descrição": "O chão tem carpete neon sujo. Há três máquinas funcionando: 'fome de jon', 'consertos' e 'julgamento'. Digite 'jogar [nome]'.",
+            "direita": "sala 1",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "sala 2": {
+            "descrição": "voce da de cara com um animatronico enorme no escuro! O zumbido cresce. Você tem poucos segundos para recuar!",
+            "esquerda": "sala 1",
+            "atrás": "duas salas de festas",
+            "frente": "morte",
+            "direita": "morte",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "palco": {
+            "descrição": "Você sobe no palco fedorento. As cortinas estão rasgadas. Algo terrível te observa nas sombras...",
+            "atrás": "sala 1",
+            "frente": "morte",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "sala dos fundos": {
+            "descrição": "Um corredor denso e escuro. Há 5 portas com placas: 'pelucias', 'equipamento', 'animatronicos', 'mercadorias' e 'energia'.",
+            "atrás": "sala de jantar",
+            "esquerda": "cozinha principal",
+            "pelucias": "sala de pelucias",
+            "equipamento": "sala de equipamento",
+            "animatronicos": "sala de animatronicos",
+            "mercadorias": "sala de mercadorias",
+            "energia": "sala de energia",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "cozinha principal": {
+            "descrição": "A antiga cozinha que preparava comida. Tem uma caixa de primeiros socorros aberta.",
+            "direita": "sala dos fundos",
+            "itens": [
+                "remedio",
+                "pizza mofada"
+            ],
+            "inspecionaveis": {}
+        },
+        "sala de pelucias": {
+            "descrição": "Uma sala cheia de pelúcias apodrecidas. Melhor não ficar aqui.",
+            "atrás": "sala dos fundos",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "sala de energia": {
+            "descrição": "Uma sala abafada dominada por painéis elétricos, cabos e um ar quente e metálico. A pesada porta de metal bate atrás de você quando a entrada fecha.",
+            "atrás": "sala dos fundos",
+            "frente": "morte",
+            "esquerda": "nada",
+            "direita": "nada",
+            "itens": [
+                "celular quebrado"
+            ],
+            "inspecionaveis": {
+                "celular quebrado": "Um celular rachado com uma mensagem não lida."
+            }
+        },
+        "sala de equipamento": {
+            "descrição": "Apenas ferramentas velhas e graxa seca pelo chão.",
+            "atrás": "sala dos fundos",
+            "itens": [
+                "bateria nova",
+                "disquete"
+            ],
+            "inspecionaveis": {}
+        },
+        "sala de animatronicos": {
+            "descrição": "Várias carcaças de metal desmontadas. Uma delas vira a cabeça devagar para você! Você bate a porta.",
+            "atrás": "sala dos fundos",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "sala de mercadorias": {
+            "descrição": "Caixas de papelão mofadas com camisetas do restaurante.",
+            "atrás": "sala dos fundos",
+            "itens": [
+                "bolsa"
+            ],
+            "inspecionaveis": {}
+        },
+        "morte": {
+            "descrição": "Você está morto. O escuro engoliu sua alma.",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "saida": {
+            "descrição": "Você escapou pela porta da frente.",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "cama": {
+            "descrição": "O cheiro dela...",
+            "itens": [],
+            "inspecionaveis": {}
+        },
+        "final_bom": {
+            "descrição": "O silêncio absoluto.",
+            "itens": [],
+            "inspecionaveis": {}
+        }
+    },
+    "descricoes_itens": {
+        "tabua pequena de madeira": "Você passa a mão pela tábua, ela está velha, úmida, e cheia de farpas.",
+        "tocha": "Você olha para a tábua com um papel procurando algo, mas não há nada.",
+        "tocha acesa": "Você olha para a tocha acesa, parece que não vai durar muito pela umidade.",
+        "papel": "O papel tem letras borradas de sangue: '1985'.",
+        "papel aceso": "Você enxerga muito mais pela luz laranja do fogo, mas está queimando rápido.",
+        "tesoura": "Tesoura escolar sem ponta, de aço inox, deve servir para arrombar alguma porta.",
+        "tesoura quebrada": "Tesoura escolar quebrada, o aço entortou e perdeu o corte, está inútil.",
+        "pelucias": "Pelúcias velhas e empoeiradas. Os olhos de plástico parecem te julgar na escuridão.",
+        "doce": "Doce de laranja velho, grudado no plástico.",
+        "confete": "Pedaços de papel colorido que perderam a cor. Têm cheiro de mofo.",
+        "isqueiro": "Um isqueiro formidável dos anos 80, ainda está funcional.",
+        "pano": "Pano velho cheio de pelo e sujeira, muito úmido.",
+        "pano aceso": "O pano queima com uma chama irregular, cheirando a poeira queimada.",
+        "fosforo": "Uma caixinha de fósforos quase vazia.",
+        "garrafa vazia": "Uma garrafa de vinho suja.",
+        "pedra": "Uma pedra comum e redonda. Pesada, fria e completamente inútil.",
+        "moeda velha": "Uma ficha de fliperama enferrujada de 1982.",
+        "chave da cozinha": "Uma chave prateada com um chaveiro sujo de graxa.",
+        "remedio": "Um frasco de relaxante muscular, venceu em 1996. Talvez ajude com a dor.",
+        "pizza mofada": "Um pedaço de pizza de 1992. Tem uma cor verde fluorescente.",
+        "bateria nova": "Uma bateria industrial pesada. Cabe na sua lanterna",
+        "recorte 1": "Pedaço de jornal de 1994: '...o cliente João Barros, desapareceu...' ",
+        "recorte 2": "Parte central da notícia: '...a garçonete Ângela Silva vista pela última vez...' ",
+        "recorte 3": "A base do jornal: '...o proprietário Renato Fidelis.'",
+        "jornal completo": "Os três recortes unidos. Conta a história das três vítimas de 1994, João.. Ângela... e Renato.",
+        "lanterna": "Sua lanterna velha de plástico vermelha, você esqueceu de trocar a bateria antes de vir aqui.",
+        "disquete": "Um disquete de 5¼ polegadas. Serve para salvar os dados do sistema no terminal.",
+        "bolsa": "Uma bolsa escolar antiga, desgastadas e um pouco rasgado, deve servir para guardar alguma coisa ainda..",
+        "fita isolante": "Um rolo de fita preta grossa. A cola ainda deve servir.",
+        "fios cortados": "Um punhado de fios elétricos grossos e coloridos. Estão sujos com o óleo preto do Minotauro.",
+        "chave dos fundos": "Uma chave de metal pesada e enferrujada. Parece pertencer à porta da Sala dos Fundos."
+    }
+}
