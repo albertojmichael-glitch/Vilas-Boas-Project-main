@@ -3,7 +3,7 @@ import random
 from data import CAVEIRA_MORTE
 from state import carregar_conquistas, registrar_final
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
-from utils import corromper_texto
+from villas_boas.utils import corromper_texto
 
 
 def imprimir_tela_boot(ui):
