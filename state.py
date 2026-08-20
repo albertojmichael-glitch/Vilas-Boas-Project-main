@@ -69,6 +69,7 @@ class GameState(BaseModel):
     posicao_perseguidor: str = "palco"
     estado_atual: str = GameStateEnum.MENU.value
     god_mode: bool = False
+    erros_consecutivos: int = Field(default=0)
     alberto_desativado: bool = False
     fast_mode: bool = False
     limite_inventario: int = 3
