@@ -83,9 +83,20 @@ def processar_comando(comando, jogo, mapa):
             comando = f"examinar {normalizar(comando)}"
 
     if comando.startswith("tp ") and getattr(jogo, 'god_mode', False):
-        destino = comando.replace("tp ", "").strip()
-        jogo.sala_atual = destino
-        ui.exibir(f"{DOS_AMARELO}[GOD MODE] Teleportado para: {destino}{RESET}")
+        destino_desejado = comando.replace("tp ", "").strip()
+        
+        
+        lugares_validos = list(mapa.keys()) + ["morte", "saida", "cama", "final_bom", "01"]
+        
+        
+        match_destino = encontrar_melhor_match(destino_desejado, lugares_validos)
+        
+        if match_destino:
+            jogo.sala_atual = match_destino
+            ui.exibir(f"{DOS_AMARELO}[GOD MODE] Teleportado para: {match_destino}{RESET}")
+        else:
+            ui.exibir(f"{DOS_VERMELHO}[GOD MODE ERRO] O destino '{destino_desejado}' não existe na planta do edifício.{RESET}")
+            
         return True
 
     if jogo.sala_atual == "sala de energia":
