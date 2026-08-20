@@ -90,7 +90,6 @@ def cmd_ir(comando, jogo, mapa):
             jogo.sala_atual = "entrada"
             ui.pausar(3)
         else:
-            ui.exibir(f"{DOS_BRANCO}{destino}{RESET}")
             ui.pausar(1.5)
             
         return True
