@@ -336,5 +336,30 @@
         "fita isolante": "Um rolo de fita preta grossa. A cola ainda deve servir.",
         "fios cortados": "Um punhado de fios elétricos grossos e coloridos. Estão sujos com o óleo preto do Minotauro.",
         "chave dos fundos": "Uma chave de metal pesada e enferrujada. Parece pertencer à porta da Sala dos Fundos."
+    },
+
+    "eventos_aleatorios": [
+    {
+      "mensagem": "Você ouve um estalo alto vindo do teto. Algo pesado se moveu lá em cima...",
+      "item_drop": null
+    },
+    
+    {
+      "mensagem": "Você tropeça em algo no escuro que faz um som metálico...",
+      "item_drop": "fita isolante"
+    },
+
+    {
+      "mensagem": "Uma risada infantil, distorcida e estática, ecoa rapidamente pela sala e some.",
+      "item_drop": null
+    },
+
+    {
+      "mensagem": "Você encontra algo caído próximo à parede.",
+      "item_drop": "bateria nova"
     }
+  ]
+
+
+
 }

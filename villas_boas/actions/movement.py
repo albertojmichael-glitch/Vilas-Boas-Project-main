@@ -1,6 +1,11 @@
 import random
+
 from villas_boas.utils import extrair_argumentos, encontrar_melhor_match
+
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, default_ui
+
+from data import EVENTOS_ALEATORIOS
+
 
 def cmd_ir(comando, jogo, mapa):
     ui = jogo.ui_handler or default_ui
@@ -68,6 +73,24 @@ def cmd_ir(comando, jogo, mapa):
             return True
 
         jogo.sala_atual = destino
+
+        
+        if EVENTOS_ALEATORIOS and random.random() < 0.25:
+            evento = random.choice(EVENTOS_ALEATORIOS)
+            ui.pausar(0.5)
+            ui.exibir(f"\n{DOS_AMARELO}⚠ {evento['mensagem']}{RESET}")
+            
+            
+            item_drop = evento.get("item_drop")
+            if item_drop and item_drop not in jogo.inventario:
+                sala_dic = mapa[jogo.sala_atual]
+                sala_dic.setdefault("itens", [])
+                if item_drop not in sala_dic["itens"]:
+                    sala_dic["itens"].append(item_drop)
+        
+        
+        ui.pausar(0.5)
+        return True
 
         if getattr(jogo, 'dificuldade_escolhida', 'NORMAL') == "PESADELO" and jogo.sala_atual == getattr(jogo, 'posicao_perseguidor', ''):
             ui.limpar()

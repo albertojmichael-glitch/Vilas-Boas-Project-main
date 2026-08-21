@@ -1,19 +1,37 @@
 import logging
+
 from villas_boas.utils import encontrar_melhor_match
+
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
-from data import MAX_INVENTARIO
+
+from data import MAX_INVENTARIO, TURNOS_BATERIA
+
+
+
+
+
 logger = logging.getLogger(__name__)
+
 def cmd_pegar(comando, jogo, mapa):
     ui = jogo.ui_handler
+
     item = comando.replace("pegar ", "").strip()
+
     sala = mapa.get(jogo.sala_atual, {})
+
     itens_chao = sala.get("itens", [])
+
     match_item = encontrar_melhor_match(item, itens_chao)
+
     if not match_item:
+
         ui.exibir(f"Não há nenhum '{item}' aqui para pegar.")
         return False
+
     item = match_item
+
     qtd_bolsas = jogo.inventario.count("bolsa")
+
     limite_atual = MAX_INVENTARIO + (qtd_bolsas * 3)
 
     if len(jogo.inventario) >= limite_atual and not getattr(jogo, "god_mode", False):
@@ -21,26 +39,43 @@ def cmd_pegar(comando, jogo, mapa):
             f"{DOS_VERMELHO}Sua mochila está cheia! Você precisa largar algo antes.{RESET}"
         )
         return False
+
     jogo.inventario.append(item)
+
     itens_chao.remove(item)
+
     ui.exibir(f"{DOS_VERDE}Você pegou: {item}{RESET}")
+
     return True
+
 def cmd_largar(comando, jogo, mapa):
+
     ui = jogo.ui_handler
+
     item = comando.replace("largar ", "").strip()
 
     match_item = encontrar_melhor_match(item, jogo.inventario)
+
     if not match_item:
+
         ui.exibir(f"Você não tem '{item}' no inventário.")
         return False
+
     item = match_item
+
     jogo.inventario.remove(item)
+
     sala = mapa.get(jogo.sala_atual, {})
+
     if "itens" not in sala:
         sala["itens"] = []
+
     sala["itens"].append(item)
+
     ui.exibir(f"{DOS_AMARELO}Você largou: {item} no chão.{RESET}")
+
     return True
+
 def cmd_usar(comando, jogo, mapa):
     ui = jogo.ui_handler
     item = comando.replace("usar ", "").strip()
@@ -71,14 +106,16 @@ def cmd_usar(comando, jogo, mapa):
         else:
             ui.exibir("Não há nenhuma fechadura por aqui que se encaixe nessa chave.")
         return True
+
     elif item == "bateria nova":
         ui.exibir(
             f"{DOS_VERDE}Você abre a parte inferior da lanterna e insere a bateria nova.{RESET}"
         )
         ui.exibir(f"{DOS_AMARELO}A luz da lanterna fica forte e ofuscante!{RESET}")
-        jogo.turnos_luz = 12
+        jogo.turnos_luz = TURNOS_BATERIA
         jogo.inventario.remove("bateria nova")
         return True
+
     elif item == "isqueiro":
         if getattr(jogo, "noite_vencida", False):
             if getattr(jogo, "fios_cortados_inventario", False):

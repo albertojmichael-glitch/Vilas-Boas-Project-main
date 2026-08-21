@@ -11,7 +11,7 @@ from villas_boas.utils import extrair_argumentos, atualizar_eventos_de_tempo
 
 from data import (
     MAX_INVENTARIO, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, MAPA_ORIGINAL,
-    ARTE_PASTA, ARTE_DISQUETE, ARTE_RADAR
+    ARTE_PASTA, ARTE_DISQUETE, ARTE_RADAR, VIDA_NORMAL, VIDA_PESADELO
 )
 
 from views import (
@@ -218,22 +218,22 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             if comando == "1":
                 jogo.dificuldade_escolhida = "NORMAL"
                 jogo.fast_mode = False
-                jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
+                jogo.hp = VIDA_NORMAL; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
                 ui.animar(f"{DOS_VERDE}MODO NORMAL SELECIONADO. VELOCIDADE RETRÔ ATIVADA.{RESET}\n", 0.04, jogo=jogo)
             elif comando == "2":
                 jogo.dificuldade_escolhida = "NORMAL"
                 jogo.fast_mode = True
-                jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
+                jogo.hp = VIDA_NORMAL; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
                 ui.animar(f"{DOS_AMARELO}MODO NORMAL COM TEXTO RÁPIDO SELECIONADO.{RESET}\n", 0.04, jogo=jogo)
             elif comando == "3":
                 jogo.dificuldade_escolhida = "PESADELO"
                 jogo.fast_mode = False
-                jogo.hp = 2; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
+                jogo.hp = VIDA_PESADELO; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
                 ui.animar(f"{DOS_VERMELHO}MODO PESADELO SELECIONADO. VELOCIDADE RETRÔ ATIVADA. BOA SORTE.{RESET}\n", 0.04, jogo=jogo)
             elif comando == "4":
                 jogo.dificuldade_escolhida = "PESADELO"
                 jogo.fast_mode = True
-                jogo.hp = 2; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
+                jogo.hp = VIDA_PESADELO; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
                 ui.animar(f"{DOS_VERMELHO}MODO PESADELO COM TEXTO RÁPIDO SELECIONADO. BOA SORTE.{RESET}\n", 0.04, jogo=jogo)
 
             jogo.estado_atual = "JOGO"

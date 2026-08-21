@@ -224,3 +224,4 @@ COFRE_SENHA = str(os.environ.get("COFRE_SENHA", _constantes.get("cofre_senha", "
 VIDA_NORMAL = int(os.environ.get("VIDA_NORMAL", _constantes.get("vida_normal", 3)))
 VIDA_PESADELO = int(os.environ.get("VIDA_PESADELO", _constantes.get("vida_pesadelo", 2)))
 TURNOS_BATERIA = int(os.environ.get("TURNOS_BATERIA", _constantes.get("turnos_bateria", 12)))
+EVENTOS_ALEATORIOS = _dados.get("eventos_aleatorios", [])
