@@ -43,9 +43,7 @@ IS_PRODUCTION = bool(
     or os.environ.get("PROD")
 )
 
-#motor de criptografia
-_key_hash = hashlib.sha256((app.secret_key).encode()).digest()
-CIPHER_SUITE = Fernet(base64.urlsafe_b64encode(_key_hash))
+
 
 SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
@@ -59,10 +57,15 @@ if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
 
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
-
-
 app.secret_key = SECRET_KEY or "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
+
+# 2. AGORA você pode usar o app para configurar o resto
+app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+
+# Motor de criptografia
+_key_hash = hashlib.sha256((app.secret_key).encode()).digest()
+CIPHER_SUITE = Fernet(base64.urlsafe_b64encode(_key_hash))
 
 
 if IS_PRODUCTION:
@@ -285,7 +288,7 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
             "timestamp": time.time(),
         })
     except Exception as e:
-        logger.error(f"Erro na telemetria: Falha de sanitização.") 
+        logger.error(f"Erro na telemetria: Falha de sanitização. Detalhes: {e}")
 
 
 

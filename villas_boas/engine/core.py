@@ -563,13 +563,12 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     elif jogo.estado_atual.startswith("MINIGAME_") and hasattr(jogo, 'minigame_atual') and jogo.minigame_atual is not None:
         
         
+        
         if isinstance(jogo.minigame_atual, dict):
             dados_salvos = jogo.minigame_atual
             if jogo.estado_atual == "MINIGAME_SEGURANCA":
-                from villas_boas.engine.minigames.seguranca import MinigameSeguranca
                 jogo.minigame_atual = MinigameSeguranca(jogo)
             elif jogo.estado_atual == "MINIGAME_MINOTAURO":
-                from villas_boas.engine.minigames.minotauro import MinigameMinotauro
                 jogo.minigame_atual = MinigameMinotauro(jogo)
                 
             jogo.minigame_atual.__dict__.update(dados_salvos) 
@@ -599,10 +598,11 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             try: 
                 from app import registrar_telemetria
                 registrar_telemetria("MORTE", jogo.estado_atual, jogo.dificuldade_escolhida, "Falhou em um Minigame")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Falha de telemetria no minigame: {e}")
             dar_tela_de_morte(jogo)
 
+            
         elif resultado.startswith("vitoria_"):
             jogo.estado_atual = "JOGO"
             jogo.minigame_atual = None
