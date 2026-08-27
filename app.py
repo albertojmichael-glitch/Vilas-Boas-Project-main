@@ -48,8 +48,6 @@ IS_PRODUCTION = bool(
 SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
 
-app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024  
-
 
 if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
     print("➣ ERRO FATAL: SECRET_KEY e/ou ADMIN_TOKEN não encontrados no ambiente de produção! ")
