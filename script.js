@@ -772,50 +772,67 @@ function mostrarSalvando() {
 }
 
 function ligarTV() {
-
+    // 1. O botão foi pressionado
     document.getElementById("power-button").disabled = true;
-
-
+    document.getElementById("power-led").classList.add("led-on"); // LED Fica Verde
+    
+    // Libera o som do navegador e toca o som de estática (ruído branco)
     iniciarSomAmbiente();
 
     const layerStatic = document.getElementById("layer-static");
+    const layerColorBars = document.getElementById("layer-color-bars");
     const layerBlue = document.getElementById("layer-blue");
     const layerGame = document.getElementById("layer-game");
     const tvFrame = document.getElementById("tv-frame");
 
+    // Toca um bipe grave imitando a TV ligando
+    reproduzirBeep('erro'); 
 
+    // 2. 0 Segundos: Estática liga imediatamente
     layerStatic.classList.add("static-active");
 
-  
+    // 3. APÓS 1.5 SEGUNDOS: Estática sai, Barras de Cor entram
     setTimeout(() => {
         layerStatic.classList.remove("static-active");
         layerStatic.classList.add("hidden");
-        layerBlue.classList.remove("hidden");
-    }, 2000);
+        layerColorBars.classList.remove("hidden");
+        
+        // Toca aquele "Piiiii" contínuo clássico das barras de cor
+        const ctx = obterAudioContext();
+        if (ctx) {
+            window.colorBarOsc = ctx.createOscillator();
+            window.colorBarOsc.type = 'sine';
+            window.colorBarOsc.frequency.value = 1000; // Tom clássico de 1kHz
+            window.colorBarOsc.connect(ctx.destination);
+            window.colorBarOsc.start();
+        }
+    }, 1500);
 
-    
+    // 4. APÓS 3 SEGUNDOS: Barras saem, Tela Azul de Video entra
+    setTimeout(() => {
+        layerColorBars.classList.add("hidden");
+        layerBlue.classList.remove("hidden");
+        
+        // Para o "Piiii" contínuo
+        if (window.colorBarOsc) {
+            window.colorBarOsc.stop();
+        }
+    }, 3000);
+
+    // 5. APÓS 4.5 SEGUNDOS: Zoom para entrar no jogo
     setTimeout(() => {
         layerBlue.classList.add("hidden");
         layerGame.classList.remove("hidden"); 
-        
-        
         tvFrame.classList.add("zoom-into-tv");
     }, 4500);
 
-    
+    // 6. APÓS 6 SEGUNDOS: Destrói a TV e COMEÇA O JOGO
     setTimeout(() => {
         const tvRoom = document.getElementById("tv-room");
         const containerJogo = document.querySelector(".container");
-        
-        
         document.body.appendChild(containerJogo);
-        
-        
         tvRoom.remove();
-        
-        
         iniciarJogo();
-        
     }, 6000);
 }
 

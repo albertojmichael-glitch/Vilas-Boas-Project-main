@@ -10,31 +10,39 @@
 
     <div id="tv-room">
     <div id="tv-frame">
+        <!-- Detalhes Físicos da TV -->
+        <div class="tv-speakers left"></div>
+        <div class="tv-speakers right"></div>
+        
         <!-- O Vidro e Reflexo da TV -->
         <div id="tv-glass"></div>
         
-        <!-- O Botão de Ligar -->
-        <button id="power-button" onclick="ligarTV()"></button>
-        <div class="brand-logo">MITSUBISHI</div> <!-- Baseado na sua foto! -->
+        <!-- Controles Inferiores -->
+        <div class="tv-controls">
+            <div id="power-led"></div>
+            <button id="power-button" onclick="ligarTV()"></button>
+            <div class="brand-logo">MITSUBISHI</div>
+        </div>
 
         <!-- A Tela propriamente dita -->
         <div id="tv-screen">
             
-            <!-- Camada 1: Estática (Ruído) -->
+            <!-- Camada 1: Estática Real -->
             <div id="layer-static" class="screen-layer"></div>
             
-            <!-- Camada 2: Tela Azul do Videocassete -->
+            <!-- Camada 2: Barras de Cor -->
+            <div id="layer-color-bars" class="screen-layer hidden"></div>
+            
+            <!-- Camada 3: Tela Azul do Videocassete -->
             <div id="layer-blue" class="screen-layer hidden">
                 <div class="vcr-text">VIDEO 2<br>CONECTADO</div>
             </div>
 
-            <!-- Camada 3: O Seu Jogo Atual (Terminal) -->
-            <!-- COLOQUE A SUA DIV .container AQUI DENTRO, mas comece com ela escondida -->
+            <!-- Camada 4: O Seu Jogo Atual (Terminal) -->
             <div id="layer-game" class="screen-layer hidden">
-
                 <a href="#comando" class="skip-link">Pular direto para o terminal</a>
-
                 <div class="container">
+                    <!-- TODO O CONTEÚDO DO SEU JOGO CONTINUA AQUI DENTRO INTACTO -->
                     <main class="terminal-section" id="terminal" role="main" aria-label="Terminal do Jogo">
                         <div id="output" role="log" aria-live="polite" aria-label="Saída do Jogo"></div>
                         
