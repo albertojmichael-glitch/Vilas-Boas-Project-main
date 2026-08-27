@@ -442,9 +442,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         else:
             ui.exibir("Direção inválida. Use F, E ou D.")
 
-    # ==========================================
-    # BLOCO: MINIGAME DE CONSERTOS
-    # ==========================================
+    
     elif jogo.estado_atual == "MINIGAME_CONSERTOS_CABECA":
         jogo.web_consertos["cabeca"] = comando
         jogo.estado_atual = "MINIGAME_CONSERTOS_TRONCO"
@@ -482,9 +480,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         jogo.estado_atual = "JOGO"
         imprimir_contexto_sala(jogo)
 
-    # ==========================================
-    # BLOCO: MINIGAME DO PIANISTA
-    # ==========================================
+    
     elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q1":
         if comando == "1994": 
             jogo.web_julgamento["pontos"] += 1

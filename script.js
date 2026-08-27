@@ -771,6 +771,50 @@ function mostrarSalvando() {
     }
 }
 
+function ligarTV() {
+    // 1. Desabilita o botão para não clicarem duas vezes
+    document.getElementById("power-button").disabled = true;
+
+    const layerStatic = document.getElementById("layer-static");
+    const layerBlue = document.getElementById("layer-blue");
+    const layerGame = document.getElementById("layer-game");
+    const tvFrame = document.getElementById("tv-frame");
+
+    // 2. TELA LIGA: Estática aparece imediatamente
+    layerStatic.classList.add("static-active");
+
+    // 3. APÓS 2 SEGUNDOS: Corta pra tela azul "VIDEO 2"
+    setTimeout(() => {
+        layerStatic.classList.remove("static-active");
+        layerStatic.classList.add("hidden");
+        layerBlue.classList.remove("hidden");
+    }, 2000);
+
+    // 4. APÓS 4 SEGUNDOS (2s de tela azul): Prepara para o jogo e inicia o Zoom
+    setTimeout(() => {
+        layerBlue.classList.add("hidden");
+        layerGame.classList.remove("hidden"); // Revela o terminal
+        
+        // Inicia a animação de zoom CSS na carcaça da TV
+        tvFrame.classList.add("zoom-into-tv");
+    }, 4500);
+
+    // 5. APÓS 6 SEGUNDOS: Destrói a TV e deixa o jogo normal
+    setTimeout(() => {
+        // Remove a casca da TV do código para não atrapalhar os cliques do jogo
+        const tvRoom = document.getElementById("tv-room");
+        const containerJogo = document.querySelector(".container");
+        
+        
+        document.body.appendChild(containerJogo);
+        
+        
+        tvRoom.remove();
+        
+        
+    }, 6000);
+}
+
 function fazerNada() {
     
 }
