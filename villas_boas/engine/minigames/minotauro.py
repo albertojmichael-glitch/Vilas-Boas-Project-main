@@ -2,6 +2,7 @@ import random
 import time
 import logging
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
+from villas_boas.engine.minigames.base import BaseMinigame
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ CAVEIRA_ASCII = r'''
 
 
 
-class MinigameMinotauro:
+class MinigameMinotauro(BaseMinigame):
     def __init__(self, jogo):
         self.px, self.py = 0, 0 
         self.mx, self.my = random.choice([-1, 0, 1]), random.choice([2, 3]) 

@@ -5,12 +5,15 @@ services:
     build: .
     ports:
       - "5000:5000"
+      
     environment:
-      - FLASK_SECRET_KEY=producao_secreta_super_segura_1982
-      - ADMIN_TOKEN=admin_senha_super_secreta
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+      - FLASK_ENV=production
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
       - MONGO_URI=mongodb://mongo:27017/
       - REDIS_URL=redis://redis:6379/0
-      - PROD=true # Ativa as flags de cookie seguro (Secure=True)
+      - PROD=true 
+
     depends_on:
       - redis
       - mongo

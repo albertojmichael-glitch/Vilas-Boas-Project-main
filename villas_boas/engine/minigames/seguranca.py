@@ -2,10 +2,11 @@ import random
 import logging
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from data import ARTE_MESA_SEGURANCA, ARTE_INDIO
+from villas_boas.engine.minigames.base import BaseMinigame
 
 logger = logging.getLogger(__name__)
 
-class MinigameSeguranca:
+class MinigameSeguranca(BaseMinigame):
     def __init__(self, jogo):
         self.ui = jogo.ui_handler 
         self.turno = 0

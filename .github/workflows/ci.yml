@@ -1,6 +1,6 @@
 name: CI do Vilas Boas OS
 
-# Define quando o fluxo será executado (em pushes e pull requests para a branch main)
+
 on:
   push:
     branches: [ "main", "master" ]
@@ -20,15 +20,12 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.11"
-        cache: 'pip' # Acelera a instalação salvando pacotes em cache
+        cache: 'pip' 
 
     - name: Instalar dependências
       run: |
         python -m pip install --upgrade pip
-        # Instala as ferramentas de qualidade
-        pip install ruff pytest mypy
-        # Instala as dependências do seu jogo (Flask, Pydantic, pymongo, redis, etc)
-        # Se você tiver um requirements.txt, descomente a linha abaixo:
+        pip install ruff pytest mypy pip-audit
         pip install -r requirements.txt
 
     - name: Verificar lint e formatação com Ruff
@@ -53,5 +50,9 @@ jobs:
       run: |
         ruff check . || true
         ruff format --check .
+
+    - name: Auditoria de Segurança (Dependências)
+      run: |
+        pip-audit --desc on
 
     

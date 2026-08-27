@@ -4,7 +4,11 @@ import logging
 import os
 import sys  
 import time
+import secrets
 import uuid
+import base64
+import hashlib
+from cryptography.fernet import Fernet, InvalidToken
 from datetime import timedelta
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -31,11 +35,7 @@ from views import imprimir_tela_boot
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# ==========================================
-# 1. CONFIGURAÇÕES DE AMBIENTE E SEGURANÇA
-# ==========================================
 
-# Consolidação da detecção de produção (Flask_env, Render, Railway, etc)
 IS_PRODUCTION = bool(
     os.environ.get("FLASK_ENV") == "production"
     or os.environ.get("RENDER")
@@ -43,28 +43,33 @@ IS_PRODUCTION = bool(
     or os.environ.get("PROD")
 )
 
-# Busca os segredos principais
+#motor de criptografia
+_key_hash = hashlib.sha256((app.secret_key).encode()).digest()
+CIPHER_SUITE = Fernet(base64.urlsafe_b64encode(_key_hash))
+
 SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
 
-# Trava de segurança rigorosa para Produção
-if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
-    print("❌ ERRO FATAL: SECRET_KEY e/ou ADMIN_TOKEN não encontrados no ambiente de produção! ❌")
-    sys.exit(1) # Derruba o container imediatamente para evitar vazamentos
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024  
 
-# Inicializa o Flask
+
+if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
+    print("➣ ERRO FATAL: SECRET_KEY e/ou ADMIN_TOKEN não encontrados no ambiente de produção! ")
+    sys.exit(1) 
+
+
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 
-# Aplica as chaves
+
 app.secret_key = SECRET_KEY or "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 
-# Consolidação do Hardening de Cookies
+
 if IS_PRODUCTION:
     app.config.update(
-        SESSION_COOKIE_SECURE=True,     # Exige HTTPS
-        SESSION_COOKIE_HTTPONLY=True,   # Impede que o JS (front-end) leia o cookie
-        SESSION_COOKIE_SAMESITE='Lax',  # Protege contra ataques CSRF
+        SESSION_COOKIE_SECURE=True,     
+        SESSION_COOKIE_HTTPONLY=True,   
+        SESSION_COOKIE_SAMESITE='Lax',  
     )
     print("🔒 Segurança de Cookies: Modo Produção ativado (Secure=True).")
 else:
@@ -75,9 +80,7 @@ else:
     )
     print("🔓 Segurança de Cookies: Modo Desenvolvimento (Secure=False).")
 
-# ==========================================
-# 2. CONFIGURAÇÃO DE LOGS
-# ==========================================
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
@@ -89,17 +92,16 @@ file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(messa
 logging.getLogger().addHandler(file_handler)
 logger = logging.getLogger(__name__)
 
-# ==========================================
-# 3. CONEXÕES DE BANCO (MONGO E REDIS)
-# ==========================================
+
 SAVES_DIR_ENV = os.environ.get("SAVES_DIR", os.path.join(BASE_DIR, "saves"))
 os.makedirs(SAVES_DIR_ENV, exist_ok=True)
 
-# Define o Fallback do ADMIN_TOKEN para testes locais se não existir no ambiente
-if not ADMIN_TOKEN:
-    ADMIN_TOKEN = "senha-super-secreta-mudar-em-prod"
 
-# Conexão com MongoDB
+if not ADMIN_TOKEN:
+    ADMIN_TOKEN = secrets.token_urlsafe(32)
+    logger.warning("⚠ ADMIN_TOKEN não definido no ambiente! Uma senha aleatória segura foi gerada para esta sessão.")
+
+
 MONGO_URI = os.environ.get("MONGO_URI")
 if MONGO_URI:
     mongo_client = MongoClient(MONGO_URI)
@@ -112,7 +114,6 @@ else:
     mongo_client = None
     logger.warning("⚠ Rodando sem Banco de Dados MongoDB. Usando arquivos locais.")
 
-# Configuração de CORS e Limiter
 CORS(app, supports_credentials=True)
 limiter = Limiter(key_func=get_remote_address, app=app, storage_uri="memory://")
 
@@ -159,7 +160,12 @@ else:
 
 
 class ComandoRequest(BaseModel):
-    comando: str = Field(default="", max_length=256)
+    
+    comando: str = Field(
+        default="", 
+        max_length=256, 
+        pattern=r"^[a-zA-Z0-9\s\"\'\-\_áéíóúâêôãõçÁÉÍÓÚÂÊÔÃÕÇ]+$"
+    )
     telemetria: bool = Field(default=True)
 
 
@@ -178,8 +184,15 @@ def requer_admin(f):
     @functools.wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get("X-Admin-Token") or request.args.get("token")
+        ip_origem = get_remote_address()
+        
         if not token or token != ADMIN_TOKEN:
+            
+            logger.warning(f"TENTATIVA INVASÃO ADMIN: IP {ip_origem} tentou acessar {request.path}")
             return jsonify({"erro": "Acesso negado. Credenciais inválidas."}), 403
+            
+        
+        logger.info(f" ACESSO ADMIN: IP {ip_origem} visualizando {request.path}")
         return f(*args, **kwargs)
     return decorated
 
@@ -218,33 +231,31 @@ class WebUIHandler(UIHandler):
 
 def ansi_para_html(texto_ansi):
     import re
-
+    import html  
+    
     mapa_cores = {
-        DOS_VERDE: "verde",
-        DOS_BRANCO: "branco",
-        DOS_AMARELO: "amarelo",
-        DOS_VERMELHO: "vermelho",
+        DOS_VERDE: "verde", DOS_BRANCO: "branco",
+        DOS_AMARELO: "amarelo", DOS_VERMELHO: "vermelho",
     }
-    padrao = re.compile(
-        "(" + "|".join(re.escape(c) for c in list(mapa_cores.keys()) + [RESET]) + ")"
-    )
+    padrao = re.compile("(" + "|".join(re.escape(c) for c in list(mapa_cores.keys()) + [RESET]) + ")")
     partes = padrao.split(texto_ansi)
-    html, aberto = [], False
+    html_out, aberto = [], False
+    
     for parte in partes:
         if parte in mapa_cores:
-            if aberto:
-                html.append("</span>")
-            html.append(f'<span class="{mapa_cores[parte]}">')
+            if aberto: html_out.append("</span>")
+            html_out.append(f'<span class="{mapa_cores[parte]}">')
             aberto = True
         elif parte == RESET:
             if aberto:
-                html.append("</span>")
+                html_out.append("</span>")
                 aberto = False
         else:
-            html.append(parte)
-    if aberto:
-        html.append("</span>")
-    return "".join(html)
+            
+            html_out.append(html.escape(parte))
+            
+    if aberto: html_out.append("</span>")
+    return "".join(html_out)
 
 
 def obter_caminho_autosave(sid):
@@ -252,24 +263,29 @@ def obter_caminho_autosave(sid):
 
 
 def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
-    if not mongo_client:
-        return
-
-    if not session.get("permite_telemetria", True):
+    if not mongo_client or not session.get("permite_telemetria", True):
         return
 
     try:
-        telemetry_collection.insert_one(
-            {
-                "evento": evento,
-                "sala": sala,
-                "dificuldade": dificuldade,
-                "detalhes": detalhes,
-                "timestamp": time.time(),
-            }
-        )
-    except (KeyError, ValueError, TypeError) as e:
-        logger.error(f"Erro na telemetria: {e}")
+        
+        evento_seguro = str(evento)[:50]
+        sala_segura = str(sala)[:50]
+        dif_segura = str(dificuldade)[:50]
+        det_seguros = str(detalhes)[:256]
+        
+        
+        if any(v.startswith('$') for v in [evento_seguro, sala_segura, dif_segura]):
+            return
+
+        telemetry_collection.insert_one({
+            "evento": evento_seguro,
+            "sala": sala_segura,
+            "dificuldade": dif_segura,
+            "detalhes": det_seguros,
+            "timestamp": time.time(),
+        })
+    except Exception as e:
+        logger.error(f"Erro na telemetria: Falha de sanitização.") 
 
 
 
@@ -278,55 +294,75 @@ def carregar_save_web(jogo):
     if not sid:
         return False
 
+    def processar_dados_save(dados_brutos):
+        """Descriptografa se for texto seguro, ou lê normalmente se for um save antigo."""
+        if isinstance(dados_brutos, str):
+            try:
+                
+                dados_json = CIPHER_SUITE.decrypt(dados_brutos.encode("utf-8")).decode("utf-8")
+                return json.loads(dados_json)
+            except InvalidToken:
+                logger.error("Tentativa de carregar save com chave de criptografia inválida!")
+                return None
+            except json.JSONDecodeError:
+                pass 
+        
+        return dados_brutos if isinstance(dados_brutos, dict) else json.loads(dados_brutos)
+
     if mongo_client:
         try:
             doc = saves_collection.find_one({"sid": sid})
             if doc and "dados" in doc:
-                novo_jogo = GameState.from_dict(doc["dados"])
-                for k, v in novo_jogo.__dict__.items():
-                    if k != "ui_handler":
-                        setattr(jogo, k, v)
-                return True
+                dados = processar_dados_save(doc["dados"])
+                if dados:
+                    novo_jogo = GameState.from_dict(dados)
+                    for k, v in novo_jogo.__dict__.items():
+                        if k != "ui_handler":
+                            setattr(jogo, k, v)
+                    return True
         except Exception:
-            logger.exception("Erro ao buscar save no MongoDB")
+            logger.exception("Erro ao buscar save criptografado no MongoDB")
     else:
         caminho = obter_caminho_autosave(sid)
         if caminho.exists():
             try:
-                dados = json.loads(caminho.read_text(encoding="utf-8"))
-                novo_jogo = GameState.from_dict(dados)
-                for k, v in novo_jogo.__dict__.items():
-                    if k != "ui_handler":
-                        setattr(jogo, k, v)
-                return True
+                conteudo = caminho.read_text(encoding="utf-8")
+                dados = processar_dados_save(conteudo)
+                if dados:
+                    novo_jogo = GameState.from_dict(dados)
+                    for k, v in novo_jogo.__dict__.items():
+                        if k != "ui_handler":
+                            setattr(jogo, k, v)
+                    return True
             except Exception:
                 logger.exception("Erro ao carregar save local")
 
     return False
-
 
 def salvar_save_web(jogo):
     sid = obter_sid_seguro()
     if not sid:
         return
 
+    
+    dados_json = json.dumps(jogo.to_dict(), ensure_ascii=False)
+    dados_criptografados = CIPHER_SUITE.encrypt(dados_json.encode("utf-8")).decode("utf-8")
+
     if mongo_client:
         try:
             saves_collection.update_one(
                 {"sid": sid},
-                {"$set": {"sid": sid, "dados": jogo.to_dict()}},
+                {"$set": {"sid": sid, "dados": dados_criptografados}},
                 upsert=True,
             )
         except Exception:
-            logger.exception("Erro ao salvar progresso no MongoDB")
+            logger.exception("Erro ao salvar progresso blindado no MongoDB")
     else:
         try:
             caminho = obter_caminho_autosave(sid)
-            caminho.write_text(
-                json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8"
-            )
+            caminho.write_text(dados_criptografados, encoding="utf-8")
         except Exception:
-            logger.exception("Erro ao gerar autosave local")
+            logger.exception("Erro ao gerar autosave local blindado")
 
 
 def gerar_resposta_json(jogo):
@@ -500,6 +536,7 @@ def receber_comando():
 
 
 @app.route("/save/export", methods=["GET"])
+@limiter.limit("5 per minute")
 def exportar_save():
     sid = obter_sid_seguro()
     if not sid or sid not in MEMORIA_SESSOES:
@@ -584,6 +621,7 @@ def ver_telemetria():
 
 
 @app.route("/share/generate", methods=["GET"])
+@limiter.limit("5 per minute")
 def gerar_link_compartilhamento():
     sid = obter_sid_seguro()
     if not sid:
@@ -593,7 +631,7 @@ def gerar_link_compartilhamento():
 
     
     share_token = str(uuid.uuid4())
-    expires_at = time.time() + (24 * 3600)
+    expires_at = time.time() + 3600 
 
     
     shares_collection.insert_one(
@@ -671,6 +709,26 @@ def listar_saves_paginados():
     except (pymongo.errors.PyMongoError, ValueError) as e:
         logger.error(f"Erro ao listar saves paginados: {e}")
         return jsonify({"erro": "Erro interno do servidor"}), 500
+
+
+@app.after_request
+def aplicar_headers_de_seguranca(response):
+    
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com;"
+    )
+    
+    
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY' 
+    
+    
+    if IS_PRODUCTION:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        
+    return response
 
 
 if __name__ == "__main__":

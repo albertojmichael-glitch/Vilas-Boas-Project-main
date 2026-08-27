@@ -16,9 +16,7 @@ const invEl = document.getElementById('hud-inv');
 const salaEl = document.getElementById('hud-sala');
 const saidasEl = document.getElementById('hud-saidas');
 
-// ==========================================
-// GERENCIADOR DE ÁUDIO E ZUMBIDO CRT
-// ==========================================
+
 let audioCtx = null;
 let ambientOsc = null;
 let crtOsc = null;
@@ -40,7 +38,7 @@ function iniciarSomAmbiente() {
     const ctx = obterAudioContext();
     if (!ctx || ambientOsc) return;
 
-    // 1. Drone Grave de Fundo (Ambiente abafado de $55\text{ Hz}$)
+    
     ambientOsc = ctx.createOscillator();
     const ambientGain = ctx.createGain();
     ambientOsc.type = 'triangle';
@@ -51,7 +49,7 @@ function iniciarSomAmbiente() {
     ambientGain.connect(ctx.destination);
     ambientOsc.start();
 
-    // 2. Zumbido de Monitor CRT (Chiado elétrico de $60\text{ Hz}$)
+    
     crtOsc = ctx.createOscillator();
     const crtGain = ctx.createGain();
     crtOsc.type = 'sawtooth';
@@ -66,11 +64,7 @@ function iniciarSomAmbiente() {
 document.body.addEventListener('click', iniciarSomAmbiente, { once: true });
 document.body.addEventListener('keydown', iniciarSomAmbiente, { once: true });
 
-// ==========================================
-// SINTETIZADORES DE EFEITOS SONOROS
-// ==========================================
 
-// 1. Som de caractere sendo impresso na tela
 function tocarSomDigito() {
     const ctx = obterAudioContext();
     if (!ctx) return;
@@ -91,7 +85,7 @@ function tocarSomDigito() {
     osc.stop(ctx.currentTime + 0.05);
 }
 
-// 2. Bip de Confirmação de Comando (Enter)
+
 function tocarBipEntrada() {
     const ctx = obterAudioContext();
     if (!ctx) return;
@@ -113,14 +107,14 @@ function tocarBipEntrada() {
     osc.stop(ctx.currentTime + 0.06);
 }
 
-// 3. Passos Metálicos Pesados
+
 function tocarPassoMetalico() {
     const ctx = obterAudioContext();
     if (!ctx) return;
 
     const t = ctx.currentTime;
 
-    // Impacto Sub-grave do peso
+    
     const subOsc = ctx.createOscillator();
     const subGain = ctx.createGain();
     subOsc.type = 'sine';
@@ -135,7 +129,7 @@ function tocarPassoMetalico() {
     subOsc.start(t);
     subOsc.stop(t + 0.25);
 
-    // Rangido e fricção do metal
+    
     const metalOsc = ctx.createOscillator();
     const metalGain = ctx.createGain();
     metalOsc.type = 'sawtooth';
@@ -151,7 +145,7 @@ function tocarPassoMetalico() {
     metalOsc.stop(t + 0.18);
 }
 
-// Beep genérico de erro/sucesso
+
 function reproduzirBeep(tipo = 'sucesso') {
     const ctx = obterAudioContext();
     if (!ctx) return;
@@ -181,9 +175,7 @@ function playBip(tipo) {
     reproduzirBeep(tipo);
 }
 
-// ==========================================
-// GERENCIAMENTO DE SAVES (UI)
-// ==========================================
+
 function openSaves() {
     document.getElementById('saves-modal').classList.remove('hidden');
 }
@@ -199,7 +191,7 @@ async function exportarSave() {
         if (!res.ok) throw new Error("Nenhum progresso encontrado no servidor.");
         const data = await res.json();
         
-        // Cria um Blob JSON e força o Download no navegador do usuário
+        
         const blob = new Blob([JSON.stringify(data, null, 4)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -226,7 +218,12 @@ async function importarSave(event) {
         try {
             const dados = JSON.parse(e.target.result);
             
-            // Envia o JSON do usuário para o endpoint que acabamos de criar
+            
+            if (!dados || typeof dados !== 'object' || !('sala_atual' in dados) || !('hp' in dados)) {
+                throw new Error("Estrutura de save incompatível.");
+            }
+            
+            
             const res = await fetch('/save/import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -235,17 +232,17 @@ async function importarSave(event) {
             
             const result = await res.json();
             if (res.ok) {
-                alert("Save corrompido... Digo, importado com sucesso! Reiniciando terminal...");
+                alert("Save corrompido... importado com sucesso! Reiniciando terminal...");
                 window.location.reload();
             } else {
                 alert("[ERRO DE BIOS] " + result.erro);
             }
         } catch (erro) {
-            alert("[ERRO FATAL] O arquivo fornecido não é um JSON válido do sistema Vilas Boas.");
+            alert("[ERRO FATAL] O arquivo fornecido não é um JSON válido do sistema.");
         }
     };
     reader.readAsText(file);
-    event.target.value = ''; // Limpa o input para permitir re-upload do mesmo arquivo se necessário
+    event.target.value = ''; 
 }
 
 async function gerarLinkCompartilhamentoUI() {
@@ -262,7 +259,7 @@ async function gerarLinkCompartilhamentoUI() {
             input.value = data.link;
             msg.innerText = data.mensagem;
             
-            // Copia automaticamente para a área de transferência
+            
             input.select();
             document.execCommand('copy');
             reproduzirBeep('sucesso');
@@ -276,7 +273,7 @@ async function gerarLinkCompartilhamentoUI() {
     }
 }
 
-// Lembre-se de adicionar closeSaves() na sua escuta da tecla "Escape" já existente:
+
 document.addEventListener('keydown', function(event) {
     if (event.key === "Escape") {
         closeHelp();
@@ -285,9 +282,7 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// ==========================================
-// PREFERÊNCIAS DO JOGADOR
-// ==========================================
+
 let pref_multiplicadorVelocidade = 1.0;
 
 function carregarPreferencias() {
@@ -353,7 +348,7 @@ function closeSettings() {
     document.getElementById('comando').focus();
 }
 
-// Escutar "Escape" para fechar também as configurações
+
 document.addEventListener('keydown', function(event) {
     if (event.key === "Escape") {
         closeHelp();
@@ -361,16 +356,14 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// Inicializar as preferências ao carregar a janela
+
 const onloadOriginal = window.onload;
 window.onload = function() {
     carregarPreferencias();
     if(onloadOriginal) onloadOriginal();
 };
 
-// ==========================================
-// FOCO INTELIGENTE E CONTROLES
-// ==========================================
+
 const terminalSection = document.querySelector('.terminal-section');
 
 
@@ -390,16 +383,14 @@ terminalSection.addEventListener('click', (event) => {
     }
 });
 
-// ==========================================
-// EVENTOS DE TECLADO (INPUT)
-// ==========================================
+
 inputField.addEventListener("keydown", async function(event) {
     if (event.key === "Enter") {
         const comandoBruto = inputField.value;
         const comando = comandoBruto.trim();
         
         if (comando !== "") {
-            tocarBipEntrada(); // Toca o Bip ao apertar Enter
+            tocarBipEntrada(); 
 
             if (historicoComandos[historicoComandos.length - 1] !== comando) {
                 historicoComandos.push(comando);
@@ -439,9 +430,7 @@ inputField.addEventListener("keydown", async function(event) {
     }
 });
 
-// ==========================================
-// ATUALIZAÇÃO DO HUD VISUAL
-// ==========================================
+
 function atualizarSidebar(estado) {
     if (!estado) return;
 
@@ -511,9 +500,7 @@ function atualizarSidebar(estado) {
     }
 }
 
-// ==========================================
-// PROCESSAMENTO E ANIMAÇÃO DE TEXTO
-// ==========================================
+
 async function processarLinhas(linhas, estado) {
     const terminalEl = document.querySelector('.terminal-section'); 
 
@@ -548,7 +535,7 @@ function novaLinha(linha, terminalEl) {
             resolve();
             
         } else if (linha.startsWith("@@RELOAD@@")) {
-            // força o f5
+            
             window.location.reload();
             resolve();
 
@@ -562,14 +549,14 @@ function novaLinha(linha, terminalEl) {
             let ms = parseInt(parts[3]);
             let texto = parts.slice(4).join("@@"); 
             
-            // APLICA O MULTIPLICADOR DO USUÁRIO
+            
             let velocidadeFinal = ms * pref_multiplicadorVelocidade;
             if (pref_multiplicadorVelocidade === 0) velocidadeFinal = 0;
 
             digitarTextoAnimadoHTML(texto, cor, velocidadeFinal, resolve);
 
         } else {
-            // FALLBACK: APLICA MULTIPLICADOR NO TEXTO PADRÃO
+            
             let velocidadeFinal = 15 * pref_multiplicadorVelocidade;
             if (pref_multiplicadorVelocidade === 0) velocidadeFinal = 0;
             
@@ -582,8 +569,7 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
     const p = document.createElement('p');
     if (classeCor) p.className = classeCor;
     
-    // --- LÓGICA DE ACESSIBILIDADE (Leitor de Tela) ---
-    // 1. Cria um span invisível onde o texto entra de uma vez só
+    
     const srSpan = document.createElement('span');
     srSpan.className = 'sr-only';
     
@@ -595,20 +581,20 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
     }
     if (classeCor === 'amarelo') a11yPrefix = "Atenção: ";
     
-    // Removemos tags HTML para o leitor ler apenas texto puro
+    
     const textoLimpo = htmlString.replace(/<[^>]*>?/gm, '');
     srSpan.innerText = a11yPrefix + textoLimpo;
 
-    // 2. Cria o span visual onde a animação vai acontecer (invisível pro Leitor de Tela)
+    
     const visualSpan = document.createElement('span');
     visualSpan.setAttribute('aria-hidden', 'true');
 
-    // Injeta os dois spans no parágrafo
+    
     p.appendChild(srSpan);
     p.appendChild(visualSpan);
     outputDiv.appendChild(p);
     
-    // Se a velocidade for 0 (Fast Mode), preenche e sai
+    
     if (velocidade === 0) {
         visualSpan.innerHTML = htmlString;
         terminal.scrollTop = terminal.scrollHeight;
@@ -616,7 +602,7 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
         return;
     }
     
-    // --- LÓGICA DE ANIMAÇÃO VISUAL ---
+    
     let i = 0;
     let isTag = false;
     let currentHTML = "";
@@ -626,7 +612,7 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
             let char = htmlString.charAt(i);
             currentHTML += char;
             
-            // Injeta a animação APENAS no span visual
+            
             visualSpan.innerHTML = currentHTML;
             i++;
             
@@ -650,9 +636,7 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
     digitar();
 }
 
-// ==========================================
-// COMUNICAÇÃO COM O SERVIDOR (API)
-// ==========================================
+
 async function fetchSeguro(url, options) {
     inputField.disabled = true;
     inputLineDiv.style.display = 'none'; 
@@ -700,7 +684,7 @@ async function enviarComando(comando) {
     fetchSeguro('/comando', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // NOVO: Adicionamos o campo telemetria no payload
+        
         body: JSON.stringify({ 
             comando: comando, 
             telemetria: pref_telemetria 
@@ -710,9 +694,7 @@ async function enviarComando(comando) {
 
 window.onload = iniciarJogo;
 
-// ==========================================
-// UTILITÁRIOS E ATALHOS
-// ==========================================
+
 function openHelp() {
     document.getElementById('help-modal').classList.remove('hidden');
 }

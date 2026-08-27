@@ -561,106 +561,72 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "JOGO"
             imprimir_contexto_sala(jogo)
 
-    # ==========================================
-    # BLOCO: MINIGAME DE SEGURANÇA
-    # ==========================================
-    elif jogo.estado_atual == "MINIGAME_SEGURANCA":
-        if type(jogo.minigame_atual) is dict:
-            dados_salvos = jogo.minigame_atual
-            jogo.minigame_atual = MinigameSeguranca(jogo)
-            jogo.minigame_atual.__dict__.update(dados_salvos) 
-            jogo.minigame_atual.jogo = jogo
-        elif not isinstance(jogo.minigame_atual, MinigameSeguranca):
-            jogo.minigame_atual = MinigameSeguranca(jogo)
 
-        if hasattr(jogo.minigame_atual, 'ui'):
-            jogo.minigame_atual.ui = jogo.ui_handler
-            
-        partes = extrair_argumentos(comando)
-        verbo = partes[0] if partes else ""
-        mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
-        if verbo in mapa_direcoes: 
-            comando = mapa_direcoes[verbo]
+    #bloco universal
 
-        resultado = jogo.minigame_atual.processar_turno(comando, jogo)
+    elif jogo.estado_atual.startswith("MINIGAME_") and hasattr(jogo, 'minigame_atual') and jogo.minigame_atual is not None:
         
-        if resultado == "continuar":
-            jogo.minigame_atual.imprimir_status()
-
-        elif resultado == "vitoria_seguranca":
-            jogo.estado_atual = "JOGO"
-            if jogo.sala_atual not in jogo.mapa:
-                jogo.sala_atual = "01"
-            jogo.minigame_atual = None
-            imprimir_contexto_sala(jogo)
-
-        elif resultado == "morte":
-            jogo.estado_atual = "FIM"
-            jogo.sala_atual = "morte"
-            jogo.minigame_atual = None
-            try: 
-                from app import registrar_telemetria
-                registrar_telemetria("MORTE", "SALA DE SEGURANCA", jogo.dificuldade_escolhida, "Jumpscare na cadeira")
-            except (ImportError, AttributeError) as e:
-                pass
-            dar_tela_de_morte(jogo)
-
-        return
-
-   
-    #MINIGAME DO MINOTAURO
-    
-    elif jogo.estado_atual == "MINIGAME_MINOTAURO":
-        if type(jogo.minigame_atual) is dict:
-            dados_salvos = jogo.minigame_atual
-            jogo.minigame_atual = MinigameMinotauro(jogo)
-            jogo.minigame_atual.__dict__.update(dados_salvos) 
-            jogo.minigame_atual.jogo = jogo
-        elif not isinstance(jogo.minigame_atual, MinigameMinotauro):
-            jogo.minigame_atual = MinigameMinotauro(jogo)
-
-        if hasattr(jogo.minigame_atual, 'ui'):
-            jogo.minigame_atual.ui = jogo.ui_handler
-            
-        partes = extrair_argumentos(comando)
-        verbo = partes[0] if partes else ""
-        mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
-        if verbo in mapa_direcoes: 
-            comando = mapa_direcoes[verbo]
-
-        resultado = jogo.minigame_atual.processar_turno(comando, jogo)
         
-        if resultado == "continuar":
-            jogo.minigame_atual.imprimir_status()
-
-        elif resultado == "vitoria_minotauro":
-            jogo.estado_atual = "JOGO"
-            jogo.sala_atual = "sala dos fundos"
-            jogo.minigame_atual = None
-            
-            
-            if getattr(jogo, 'god_mode', False) and not getattr(jogo, 'fios_cortados_inventario', False):
-                jogo.inventario.append("fios cortados")
-                jogo.fios_cortados_inventario = True
-                ui.exibir(f"{DOS_AMARELO}[GOD MODE] Com sua força divina, você arrancou os 'fios cortados' da parede antes de sair!{RESET}")
-            
-
-            if "sala dos fundos" in jogo.mapa:
-                jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
-            ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você. Você sobreviveu.{RESET}")
-            imprimir_contexto_sala(jogo)
-
-        elif resultado == "morte":
-            jogo.estado_atual = "FIM"
-            jogo.sala_atual = "morte"
-            jogo.minigame_atual = None
-            try: 
-                from app import registrar_telemetria
-                registrar_telemetria("MORTE", "LABIRINTO", jogo.dificuldade_escolhida, "Morto no Escuro")
-            except (ImportError, AttributeError) as e:
-            
-                pass
-            dar_tela_de_morte(jogo)
-
-        return
+        if isinstance(jogo.minigame_atual, dict):
+            dados_salvos = jogo.minigame_atual
+            if jogo.estado_atual == "MINIGAME_SEGURANCA":
+                from villas_boas.engine.minigames.seguranca import MinigameSeguranca
+                jogo.minigame_atual = MinigameSeguranca(jogo)
+            elif jogo.estado_atual == "MINIGAME_MINOTAURO":
+                from villas_boas.engine.minigames.minotauro import MinigameMinotauro
+                jogo.minigame_atual = MinigameMinotauro(jogo)
                 
+            jogo.minigame_atual.__dict__.update(dados_salvos) 
+            jogo.minigame_atual.jogo = jogo
+
+        if hasattr(jogo.minigame_atual, 'ui'):
+            jogo.minigame_atual.ui = jogo.ui_handler
+            
+        
+        partes = extrair_argumentos(comando)
+        verbo = partes[0] if partes else ""
+        mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
+        if verbo in mapa_direcoes: 
+            comando = mapa_direcoes[verbo]
+
+       
+        resultado = jogo.minigame_atual.processar_turno(comando, jogo)
+        
+        
+        if resultado == "continuar":
+            jogo.minigame_atual.imprimir_status()
+
+        elif resultado == "morte":
+            jogo.estado_atual = "FIM"
+            jogo.sala_atual = "morte"
+            jogo.minigame_atual = None
+            try: 
+                from app import registrar_telemetria
+                registrar_telemetria("MORTE", jogo.estado_atual, jogo.dificuldade_escolhida, "Falhou em um Minigame")
+            except Exception:
+                pass
+            dar_tela_de_morte(jogo)
+
+        elif resultado.startswith("vitoria_"):
+            jogo.estado_atual = "JOGO"
+            jogo.minigame_atual = None
+            
+            
+            if resultado == "vitoria_seguranca":
+                if jogo.sala_atual not in jogo.mapa:
+                    jogo.sala_atual = "01"
+                    
+            elif resultado == "vitoria_minotauro":
+                jogo.sala_atual = "sala dos fundos"
+                if getattr(jogo, 'god_mode', False) and not getattr(jogo, 'fios_cortados_inventario', False):
+                    jogo.inventario.append("fios cortados")
+                    jogo.fios_cortados_inventario = True
+                    ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você arrancou os 'fios cortados' da parede!{RESET}")
+                    
+                if "sala dos fundos" in jogo.mapa:
+                    jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
+                ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você. Você sobreviveu.{RESET}")
+
+            imprimir_contexto_sala(jogo)
+
+        return
