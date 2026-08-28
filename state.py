@@ -75,6 +75,10 @@ class GameState(BaseModel):
     limite_inventario: int = 3
     amanheceu: bool = False
     jon_passos_dados: int = 0
+    ai_sala: str = "palco"
+    ai_estado: str = "PATRULHA"
+    ai_alvo: str = ""
+    nivel_barulho: int = 0
     conquistas: list[str] = Field(default_factory=list)
     jon_caminho_certo: list[str] = Field(default_factory=list)
     web_consertos: dict[str, Any] = Field(default_factory=dict)

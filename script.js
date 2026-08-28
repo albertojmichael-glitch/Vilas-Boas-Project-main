@@ -466,6 +466,14 @@ function atualizarSidebar(estado) {
         luzVal.className = (estado.luz === "∞" || estado.luz > 3) ? "verde" : "vermelho";
     }
 
+    const somVal = document.getElementById("som-val");
+    if (somVal && estado.som !== undefined) {
+        somVal.textContent = estado.som + "%";
+        if (estado.som >= 80) somVal.className = "vermelho";
+        else if (estado.som >= 50) somVal.className = "amarelo";
+        else somVal.className = "verde";
+    }
+
     const invList = document.getElementById("inv-list");
     const invTitulo = document.querySelector("#hud-inv");
     

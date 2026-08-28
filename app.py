@@ -402,6 +402,7 @@ def gerar_resposta_json(jogo):
         hp = jogo.hp if not getattr(jogo, "god_mode", False) else "∞"
         luz = jogo.turnos_luz if not getattr(jogo, "god_mode", False) else "∞"
         inv = jogo.inventario
+        som = getattr(jogo, "nivel_barulho", 0) 
         sala = (
             jogo.sala_atual.upper()
             if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"]

@@ -31,6 +31,70 @@ from villas_boas.engine.minigames.minotauro import MinigameMinotauro
 
 logger = logging.getLogger(__name__)
 
+def calcular_caminho_bfs(mapa, inicio, destino):
+    """Algoritmo de pathfinding para a IA navegar pelas salas conectadas."""
+    if inicio not in mapa or destino not in mapa:
+        return []
+    fila = [[inicio]]
+    visitados = set([inicio])
+    while fila:
+        caminho = fila.pop(0)
+        sala = caminho[-1]
+        if sala == destino:
+            return caminho
+        
+        for direcao, vizinho in mapa[sala].items():
+            
+            if isinstance(vizinho, str) and vizinho in mapa and vizinho not in visitados and direcao not in ["descrição", "itens", "inspecionaveis", "energia"]:
+                visitados.add(vizinho)
+                novo_caminho = list(caminho)
+                novo_caminho.append(vizinho)
+                fila.append(novo_caminho)
+    return []
+
+def processar_ia_inimigo(jogo):
+    """Cérebro da Máquina de Estados da IA."""
+    if getattr(jogo, 'god_mode', False) or jogo.estado_atual != "JOGO":
+        return
+
+
+    if jogo.nivel_barulho > 0:
+        jogo.nivel_barulho = max(0, jogo.nivel_barulho - 5)
+
+
+    if jogo.nivel_barulho >= 80 or jogo.ai_sala == jogo.sala_atual:
+        jogo.ai_estado = "CACA"
+    elif jogo.nivel_barulho >= 50 and jogo.ai_estado != "CACA":
+        jogo.ai_estado = "ALERTA"
+    elif jogo.nivel_barulho < 50:
+        jogo.ai_estado = "PATRULHA"
+
+
+    if jogo.ai_estado == "PATRULHA":
+
+        vizinhos = [v for k, v in jogo.mapa.get(jogo.ai_sala, {}).items() if isinstance(v, str) and v in jogo.mapa and k not in ["descrição", "itens", "inspecionaveis", "energia"]]
+        if random.random() > 0.5 and vizinhos:
+            jogo.ai_sala = random.choice(vizinhos)
+
+    elif jogo.ai_estado in ["ALERTA", "CACA"]:
+
+        destino = jogo.sala_atual if jogo.ai_estado == "CACA" else (jogo.ai_alvo if jogo.ai_alvo else jogo.sala_atual)
+        caminho = calcular_caminho_bfs(jogo.mapa, jogo.ai_sala, destino)
+        if len(caminho) > 1: 
+            jogo.ai_sala = caminho[1]
+
+
+    caminho_para_jogador = calcular_caminho_bfs(jogo.mapa, jogo.sala_atual, jogo.ai_sala)
+    distancia = len(caminho_para_jogador) - 1 if caminho_para_jogador else 99
+
+    if distancia == 0 and jogo.sala_atual not in ["01", "sala de energia"]:
+        jogo.estado_atual = "COMBATE_ANIMATRONICO"
+        jogo.ui_handler.buffer.append(f"@@TYPE@@vermelho@@15@@O animatrônico irrompe na sala! Ele encontrou você!")
+    elif distancia == 1:
+        jogo.ui_handler.buffer.append("@@PASSO@@Você ouve passos metálicos pesados na sala ao lado...")
+    elif distancia == 2:
+        jogo.ui_handler.buffer.append("@@TYPE@@amarelo@@15@@Um baque surdo ecoa pelos corredores distantes.")
+
 ARTE_COFRE = r'''
   __________________________
  /  ______________________  \
@@ -318,6 +382,80 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             if gastou_turno:
                 atualizar_eventos_de_tempo(jogo)
                 jogo.erros_consecutivos = 0
+            else:
+                # FLAG DE VELOCIDADE: Começa falsa
+                jogador_correu = False
+
+                # 1. Geração de Barulho e Interceptação do "Correr"
+                if comando.startswith("correr "):
+                    direcao = comando.replace("correr ", "").strip()
+                    comando_bruto = f"ir {direcao}"
+                    comando = comando_bruto
+                    
+                    # O jogador ativou a explosão de velocidade!
+                    jogador_correu = True
+                    jogo.nivel_barulho = 100
+                    jogo.ai_alvo = jogo.sala_atual 
+                    jogo.turnos_enjoado = 2 
+                    
+                    import random
+                    if jogo.inventario and len(jogo.inventario) > 0 and random.random() <= 0.25:
+                        item_perdido = random.choice(jogo.inventario)
+                        jogo.inventario.remove(item_perdido)
+                        
+                        sala_atual = jogo.mapa.get(jogo.sala_atual, {})
+                        if "itens" not in sala_atual:
+                            sala_atual["itens"] = []
+                        sala_atual["itens"].append(item_perdido)
+                        
+                        ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você corre desesperadamente! No pânico, você tropeça e deixa cair seu(sua) {item_perdido.upper()}!")
+                    else:
+                        ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você foge correndo! Você deixa tudo para trás num piscar de olhos!")
+                
+                elif comando.startswith("ir ") or comando.startswith("abrir "):
+                    jogo.nivel_barulho = min(100, jogo.nivel_barulho + 15)
+                elif comando in ["olhar", "inventario", "esperar"]:
+                    jogo.nivel_barulho = max(0, jogo.nivel_barulho - 10)
+                else:
+                    jogo.nivel_barulho = min(100, jogo.nivel_barulho + 5)
+                    
+                # 2. Processa a ação do jogador (ele se move para a nova sala aqui)
+                gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
+                
+                # 3. Atualiza os eventos
+                if gastou_turno:
+                    atualizar_eventos_de_tempo(jogo)
+                    jogo.erros_consecutivos = 0
+                    
+                    # A MÁGICA ACONTECE AQUI:
+                    if not jogador_correu:
+                        processar_ia_inimigo(jogo) # A IA só se move se o jogador NÃO correu
+                    else:
+                        ui.buffer.append("@@TYPE@@amarelo@@10@@Sua velocidade surpreende a criatura, que fica para trás tentando entender de onde veio o estrondo.")
+
+                else:
+                    # Punição por spammar erros
+                    jogo.erros_consecutivos += 1
+                    if jogo.erros_consecutivos >= 3:
+                        jogo.nivel_barulho = min(100, jogo.nivel_barulho + 30)
+                        jogo.ai_alvo = jogo.sala_atual
+                        ui.animar("Você está tropeçando e fazendo muito barulho no escuro...", 0.03, DOS_AMARELO, jogo)
+
+               
+                gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
+                
+                
+                if gastou_turno:
+                    atualizar_eventos_de_tempo(jogo)
+                    jogo.erros_consecutivos = 0
+                    processar_ia_inimigo(jogo) 
+                else:
+                    
+                    jogo.erros_consecutivos += 1
+                    if jogo.erros_consecutivos >= 3:
+                        jogo.nivel_barulho = min(100, jogo.nivel_barulho + 30)
+                        jogo.ai_alvo = jogo.sala_atual
+                        ui.animar("Seus tropeços estão fazendo muito barulho...", 0.03, DOS_AMARELO, jogo)
             
             
             if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
