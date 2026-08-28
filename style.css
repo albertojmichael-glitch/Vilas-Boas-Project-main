@@ -541,21 +541,21 @@ input, textarea {
     transition: opacity 1.5s ease-in-out;
 }
 
-/* --- A TELA (ONDE O JOGO/ESTÁTICA RODA) --- */
 #tv-content-area {
     position: absolute;
     z-index: 1;
     overflow: hidden;
     background: #000;
     
-    /* ⚠️ AJUSTE ESTES 4 VALORES PARA ENCAIXAR NO BURACO BRANCO DA SUA IMAGEM: */
-    top: 60px;       /* Distância do topo */
-    left: 48px;      /* Distância da esquerda */
-    width: 485px;    /* Largura da tela do tubo */
-    height: 380px;   /* Altura da tela do tubo */
+    /* VALORES AJUSTADOS PARA ENQUADRAR NA TV.PNG */
+    top: 74px;        /* Desceu um pouco para alinhar com o topo do vidro */
+    left: 50px;       /* Alinhado com a borda esquerda */
+    width: 542px;    /* Esticado para alcançar o painel de botões à direita */
+    height: 420px;    /* Altura exata do recorte */
     
-    /* Curvatura leve para simular o vidro do tubo */
-    border-radius: 40% / 15%; 
+    /* Curvatura para imitar o tubo da referência (image_976e63.jpg) */
+    border-radius: 90px / 75px;
+    border: 2px solid red; 
 }
 
 /* --- CAMADAS DE VÍDEO --- */
@@ -572,17 +572,16 @@ input, textarea {
 .vcr-text { color: #00ff00; font-family: 'VT323', monospace; font-size: 2.5rem; text-shadow: 2px 2px 0px #000; animation: blinker 1s linear infinite; }
 @keyframes blinker { 50% { opacity: 0; } }
 
-/* --- CONTROLES DA TV --- */
 #power-button {
     position: absolute;
     z-index: 20; 
-    /* ⚠️ Ajuste para ficar em cima do botão grande de baixo na imagem da TV */
-    bottom: 125px; 
-    right: 120px;   
+    /* Enquadrando no botão redondo inferior do painel direito */
+    bottom: 120px; 
+    right: 88px;   
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    background: transparent; /* Deixe 'red' temporariamente para você ver onde ele está, depois volte para 'transparent' */
+    background: transparent; 
     border: none;
     cursor: pointer;
 }
@@ -590,14 +589,16 @@ input, textarea {
 #power-led {
     position: absolute;
     z-index: 20;
-    bottom: 100px;
-    right: 138px;
-    width: 10px; height: 10px; border-radius: 50%;
+    bottom: 95px;
+    right: 104px;
+    width: 12px; 
+    height: 12px; 
+    border-radius: 50%;
     background: #333;
 }
 .led-on { background: #ff0000 !important; box-shadow: 0 0 10px #ff0000 !important; }
 
-/* --- EFEITO DE ZOOM E TRANSIÇÃO --- */
+
 .zoom-into-tv { transform: scale(2.2); } 
 .fade-out-tv { opacity: 0 !important; } 
 .expand-screen {
