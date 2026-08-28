@@ -548,15 +548,15 @@ input, textarea {
     background: #000;
     
     /* VALORES REDUZIDOS E CENTRALIZADOS */
-    top: 85px;        /* Desceu mais para não vazar no topo */
-    left: 75px;       /* Empurrou para a direita para não vazar na lateral */
-    width: 490px;     /* Encolheu a largura */
-    height: 380px;    /* Encolheu a altura */
+    top: 72px;        /* Desceu mais para não vazar no topo */
+    left: 64px;       /* Empurrou para a direita para não vazar na lateral */
+    width: 522px;     /* Encolheu a largura */
+    height: 392px;    /* Encolheu a altura */
     
     /* Curva suavizada */
     border-radius: 60px / 50px; 
-    border: 2px solid red; 
 }
+
 /* --- CAMADAS DE VÍDEO --- */
 .screen-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
@@ -575,10 +575,10 @@ input, textarea {
     position: absolute;
     z-index: 20; 
     /* Subiu e foi para a direita, em direção ao painel prateado */
-    bottom: 160px;  /* Aumentar o bottom faz ele subir */
-    right: 35px;    /* Diminuir o right faz ele ir para a direita */
+    bottom: 142px;  /* Aumentar o bottom faz ele subir */
+    right: 120px;    /* Diminuir o right faz ele ir para a direita */
     width: 40px;
-    height: 40px;
+    height: 36px;
     border-radius: 50%;
     background: rgba(0, 0, 255, 0.5); 
     border: none;
