@@ -547,17 +547,16 @@ input, textarea {
     overflow: hidden;
     background: #000;
     
-    /* VALORES AJUSTADOS PARA ENQUADRAR NA TV.PNG */
-    top: 72px;        /* Nudged up slightly */
-    left: 60px;       /* Shifted right to align with the left bezel */
-    width: 535px;     /* Adjusted width */
-    height: 415px;    /* Adjusted height */
+    /* VALORES REDUZIDOS E CENTRALIZADOS */
+    top: 85px;        /* Desceu mais para não vazar no topo */
+    left: 75px;       /* Empurrou para a direita para não vazar na lateral */
+    width: 490px;     /* Encolheu a largura */
+    height: 380px;    /* Encolheu a altura */
     
-    /* Curvatura refinada para o tubo */
-    border-radius: 95px / 75px; 
-    border: 2px solid red; /* Keep for testing, remove when perfect */
+    /* Curva suavizada */
+    border-radius: 60px / 50px; 
+    border: 2px solid red; 
 }
-
 /* --- CAMADAS DE VÍDEO --- */
 .screen-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
@@ -575,13 +574,13 @@ input, textarea {
 #power-button {
     position: absolute;
     z-index: 20; 
-    /* Enquadrando no botão redondo inferior do painel direito */
-    bottom: 105px;  /* Moved down */
-    right: 55px;    /* Moved right to align with the actual button */
-    width: 45px;
-    height: 45px;
+    /* Subiu e foi para a direita, em direção ao painel prateado */
+    bottom: 160px;  /* Aumentar o bottom faz ele subir */
+    right: 35px;    /* Diminuir o right faz ele ir para a direita */
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: rgba(0, 0, 255, 0.5); /* Semi-transparent blue to check placement */
+    background: rgba(0, 0, 255, 0.5); 
     border: none;
     cursor: pointer;
 }
@@ -589,8 +588,9 @@ input, textarea {
 #power-led {
     position: absolute;
     z-index: 20;
-    bottom: 85px;   /* Moved down */
-    right: 71px;    /* Moved right to align with the light */
+    /* Subiu e foi para a direita, acompanhando o botão */
+    bottom: 125px;   
+    right: 48px;    
     width: 12px; 
     height: 12px; 
     border-radius: 50%;
