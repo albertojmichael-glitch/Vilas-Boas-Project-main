@@ -478,14 +478,11 @@ input, textarea {
     box-shadow: none; 
 }
 
-/* Garante que nada mude quando você clica para digitar */
+
 input:focus, textarea:focus {
     outline: none;
 }
 
-/* =========================================
-   CURSOR RETRÔ PISCANDO
-   ========================================= */
 
 
 @keyframes blink-cursor {
@@ -493,7 +490,7 @@ input:focus, textarea:focus {
     50% { opacity: 0; }
 }
 
-/* 2. O bloco verde em si */
+
 .blinking-cursor {
     display: inline-block;
     width: 12px;          
@@ -512,99 +509,99 @@ input, textarea {
     caret-color: #4aff4a; 
 }
 
-/* --- AMBIENTE E MOLDURA DA TV REALISTA --- */
-#tv-room {
-    display: flex; justify-content: center; align-items: center;
-    height: 100vh; background-color: #0a0a0a; overflow: hidden;
-}
 
-#tv-frame {
-    position: relative;
-    width: 850px; height: 650px;
-    background: linear-gradient(145deg, #d4d4d4, #8a8a8a); /* Efeito metalizado clássico */
-    border-radius: 30px;
-    box-shadow: inset 0 0 15px rgba(255,255,255,0.5), inset -5px -5px 15px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.9);
-    padding: 50px 80px 100px 80px; /* Espaço lateral maior para os alto-falantes */
-    transition: transform 1.5s ease-in-out, opacity 1s ease-in-out;
-}
-
-/* Grelhas dos Alto-falantes nas laterais */
-.tv-speakers {
-    position: absolute; top: 15%; bottom: 25%; width: 40px;
-    background-image: radial-gradient(#333 30%, transparent 35%);
-    background-size: 5px 5px; /* Furinhos da caixa de som */
-    opacity: 0.4;
-}
-.tv-speakers.left { left: 20px; }
-.tv-speakers.right { right: 20px; }
-
-/* Controles Base */
-.tv-controls { position: absolute; bottom: 30px; left: 0; width: 100%; text-align: center; }
-
-#power-led {
-    position: absolute; left: 80px; top: 5px;
-    width: 12px; height: 12px; border-radius: 50%;
-    background: #ff0000; /* LED Vermelho (Desligado) */
-    box-shadow: 0 0 5px #ff0000, inset 0 2px 4px rgba(0,0,0,0.5);
-    transition: background 0.3s, box-shadow 0.3s;
-}
-.led-on { background: #00ff00 !important; box-shadow: 0 0 10px #00ff00, inset 0 2px 4px rgba(0,0,0,0.5) !important; }
-
-#power-button {
-    position: absolute; right: 80px; top: 0;
-    width: 30px; height: 30px; border-radius: 50%; background: #444;
-    border: 2px solid #222; box-shadow: inset 0 2px 5px rgba(255,255,255,0.3), 0 4px 6px rgba(0,0,0,0.6);
-    cursor: pointer;
-}
-#power-button:active { box-shadow: inset 0 4px 8px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,0.6); transform: translateY(2px); }
-
-.brand-logo { font-family: 'Arial Black', sans-serif; font-size: 1.2rem; color: #333; text-shadow: 1px 1px 0 rgba(255,255,255,0.3); letter-spacing: 4px; }
-
-/* --- TELA, VIDRO ABAULADO E REFLEXO --- */
-#tv-screen {
-    position: relative; width: 100%; height: 100%;
-    background: #050505; 
-    border-radius: 100px / 75px; /* Curvatura realística de tubo de raios catódicos */
+/* --- AMBIENTE GERAL --- */
+#tv-room.wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #050505;
     overflow: hidden;
-    box-shadow: inset 0 0 30px rgba(0,0,0,1), 0 0 5px rgba(255,255,255,0.2);
 }
 
-#tv-glass {
-    position: absolute; top: 50px; left: 80px; right: 80px; bottom: 100px;
-    border-radius: 100px / 75px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 40%, rgba(0,0,0,0.4) 100%);
-    pointer-events: none; z-index: 9999;
-    box-shadow: inset 0 15px 40px rgba(255,255,255,0.1);
+/* --- A CAIXA DA TV --- */
+.container-tv {
+    position: relative;
+    width: 800px;  /* Tamanho base da TV na tela */
+    height: 600px;
+    transition: transform 1.5s ease-in-out;
 }
 
+/* --- A IMAGEM DA TV (MOLDURA) --- */
+#tv-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Garante que a imagem não distorça */
+    pointer-events: none; /* O clique passa direto pelo vidro */
+    z-index: 10;
+    transition: opacity 1.5s ease-in-out;
+}
+
+/* --- A TELA (ONDE O JOGO/ESTÁTICA RODA) --- */
+#tv-content-area {
+    position: absolute;
+    z-index: 1;
+    overflow: hidden;
+    background: #000;
+    
+    /* ⚠️ AJUSTE ESTES 4 VALORES PARA ENCAIXAR NO BURACO BRANCO DA SUA IMAGEM: */
+    top: 60px;       /* Distância do topo */
+    left: 48px;      /* Distância da esquerda */
+    width: 485px;    /* Largura da tela do tubo */
+    height: 380px;   /* Altura da tela do tubo */
+    
+    /* Curvatura leve para simular o vidro do tubo */
+    border-radius: 40% / 15%; 
+}
+
+/* --- CAMADAS DE VÍDEO --- */
 .screen-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
-/* --- ESTÁTICA COM IMAGEM REAL --- */
-#layer-static {
-    background: url('images/estatica.png') center/cover;
-    opacity: 0;
-}
+#layer-static { background: url('images/estatica.png') center/cover; opacity: 0; }
 @keyframes tremble {
-    0% { background-position: 0 0; opacity: 0.9; }
-    25% { background-position: -5px 10px; opacity: 1; }
-    50% { background-position: 10px -5px; opacity: 0.8; }
-    75% { background-position: -10px -10px; opacity: 1; }
-    100% { background-position: 5px 5px; opacity: 0.9; }
+    0% { background-position: 0 0; } 50% { background-position: 10px -5px; } 100% { background-position: -5px 5px; }
 }
-.static-active { opacity: 1 !important; animation: tremble 0.08s infinite; filter: contrast(1.5) brightness(0.8); }
+.static-active { opacity: 1 !important; animation: tremble 0.08s infinite; filter: contrast(1.5); }
 
-/* --- BARRAS DE COR --- */
-#layer-color-bars { background: url('images/tvcolorida.png') no-repeat center center/cover; }
-
-/* --- TELA AZUL VCR --- */
-#layer-blue { background-color: #0000aa; display: flex; padding: 40px; }
-.vcr-text { color: #00ff00; font-family: 'VT323', monospace; font-size: 3rem; text-shadow: 2px 2px 0px #000; animation: blinker 1s linear infinite; }
+#layer-color-bars { background: url('images/tvcolorida.png') no-repeat center/cover; }
+#layer-blue { background-color: #0000aa; display: flex; align-items: center; justify-content: center; }
+.vcr-text { color: #00ff00; font-family: 'VT323', monospace; font-size: 2.5rem; text-shadow: 2px 2px 0px #000; animation: blinker 1s linear infinite; }
 @keyframes blinker { 50% { opacity: 0; } }
 
-/* --- EFEITO DE ZOOM --- */
-.zoom-into-tv { transform: scale(3.5); opacity: 0; }
-/* --- EFEITO DE ZOOM PARA O JOGO --- */
-.zoom-into-tv {
-    transform: scale(2.5); 
-    opacity: 0; 
+/* --- CONTROLES DA TV --- */
+#power-button {
+    position: absolute;
+    z-index: 20; 
+    /* ⚠️ Ajuste para ficar em cima do botão grande de baixo na imagem da TV */
+    bottom: 125px; 
+    right: 120px;   
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: transparent; /* Deixe 'red' temporariamente para você ver onde ele está, depois volte para 'transparent' */
+    border: none;
+    cursor: pointer;
+}
+
+#power-led {
+    position: absolute;
+    z-index: 20;
+    bottom: 100px;
+    right: 138px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #333;
+}
+.led-on { background: #ff0000 !important; box-shadow: 0 0 10px #ff0000 !important; }
+
+/* --- EFEITO DE ZOOM E TRANSIÇÃO --- */
+.zoom-into-tv { transform: scale(2.2); } 
+.fade-out-tv { opacity: 0 !important; } 
+.expand-screen {
+    top: 0 !important; left: 0 !important;
+    width: 100vw !important; height: 100vh !important;
+    border-radius: 0 !important;
 }
