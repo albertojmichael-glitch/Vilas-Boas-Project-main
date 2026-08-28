@@ -613,3 +613,39 @@ input, textarea {
     display: none !important;
     opacity: 0 !important;
 }
+
+
+@media (max-width: 850px) {
+    .container-tv {
+        transform: scale(0.85);
+    }
+    
+    .zoom-into-tv { transform: scale(1.8); }
+}
+
+
+@media (max-width: 680px) {
+    .container-tv {
+        transform: scale(0.7);
+    }
+    .zoom-into-tv { transform: scale(1.5); }
+}
+
+
+@media (max-width: 480px) {
+    .container-tv {
+        transform: scale(0.48);
+    }
+    .zoom-into-tv { transform: scale(1.1); }
+    
+    
+    #settings-btn { right: 60px !important; }
+    #saves-btn { right: 110px !important; }
+}
+
+
+@media (max-width: 380px) {
+    .container-tv {
+        transform: scale(0.42);
+    }
+}

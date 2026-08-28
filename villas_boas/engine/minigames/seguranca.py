@@ -67,6 +67,7 @@ class MinigameSeguranca(BaseMinigame):
         self.ui.exibir("\nAção (ouvir | cameras | ver tubulacao | iluminar tubulacao | fechar porta | abrir porta | olhar vidro | ligar gerador | consertar [sistema] | esperar)")
 
     def processar_turno(self, acao, jogo):
+        digitar = jogo.ui_handler.animar
         ui = self.ui
         if acao in ["pular noite", "pular", "set time 06:00"] and getattr(jogo, 'god_mode', False):
             ui.exibir(f"{DOS_AMARELO}[GOD MODE] O tempo se contorce. O relógio salta para as 06:00.{RESET}")
