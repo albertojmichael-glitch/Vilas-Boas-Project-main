@@ -3,6 +3,24 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## (Atualização do Sistema) - Patch de Expansão, Estabilidade e Segurança
+
+* **Sequência de Boot em CRT:** Implementação de uma introdução interativa simulando o ligar de uma TV de tubo clássica.
+* **Camadas Visuais Dinâmicas:** Adição de estágios de transição reais incluindo Estática (com trepidação de imagem), Barras de Cor SMPTE e Tela Azul de VCR ("VIDEO 2 CONECTADO") antes de revelar o terminal.
+* **Design de Som Integrado:** Sincronização de eventos de áudio nativos pelo AudioContext do navegador, gerando ruído branco procedural e o clássico tom de 1kHz (Bipe) durante as barras de cor.
+* **Interação Física Simulada:** Botão de energia clicável sobreposto à imagem da TV com um indicador LED dinâmico (vermelho/verde) que reage à interação do jogador.
+* **Transição Cinematográfica:** Adição de um efeito de zoom-in CSS que mergulha o jogador da sala da TV diretamente para o terminal do jogo de forma contínua.
+
+* **Correção da Condição de Vitória (06:00):** Resolução de um erro fatal (UnboundLocalError: cannot access local variable 'digitar') no arquivo seguranca.py que causava o colapso do servidor ([ERRO INTERNO]) no momento de registrar o final da partida.
+
+* **Desbloqueio de AudioContext:** Correção do bloqueio padrão de navegadores modernos contra autoplay de áudio, vinculando a inicialização do motor de som diretamente ao primeiro clique (gesto) do usuário no botão da TV.
+
+* **Sincronização de Execução:** Remoção do auto-boot no carregamento da página (window.onload) para impedir que a engine do jogo rodasse e tocasse sons invisivelmente no background enquanto a TV ainda estava desligada.
+
+* **Atualização Crítica de Dependências:** Mitigação de múltiplas vulnerabilidades graves (CVEs) apontadas pelo pip-audit. Bump de versão forçado no requirements.txt para cryptography (>=49.0.0), gunicorn (>=22.0.0), flask-cors (>=6.0.0), setuptools (>=83.0.0) e certifi (>=2024.7.4).
+
+* **Ajuste de Content Security Policy (CSP):** Flexibilização segura do cabeçalho HTTP de resposta (script-src 'self' 'unsafe-inline') para permitir a execução dos gatilhos de clique na nova interface da TV sem bloquear os scripts do jogo.
+
 ## (Patch de Estabilidade e Balanceamento)
 
 ##  Engine e Testes Automatizados (Pytest)
