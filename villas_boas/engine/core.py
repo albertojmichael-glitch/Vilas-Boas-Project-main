@@ -431,7 +431,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                     if not jogador_correu:
                         processar_ia_inimigo(jogo) # A IA só se move se o jogador NÃO correu
                     else:
-                        ui.buffer.append("@@TYPE@@amarelo@@10@@Sua velocidade surpreende a criatura, que fica para trás tentando entender de onde veio o estrondo.")
+                        ui.buffer.append("@@TYPE@@amarelo@@10@@A criatura te perde de vista enquanto corre.")
 
                 else:
                     # Punição por spammar erros
