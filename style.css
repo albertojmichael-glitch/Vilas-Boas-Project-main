@@ -548,14 +548,14 @@ input, textarea {
     background: #000;
     
     /* VALORES AJUSTADOS PARA ENQUADRAR NA TV.PNG */
-    top: 74px;        /* Desceu um pouco para alinhar com o topo do vidro */
-    left: 50px;       /* Alinhado com a borda esquerda */
-    width: 542px;    /* Esticado para alcançar o painel de botões à direita */
-    height: 420px;    /* Altura exata do recorte */
+    top: 72px;        /* Nudged up slightly */
+    left: 60px;       /* Shifted right to align with the left bezel */
+    width: 535px;     /* Adjusted width */
+    height: 415px;    /* Adjusted height */
     
-    /* Curvatura para imitar o tubo da referência (image_976e63.jpg) */
-    border-radius: 90px / 75px;
-    border: 2px solid red; 
+    /* Curvatura refinada para o tubo */
+    border-radius: 95px / 75px; 
+    border: 2px solid red; /* Keep for testing, remove when perfect */
 }
 
 /* --- CAMADAS DE VÍDEO --- */
@@ -576,12 +576,12 @@ input, textarea {
     position: absolute;
     z-index: 20; 
     /* Enquadrando no botão redondo inferior do painel direito */
-    bottom: 120px; 
-    right: 88px;   
+    bottom: 105px;  /* Moved down */
+    right: 55px;    /* Moved right to align with the actual button */
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    background: transparent; 
+    background: rgba(0, 0, 255, 0.5); /* Semi-transparent blue to check placement */
     border: none;
     cursor: pointer;
 }
@@ -589,8 +589,8 @@ input, textarea {
 #power-led {
     position: absolute;
     z-index: 20;
-    bottom: 95px;
-    right: 104px;
+    bottom: 85px;   /* Moved down */
+    right: 71px;    /* Moved right to align with the light */
     width: 12px; 
     height: 12px; 
     border-radius: 50%;
