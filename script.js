@@ -577,7 +577,6 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
     const p = document.createElement('p');
     if (classeCor) p.className = classeCor;
     
-    
     const srSpan = document.createElement('span');
     srSpan.className = 'sr-only';
     
@@ -589,19 +588,15 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
     }
     if (classeCor === 'amarelo') a11yPrefix = "Atenção: ";
     
-    
     const textoLimpo = htmlString.replace(/<[^>]*>?/gm, '');
     srSpan.innerText = a11yPrefix + textoLimpo;
 
-    
     const visualSpan = document.createElement('span');
     visualSpan.setAttribute('aria-hidden', 'true');
 
-    
     p.appendChild(srSpan);
     p.appendChild(visualSpan);
     outputDiv.appendChild(p);
-    
     
     if (velocidade === 0) {
         visualSpan.innerHTML = htmlString;
@@ -610,38 +605,53 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
         return;
     }
     
-    
     let i = 0;
     let isTag = false;
     let currentHTML = "";
+    let ultimaVez = 0;
     
-    function digitar() {
-        if (i < htmlString.length) {
+    
+    function digitar(timestamp) {
+        if (i >= htmlString.length) {
+            aoTerminar(); 
+            return;
+        }
+
+        if (!ultimaVez) ultimaVez = timestamp;
+        const progresso = timestamp - ultimaVez;
+
+        
+        let isProcessingTag = (isTag || (i < htmlString.length && htmlString.charAt(i) === '<'));
+
+        if (isProcessingTag || progresso >= velocidade) {
             let char = htmlString.charAt(i);
             currentHTML += char;
-            
-            
             visualSpan.innerHTML = currentHTML;
             i++;
-            
             terminal.scrollTop = terminal.scrollHeight;
             
             if (char === '<') isTag = true;
             if (char === '>') isTag = false;
             
             if (isTag || (i < htmlString.length && htmlString.charAt(i) === '<')) {
-                digitar(); 
+                
+                digitar(timestamp);
             } else {
                 if (char !== ' ' && char !== '\n') {
                     tocarSomDigito(); 
                 }
-                setTimeout(digitar, velocidade);
+                ultimaVez = timestamp;
+                
+                requestAnimationFrame(digitar);
             }
         } else {
-            aoTerminar(); 
+            
+            requestAnimationFrame(digitar);
         }
     }
-    digitar();
+    
+    
+    requestAnimationFrame(digitar);
 }
 
 
@@ -844,7 +854,24 @@ function ligarTV() {
     }, 6000);
 }
 
+const output = document.getElementById("output");
+const LIMITE_LINHAS = 50; 
+
+function adicionarLinhaTerminal(htmlContent) {
+    
+    output.insertAdjacentHTML('beforeend', `<div class="linha">${htmlContent}</div>`);
+    
+    
+    while (output.childElementCount > LIMITE_LINHAS) {
+        output.removeChild(output.firstChild);
+    }
+    
+
+    output.scrollTop = output.scrollHeight;
+}
+
 function fazerNada() {
     
 }
+
 
