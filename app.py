@@ -287,7 +287,7 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
         })
         
     
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Erro na telemetria: Falha de sanitização. Detalhes: {e}")
 
 

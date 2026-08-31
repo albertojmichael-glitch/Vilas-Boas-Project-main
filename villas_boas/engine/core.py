@@ -472,7 +472,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 return
             
             if jogo.sala_atual == "morte":
-                
+
                 try: 
                     from app import registrar_telemetria
 
@@ -739,7 +739,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 from app import registrar_telemetria
                 registrar_telemetria("MORTE", jogo.estado_atual, jogo.dificuldade_escolhida, "Falhou em um Minigame")
             
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Falha de telemetria no minigame: {e}")
 
             dar_tela_de_morte(jogo)
