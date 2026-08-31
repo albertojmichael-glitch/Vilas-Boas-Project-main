@@ -11,6 +11,13 @@ class MinigameSeguranca(BaseMinigame):
         self.ui = jogo.ui_handler 
         self.turno = 0
         self.energia = 9999 if getattr(jogo, 'god_mode', False) else random.randint(getattr(jogo, 'energia_min_noite', 70), getattr(jogo, 'energia_max_noite', 100)) 
+
+        bonus_luz = max(0, getattr(jogo, 'turnos_luz', 0) - 3) * 5
+        bonus_bateria = getattr(jogo, 'inventario', []).count("bateria nova") * 10
+        self.energia += bonus_luz + bonus_bateria
+        if bonus_luz > 0 or bonus_bateria > 0:
+            self.ui.buffer.append(f"@@TYPE@@verde@@15@@[SISTEMA] Baterias extras detectadas no inventário. Energia redirecionada: +{bonus_luz + bonus_bateria}%")
+
         self.porta_fechada = False
         self.erro_camera = False
         self.erro_relogio = False
@@ -213,7 +220,7 @@ class MinigameSeguranca(BaseMinigame):
                 ui.exibir("------------------------")
                 
                 if random.randint(1, 100) == 1:
-                    ui.exibir(f"\n{DOS_VERMELHO}⊠ [ANOMALIA DETECTADA]: O feed pisca. Em uma das câmeras escuras, o rosto quebrado de Caroline encara diretamente a lente... e ela está sorrindo para você.{RESET}")
+                    ui.exibir(f"\n{DOS_VERMELHO}⊠ [ANOMALIA DETECTADA]: O feed pisca. Em uma das câmeras escuras, o rosto quebrado de Caroline encara diretamente a lente... e ela está... sorrindo?{RESET}")
 
         elif acao == "ver tubulacao":
             if self.apagao > 0 or self.erro_deteccao: ui.exibir("◯ [SENSORES OFFLINE]")
@@ -316,18 +323,22 @@ class MinigameSeguranca(BaseMinigame):
                     return "morte"
             
             if self.rick_pos == 3 and not self.porta_fechada and random.random() < 0.25:
+
                 self.rick_pos = 1 
                 ui.exibir(" Ouve passos pesados a se afastar da porta")
             else:
+
                 furia_atual = self.furia + (self.turno // 6) 
                 if self.rick_pos < 3: 
                     self.rick_pos = min(3, self.rick_pos + random.choice([0, 1, 1, 2]) * furia_atual)
                 elif self.rick_pos == 3: 
-                    self.rick_pos += random.choice([0, 1])
+                    self.rick_pos += 1 if random.random() < 0.8 else 0
 
             if self.erro_deteccao:
+
                 passos_jon = random.choice([1, 2, 3])
                 self.jon_pos = min(5, self.jon_pos + passos_jon)
+
             else:
                 self.jon_pos = min(5, self.jon_pos + random.choice([0, 1, 2]))
                 
@@ -335,6 +346,7 @@ class MinigameSeguranca(BaseMinigame):
             
             if self.turno >= 12 and (self.turno >= 20 or random.randint(1, 100) > 70): self.indio_janela = True
             else: self.indio_janela = False
+            
             if random.randint(1, 100) > 80 and not getattr(jogo, 'alberto_desativado', False): 
                 self.alberto_troll = True
 
