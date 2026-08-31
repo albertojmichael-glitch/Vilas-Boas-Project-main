@@ -415,6 +415,7 @@ def gerar_resposta_json(jogo):
             "estado": {
                 "hp": hp,
                 "luz": luz,
+                "som": som,
                 "inventario": inv,
                 "sala": sala,
                 "saidas": saidas,

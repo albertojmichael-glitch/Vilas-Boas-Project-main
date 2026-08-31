@@ -36,7 +36,7 @@ def calcular_caminho_bfs(mapa, inicio, destino):
     if inicio not in mapa or destino not in mapa:
         return []
     fila = [[inicio]]
-    visitados = set([inicio])
+    visitados = {inicio}
     while fila:
         caminho = fila.pop(0)
         sala = caminho[-1]
@@ -412,7 +412,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                     else:
                         ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você foge correndo! Você deixa tudo para trás num piscar de olhos")
                 
-                elif comando.startswith("ir ") or comando.startswith("abrir "):
+                elif comando.startswith(("ir ", "abrir ")):
                     jogo.nivel_barulho = min(100, jogo.nivel_barulho + 15)
                 elif comando in ["olhar", "inventario", "esperar"]:
                     jogo.nivel_barulho = max(0, jogo.nivel_barulho - 10)
