@@ -59,7 +59,7 @@ class MinigameMinotauro(BaseMinigame):
         self.tesoura_chao = True
         self.fios_cortados = False
         self.chance_sprint = getattr(jogo, 'chance_sprint_minotauro', 15)
-        self.bateria = 9999 if getattr(jogo, 'god_mode', False) else 15
+        self.bateria = 9999 if getattr(jogo, 'god_mode', False) else 18
 
         self.ui = getattr(jogo, 'ui_handler', getattr(jogo, 'ui', None))
         
@@ -111,15 +111,24 @@ class MinigameMinotauro(BaseMinigame):
             self.ui.exibir(f"\n[{opcoes}]")
 
     def mover_minotauro(self):
+        
         if random.random() < 0.60:
-            if self.px > self.mx: self.mx += 1
-            elif self.px < self.mx: self.mx -= 1
-            elif self.py > self.my: self.my += 1
-            elif self.py < self.my: self.my -= 1
+        
+            if random.random() < 0.5:
+                
+                if self.px > self.mx: self.mx += 1
+                elif self.px < self.mx: self.mx -= 1
+            else:
+                
+                if self.py > self.my: self.my += 1
+                elif self.py < self.my: self.my -= 1
         else:
-            self.mx += random.choice([-1, 0, 1])
-            self.my += random.choice([-1, 0, 1])
             
+            direcao = random.choice([(-1, 0), (1, 0), (0, -1), (0, 1)])
+            self.mx += direcao[0]
+            self.my += direcao[1]
+            
+        
         self.mx = max(-1, min(1, self.mx)) 
         self.my = max(0, min(3, self.my))
 
@@ -249,7 +258,6 @@ class MinigameMinotauro(BaseMinigame):
                     ui.exibir("@@JUMPSCARE@@")
                     ui.pausar(1.5)
                     ui.exibir("\n No vazio, você morre sozinho, sem poder salvar ninguém. ")
-                    ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
                     return "morte"
 
         if turno_gasto:
@@ -259,7 +267,6 @@ class MinigameMinotauro(BaseMinigame):
                     ui.exibir("\n A sua lanterna apaga, você entra em desespero e bate na bateria fazendo barulho.")
                     ui.pausar(2)
                     ui.exibir("\n Você sente uma mão atravessando seu estômago por trás, não há nada a se fazer.")
-                    ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
                     return "morte"
                 
             mx_old, my_old = self.mx, self.my
@@ -280,7 +287,6 @@ class MinigameMinotauro(BaseMinigame):
                     else:
                         ui.exibir(f"\n{DOS_VERMELHO} ☠ O Minotauro te encontrou no escuro. Mãos frias de metal te rasgam por inteiro ☠{RESET}")
                         ui.exibir("@@JUMPSCARE@@")
-                        ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
                         return "morte"
                 
         return "continuar"
