@@ -191,9 +191,7 @@ ARTE_DISQUETE = r"""
 '------'
 """
 
-# ==========================================
-# 2. CARREGAMENTO DOS DADOS EXTERNOS (JSON)
-# ==========================================
+
 BASE_DIR = Path(__file__).parent
 JSON_PATH = BASE_DIR / "data" / "game_data.json"
 
@@ -207,17 +205,14 @@ except json.JSONDecodeError as e:
     print(f"❌ ERRO FATAL: JSON malformado. Verifique a sintaxe: {e}")
     _dados = {"mapa_original": {}, "descricoes_itens": {}}
 
-# ==========================================
-# 3. EXPORTAÇÃO PARA A ENGINE
-# ==========================================
-# Exporta as variáveis como se fossem locais para o resto do código funcionar sem alterações
+
 MAPA_ORIGINAL = _dados.get("mapa_original", {})
 descricoes_itens = _dados.get("descricoes_itens", {})
 
-# Busca as constantes
+
 _constantes = _dados.get("constantes", {})
 
-# Prioridade: 1º Variável de Ambiente (.env) -> 2º JSON -> 3º Valor Fixo de Fallback
+
 MAX_INVENTARIO = int(os.environ.get("MAX_INVENTARIO", _constantes.get("max_inventario", 3)))
 COFRE_SENHA = str(os.environ.get("COFRE_SENHA", _constantes.get("cofre_senha", "1994")))
 

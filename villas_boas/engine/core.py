@@ -246,13 +246,13 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.exibir("")
             ui.exibir(f"{DOS_VERDE}NOTURNO  EXE        18.204  02-11-1982  6:00a{RESET}")
             ui.exibir("")
-            ui.exibir(f"{DOS_VERDE}DESKTOP  &lt;DIR&gt;              24-07-2007  4:00a{RESET}")
+            ui.exibir(f"{DOS_VERDE}DESKTOP  DIR                24-07-2007  4:00a{RESET}")
             ui.exibir("")
-            ui.exibir(f"{DOS_VERDE}SAVES    &lt;DIR&gt;              23-07-2008  4:00a{RESET}")
+            ui.exibir(f"{DOS_VERDE}SAVES    DIR                23-03-2008  4:00a{RESET}")
             ui.exibir("")
-            ui.exibir(f"{DOS_VERDE}PICTURE  &lt;DIR&gt;              05-11-1994  4:00a{RESET}")
+            ui.exibir(f"{DOS_VERDE}PICTURE  DIR                05-11-1994  4:00a{RESET}")
             ui.exibir("")
-            ui.exibir(f"{DOS_VERDE}VALID    &lt;DIR&gt;              24-07-2007  4:00a{RESET}")
+            ui.exibir(f"{DOS_VERDE}VALID    DIR                24-07-2007  4:00a{RESET}")
             ui.exibir("")
             ui.exibir(f"{DOS_AMARELO}         3 file(s)       68.097 bytes{RESET}")
             ui.exibir(f"{DOS_AMARELO}         4 dir(s)       655.360 bytes free{RESET}")
@@ -302,7 +302,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
 
             jogo.estado_atual = "JOGO"
             imprimir_tutorial(ui, jogo=jogo)
-            ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}", 0.04, jogo=jogo)
+            ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna dá três piscadas fracas...{RESET}", 0.04, jogo=jogo)
             ui.animar(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}", 0.04, jogo=jogo)
             imprimir_contexto_sala(jogo)
             
@@ -364,7 +364,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 ui.limpar()
                 ui.animar(f"{DOS_BRANCO}{ARTE_ROBO}{RESET}", 0.015, jogo=jogo)
                 ui.animar("--- CONSERTOS & SORRISOS ---", 0.03, DOS_VERDE, jogo)
-                ui.exibir("Bem-vindo, Mecânico! Vamos montar nosso novo Festeiro!")
+                ui.exibir("Bem-vindo, novo Mecânico. Vamos montar nosso novo Festeiro.")
                 ui.exibir(f"\n{DOS_AMARELO}[ FASE 1: SELEÇÃO DE PEÇAS ]{RESET}")
                 ui.exibir("Escolha a Cabeça (1- Urso | 2- Coelho): ")
 
@@ -383,16 +383,16 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 atualizar_eventos_de_tempo(jogo)
                 jogo.erros_consecutivos = 0
             else:
-                # FLAG DE VELOCIDADE: Começa falsa
+                
                 jogador_correu = False
 
-                # 1. Geração de Barulho e Interceptação do "Correr"
+                
                 if comando.startswith("correr "):
                     direcao = comando.replace("correr ", "").strip()
                     comando_bruto = f"ir {direcao}"
                     comando = comando_bruto
                     
-                    # O jogador ativou a explosão de velocidade!
+                    
                     jogador_correu = True
                     jogo.nivel_barulho = 100
                     jogo.ai_alvo = jogo.sala_atual 
@@ -408,9 +408,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                             sala_atual["itens"] = []
                         sala_atual["itens"].append(item_perdido)
                         
-                        ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você corre desesperadamente! No pânico, você tropeça e deixa cair seu(sua) {item_perdido.upper()}!")
+                        ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você corre desesperado. No pânico, você tropeça e deixa cair seu(sua) {item_perdido.upper()}!")
                     else:
-                        ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você foge correndo! Você deixa tudo para trás num piscar de olhos!")
+                        ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você foge correndo! Você deixa tudo para trás num piscar de olhos")
                 
                 elif comando.startswith("ir ") or comando.startswith("abrir "):
                     jogo.nivel_barulho = min(100, jogo.nivel_barulho + 15)
@@ -419,22 +419,22 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 else:
                     jogo.nivel_barulho = min(100, jogo.nivel_barulho + 5)
                     
-                # 2. Processa a ação do jogador (ele se move para a nova sala aqui)
+                
                 gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
                 
-                # 3. Atualiza os eventos
+                
                 if gastou_turno:
                     atualizar_eventos_de_tempo(jogo)
                     jogo.erros_consecutivos = 0
                     
-                    # A MÁGICA ACONTECE AQUI:
+                    
                     if not jogador_correu:
-                        processar_ia_inimigo(jogo) # A IA só se move se o jogador NÃO correu
+                        processar_ia_inimigo(jogo) 
                     else:
-                        ui.buffer.append("@@TYPE@@amarelo@@10@@A criatura te perde de vista enquanto corre.")
+                        ui.buffer.append("@@TYPE@@amarelo@@10@@A o animatronico te perde de vista enquanto corre.")
 
                 else:
-                    # Punição por spammar erros
+                    
                     jogo.erros_consecutivos += 1
                     if jogo.erros_consecutivos >= 3:
                         jogo.nivel_barulho = min(100, jogo.nivel_barulho + 30)
@@ -544,9 +544,6 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "JOGO"
             imprimir_contexto_sala(jogo)
 
-    # ==========================================
-    # BLOCO: MINIGAME DO PORCO JON
-    # ==========================================
     elif jogo.estado_atual == "MINIGAME_JON":
         passo = getattr(jogo, 'jon_passos_dados', 0)
         if comando in ["f", "e", "d", "frente", "esquerda", "direita"]:
@@ -688,7 +685,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                         ui.exibir(f"{DOS_AMARELO}⛋ Mochila cheia! A bateria nova caiu no chão.{RESET}")
                         sala["itens"].append("bateria nova")
             else:
-                ui.animar("Quem é você? *A tela desliga* Você perdeu a absolvição.", 0.05, DOS_VERMELHO, jogo)
+                ui.animar("Quem é você? *A tela desliga* Você não merece nossa ajuda.", 0.05, DOS_VERMELHO, jogo)
                 ui.exibir("@@JUMPSCARE@@")
                 
             jogo.turnos_luz = max(0, jogo.turnos_luz - 1)

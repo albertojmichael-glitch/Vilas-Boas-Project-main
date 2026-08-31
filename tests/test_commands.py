@@ -5,7 +5,7 @@ from data import MAPA_ORIGINAL
 from villas_boas.actions.movement import cmd_ir
 from villas_boas.actions.inventory import cmd_pegar, cmd_usar
 
-# Mock da interface do usuário para não poluir o terminal durante os testes
+
 class DummyUI:
     def exibir(self, texto): pass
     def animar(self, texto, tempo=0, cor="", jogo=None): pass
@@ -36,9 +36,9 @@ def test_cmd_ir_invalido(jogo_mock, mapa_mock):
     jogo_mock.sala_atual = "entrada"
     sucesso = cmd_ir("ir norte_inventado", jogo_mock, mapa_mock)
     
-    # O comando retorna False quando a direção não existe
+    
     assert sucesso is False
-    assert jogo_mock.sala_atual == "entrada" # Não deve ter saído do lugar
+    assert jogo_mock.sala_atual == "entrada" 
 
 def test_cmd_pegar_sucesso(jogo_mock, mapa_mock):
     """Testa se o jogador consegue pegar um item do chão."""
@@ -59,5 +59,5 @@ def test_cmd_usar_bateria(jogo_mock, mapa_mock):
     sucesso = cmd_usar("usar bateria", jogo_mock, mapa_mock)
     
     assert sucesso is True
-    assert jogo_mock.turnos_luz == 12 # A bateria recarrega para 12 turnos
-    assert "bateria nova" not in jogo_mock.inventario # A bateria deve ser consumida
+    assert jogo_mock.turnos_luz == 12 
+    assert "bateria nova" not in jogo_mock.inventario 

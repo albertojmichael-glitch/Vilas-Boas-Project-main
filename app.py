@@ -54,15 +54,15 @@ if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
     sys.exit(1) 
 
 
-# Inicializa o Flask (O 'app' nasce aqui!)
+
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 
-# Aplica as chaves
+
 app.secret_key = SECRET_KEY or "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
-app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024 # <-- Fica AQUI!
+app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024 
 
-# Motor de criptografia (AES-256) PARA SAVES
+
 _key_hash = hashlib.sha256((app.secret_key).encode()).digest()
 CIPHER_SUITE = Fernet(base64.urlsafe_b64encode(_key_hash))
 

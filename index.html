@@ -11,23 +11,23 @@
     <div id="tv-room" class="wrapper">
     <div id="tv-frame" class="container-tv">
         
-        <!-- CAMADA 1: A TELA (Fica no fundo) -->
+        
         <div id="tv-content-area">
-            <!-- Estática -->
+            
             <div id="layer-static" class="screen-layer"></div>
-            <!-- Barras de Cor -->
+            
             <div id="layer-color-bars" class="screen-layer hidden"></div>
-            <!-- Tela Azul -->
+            
             <div id="layer-blue" class="screen-layer hidden">
                 <div class="vcr-text">VIDEO 2<br>CONECTADO</div>
             </div>
-            <!-- O Jogo Real -->
+            
             <div id="layer-game" class="screen-layer hidden">
                 
-                <!-- COLOQUE A SUA DIV .container AQUI DENTRO -->
+                
                 <div class="container">
 
-                    <!-- TODO O CONTEÚDO DO SEU JOGO CONTINUA AQUI DENTRO INTACTO -->
+                    
                     <main class="terminal-section" id="terminal" role="main" aria-label="Terminal do Jogo">
                         <div id="output" role="log" aria-live="polite" aria-label="Saída do Jogo"></div>
                         
@@ -70,32 +70,32 @@
                     </aside>
                 </div>
 
-                    <!-- Botões existentes[cite: 15] -->
+                    
                     <button id="help-btn" class="help-float" onclick="openHelp()" aria-label="Abrir menu de ajuda">?</button>
                     <button id="settings-btn" class="help-float" style="right: 70px;" onclick="openSettings()" aria-label="Abrir configurações">⚙</button>
                     
-                    <!-- NOVO: Botão de Saves -->
+                    
                     <button id="saves-btn" class="help-float" style="right: 130px;" onclick="openSaves()" aria-label="Gerenciar Saves">💾</button>
 
-            <!-- Modal de Configurações (Faltando) -->
+            
                 <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true">
                     <h2>[ CONFIGURAÇÕES ]</h2>
                     
                     <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
                         
-                        <!-- Velocidade do Texto -->
+                        
                         <div>
                             <label style="color: #fff;">Velocidade do Texto: <span id="speed-val-display" class="amarelo">Atual (1x)</span></label>
                             <input type="range" id="speed-slider" min="0" max="2" step="0.5" value="1" style="width: 100%; margin-top: 5px;">
                         </div>
 
-                        <!-- Efeito CRT -->
+                        
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <input type="checkbox" id="crt-checkbox" checked style="width: 20px; height: 20px;">
                             <label for="crt-checkbox" style="color: #fff;">Ativar Efeito CRT (Linhas de Monitor Antigo)</label>
                         </div>
 
-                        <!-- Telemetria (Movida para cá) -->
+                        
                         <div style="display: flex; align-items: flex-start; gap: 10px;">
                             <input type="checkbox" id="telemetry-checkbox" checked style="width: 20px; height: 20px; margin-top: 2px;">
                             <label for="telemetry-checkbox" style="color: #fff;">
@@ -108,19 +108,19 @@
                     <button class="close-btn" onclick="closeSettings()" style="margin-top: 25px;">FECHAR (ESC)</button>
                 </div>
 
-                <!-- NOVO: Modal de Gerenciamento de Saves -->
+                
                 <div id="saves-modal" class="modal hidden" role="dialog" aria-modal="true">
                     <h2>[ GERENCIADOR DE SAVES ]</h2>
                     
                     <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
-                        <!-- Exportar (Download) -->
+                        
                         <button onclick="exportarSave()" style="padding: 10px; background: #222; color: #4aff4a; border: 1px solid #4aff4a; cursor: pointer; font-family: monospace;">⬇ Exportar Save Atual (JSON)</button>
                         
-                        <!-- Importar (Upload) -->
+                        
                         <button onclick="document.getElementById('import-file').click()" style="padding: 10px; background: #222; color: #ffda33; border: 1px solid #ffda33; cursor: pointer; font-family: monospace;">⬆ Importar Save (JSON)</button>
                         <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importarSave(event)">
                         
-                        <!-- Compartilhar (Link TTL) -->
+                        
                         <button onclick="gerarLinkCompartilhamentoUI()" style="padding: 10px; background: #222; color: #00ffff; border: 1px solid #00ffff; cursor: pointer; font-family: monospace;">🔗 Gerar Link de Compartilhamento</button>
                         
                         <div id="share-link-container" class="hidden" style="margin-top: 10px; background: #111; padding: 10px; border: 1px dashed #00ffff;">
