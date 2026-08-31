@@ -57,7 +57,6 @@ if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 
-
 app.secret_key = SECRET_KEY or "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024 
@@ -287,7 +286,8 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
             "timestamp": time.time(),
         })
         
-    except Exception as e:  # noqa: BLE001
+    
+    except Exception as e:
         logger.error(f"Erro na telemetria: Falha de sanitização. Detalhes: {e}")
 
 

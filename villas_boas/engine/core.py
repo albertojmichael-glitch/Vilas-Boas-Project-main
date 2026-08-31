@@ -6,6 +6,9 @@ import logging
 from villas_boas.actions import processar_comando
 from villas_boas.actions.parser import normalizar
 
+from villas_boas.engine.minigames.seguranca import MinigameSeguranca
+from villas_boas.engine.minigames.minotauro import MinigameMinotauro
+
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from villas_boas.utils import extrair_argumentos, atualizar_eventos_de_tempo
 
@@ -25,9 +28,6 @@ from views import (
     rodar_final
 )
 
-
-from villas_boas.engine.minigames.seguranca import MinigameSeguranca
-from villas_boas.engine.minigames.minotauro import MinigameMinotauro
 
 logger = logging.getLogger(__name__)
 
@@ -472,11 +472,16 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 return
             
             if jogo.sala_atual == "morte":
+                
                 try: 
                     from app import registrar_telemetria
+
                     registrar_telemetria("MORTE", jogo.sala_atual, jogo.dificuldade_escolhida, "Morte no Mapa")
+
                 except (ImportError, AttributeError) as e:
+
                     logger.warning(f"Falha ao registrar telemetria de morte: {e}")
+
                 dar_tela_de_morte(jogo)
 
 
@@ -733,10 +738,10 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             try: 
                 from app import registrar_telemetria
                 registrar_telemetria("MORTE", jogo.estado_atual, jogo.dificuldade_escolhida, "Falhou em um Minigame")
-
-            except Exception as e:  # noqa: BLE001
+            
+            except Exception as e:
                 logger.warning(f"Falha de telemetria no minigame: {e}")
-                
+
             dar_tela_de_morte(jogo)
 
 
