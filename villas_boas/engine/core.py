@@ -225,7 +225,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.pausar(1)
             ui.exibir(f"{DOS_VERMELHO}Setores defeituosos encontrados em A:\\VALID\\ROGERIO.DAT{RESET}")
             ui.exibir(f"{DOS_VERMELHO}Erro ao ler registro 44: 'Eu não consigo dormir, ela assombra meus pensamentos.'{RESET}")
-            ui.exibir(f"{DOS_AMARELO}O Sistema não pôde reparar os dados corrompidos da sua mente.{RESET}")
+            ui.exibir(f"{DOS_AMARELO}O Sistema não pôde reparar os dados corrompidos.{RESET}")
 
         
         elif comando == "exit":
@@ -331,10 +331,14 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.minigame_atual.imprimir_status()
 
         elif (comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"] or jogo.sala_atual == "01") and not getattr(jogo, 'noite_vencida', False) and comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"]:
-            jogo.sala_atual = "01"
-            jogo.minigame_atual = MinigameSeguranca(jogo)
-            jogo.estado_atual = "MINIGAME_SEGURANCA"
-            jogo.minigame_atual.imprimir_status()
+
+            if "cartao de seguranca" not in jogo.inventario and not getattr(jogo, 'god_mode', False):
+                ui.exibir(f"{DOS_VERMELHO}os monitores e o computador estão bloqueados. O sistema exige a inserção de um 'Cartão de Segurança nivel IV'.{RESET}")
+            else:
+                jogo.sala_atual = "01"
+                jogo.minigame_atual = MinigameSeguranca(jogo)
+                jogo.estado_atual = "MINIGAME_SEGURANCA"
+                jogo.minigame_atual.imprimir_status()
 
         elif comando == "abrir cofre" and jogo.sala_atual == "01":
             jogo.estado_atual = "MINIGAME_COFRE"
@@ -369,13 +373,16 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 ui.exibir("Escolha a Cabeça (1- Urso | 2- Coelho): ")
 
         elif (comando == "jogar adivinha" or comando == "jogar julgamento") and jogo.sala_atual == "sala de fliperamas":
-            jogo.estado_atual = "MINIGAME_JULGAMENTO_Q1"
-            jogo.web_julgamento = {"pontos": 0, "vitimas": ["angela", "joao", "renato"]}
-            ui.limpar()
-            ui.animar(f"{DOS_BRANCO}{ARTE_PIANO}{RESET}", 0.015, jogo=jogo)
-            ui.animar("--- O JULGAMENTO DO PIANISTA ---", 0.03, DOS_VERDE, jogo)
-            ui.exibir(f"{DOS_BRANCO}O animatrônico desperta. Ele detém todas as respostas.{RESET}")
-            ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 1: Em que ano a nossa música parou para sempre?{RESET}")
+            if "partitura rasgada" not in jogo.inventario:
+                ui.exibir(f"{DOS_AMARELO}O animatronico está mudo, parece aguardar algo... talvez um item.")
+            else:
+                jogo.estado_atual = "MINIGAME_JULGAMENTO_Q1"
+                jogo.web_julgamento = {"pontos": 0, "vitimas": ["angela", "joao", "renato"]}
+                ui.limpar()
+                ui.animar(f"{DOS_BRANCO}{ARTE_PIANO}{RESET}", 0.015, jogo=jogo)
+                ui.animar("--- O JULGAMENTO DO PIANISTA ---", 0.03, DOS_VERDE, jogo)
+                ui.exibir(f"{DOS_BRANCO}O animatrônico desperta. Ele detém todas as respostas.{RESET}")
+                ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 1: Em que ano a nossa música parou para sempre?{RESET}")
 
         else:
             gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
@@ -398,7 +405,6 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                     jogo.ai_alvo = jogo.sala_atual 
                     jogo.turnos_enjoado = 2 
                     
-                    import random
                     if jogo.inventario and len(jogo.inventario) > 0 and random.random() <= 0.25:
                         item_perdido = random.choice(jogo.inventario)
                         jogo.inventario.remove(item_perdido)
@@ -559,6 +565,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 if jogo.jon_passos_dados == 4:
                     ui.exibir(f"\n{DOS_VERDE}Jon encontrou a 'comida'. A tela pinga um pixel vermelho.{RESET}")
                     ui.exibir(f"{DOS_VERMELHO}MENSAGEM: 'Eles ainda estão aqui.'{RESET}")
+                    jogo.inventario.append("moeda velha")
+                    ui.exibir(f"{DOS_AMARELO}A maquina cospe uma ficha velha, de 1982, você guarda na sua bolsa.")
+
                     jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
                     jogo.estado_atual = "JOGO"
                     imprimir_contexto_sala(jogo)
@@ -566,7 +575,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                     dar_dica_jon(jogo.jon_caminho_certo[jogo.jon_passos_dados], ui)
                     ui.exibir(f"Passo {jogo.jon_passos_dados + 1}/4 - Direção (F/E/D): ")
             else:
-                ui.exibir(f"\n{DOS_VERMELHO}Jon caiu num triturador ativo! leva um choque brutal!{RESET}")
+                ui.exibir(f"\n{DOS_VERMELHO}Jon caiu num triturador ativo, você leva um choque!{RESET}")
                 jogo.hp -= 1
                 jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
                 if jogo.hp <= 0: 
@@ -605,9 +614,12 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         if "chave da cozinha" not in jogo.inventario and "chave da cozinha" not in sala["itens"]:
             if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                 jogo.inventario.append("chave da cozinha")
-                ui.exibir(f"{DOS_VERDE}⛋ Você obteve: CHAVE DA COZINHA!{RESET}")
+                ui.exibir(f"{DOS_VERDE}⛋ Você obteve: CHAVE DA COZINHA{RESET}")
+                jogo.inventario.append("partitura rasgada")
+                ui.exibir(f"{DOS_VERDE}⛋ Você obteve: Partitura Rasgada.")
             else:
                 sala["itens"].append("chave da cozinha")
+                sala["itens"].append("partitura rasgada")
 
         if item_secreto:
             if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
@@ -680,8 +692,11 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 jogo.web_julgamento["pontos"] += 1
             if jogo.web_julgamento["pontos"] == 5:
                 ui.animar("Obrigado por voltar pela gente, Rogério...", 0.08, DOS_VERDE, jogo)
+                ui.exibir(f"{DOS_VERDE}⛋ Um compartimento do piano se abre. Você obteve o CARTÃO DE SEGURANÇA{RESET}")
+                jogo.inventario.append("cartao de seguranca")
                 sala = jogo.mapa[jogo.sala_atual]
                 sala.setdefault("itens", [])
+
                 if "bateria nova" not in jogo.inventario and "bateria nova" not in sala["itens"]:
                     if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                         jogo.inventario.append("bateria nova")

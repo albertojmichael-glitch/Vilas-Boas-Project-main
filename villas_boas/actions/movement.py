@@ -25,7 +25,7 @@ def cmd_ir(comando, jogo, mapa):
 
     if jogo.sala_atual == "03" and direcao == "frente":
         ui.exibir(f"{DOS_AMARELO}Você toma distância e dá um chute violento na porta emperrada!{RESET}")
-        ui.exibir(f"{DOS_VERDE}CRASH! A madeira velha cede e a porta escancara.{RESET}")
+        ui.exibir(f"{DOS_VERDE}A madeira velha cede e a porta escancara.{RESET}")
         mapa["corredor"]["03"] = "sala do gerador"
         jogo.sala_atual = "sala do gerador"
         ui.pausar(2)
@@ -75,18 +75,28 @@ def cmd_ir(comando, jogo, mapa):
         jogo.sala_atual = destino
 
         
+        
         if EVENTOS_ALEATORIOS and random.random() < 0.25:
             evento = random.choice(EVENTOS_ALEATORIOS)
+            item_drop = evento.get("item_drop")
+            
+            
+            if item_drop == "bateria nova" and getattr(jogo, 'bateria_ajuda_gerada', False):
+                return True
+                
             ui.pausar(0.5)
             ui.exibir(f"\n{DOS_AMARELO}⚠ {evento['mensagem']}{RESET}")
             
-            
-            item_drop = evento.get("item_drop")
             if item_drop and item_drop not in jogo.inventario:
                 sala_dic = mapa[jogo.sala_atual]
                 sala_dic.setdefault("itens", [])
                 if item_drop not in sala_dic["itens"]:
                     sala_dic["itens"].append(item_drop)
+                    
+                    
+                    if item_drop == "bateria nova":
+                        jogo.bateria_ajuda_gerada = True
+            # ------------------------------------
         
         
         ui.pausar(0.5)

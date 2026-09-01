@@ -201,7 +201,7 @@ def cmd_usar(comando, jogo, mapa):
                 f"{DOS_AMARELO}Você usa a tábua como alavanca e força a porta emperrada...{RESET}"
             )
             ui.exibir(
-                f"{DOS_VERDE}CRASH! A porta cede e abre! A tábua quebra no processo.{RESET}"
+                f"{DOS_VERDE}CRASH! A porta cede e abre. A tábua quebra no processo.{RESET}"
             )
             jogo.inventario.remove(item)
             mapa["corredor"]["03"] = "sala do gerador"
@@ -233,7 +233,7 @@ def cmd_combinar(comando, jogo, mapa):
         item2 == "tesoura quebrada" and item1 == "fita isolante"
     ):
         ui.exibir(
-            f"{DOS_VERDE}Você enrola a fita isolante na tesoura quebrada. Ela está consertada!{RESET}"
+            f"{DOS_VERDE}Você enrola a fita isolante na tesoura quebrada. Ela está consertada.{RESET}"
         )
         jogo.inventario.remove("tesoura quebrada")
         jogo.inventario.append("tesoura")

@@ -158,7 +158,7 @@ def falar_pianista(acertou, ui, jogo):
     if acertou:
         ui.exibir(f"{DOS_BRANCO}A máquina toca uma nota suave e agradável.{RESET}")
         ui.animar(
-            f'"{random.choice(["Você lembra bem,", "O ritmo continua. Você ainda tem ouvido para isso.", "Correto. Nós sempre soubemos que você voltaria.", "Sim... exatamente como aconteceu."])}"',
+            f'"{random.choice(["Você lembra bem,", "Você ainda tem ouvido para isso.", "Correto. Nós sempre soubemos que você voltaria.", "Sim... como aconteceu."])}"',
             0.04,
             DOS_AMARELO,
             jogo,
@@ -166,7 +166,7 @@ def falar_pianista(acertou, ui, jogo):
     else:
         ui.exibir(f"{DOS_VERMELHO}Acorde dissonante.{RESET}")
         ui.animar(
-            f'"{random.choice(["Errado. As teclas pretas não perdoam mentiras.", "Você deveria lembrar melhor do que isso, Rogério.", "Uma nota fora do lugar... como você, aquela noite.", "Isso não é o que consta no registro do restaurante."])}"',
+            f'"{random.choice(["Errado. Eles não perdoam mentiras.", "Você deveria lembrar melhor do que isso, Rogério.", "Uma nota fora do lugar... como você.", "Isso não é o que consta no registro do restaurante."])}"',
             0.04,
             DOS_AMARELO,
             jogo,

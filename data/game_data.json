@@ -40,7 +40,8 @@
             "direita": "quarto de refrigeração",
             "esquerda": "entrada",
             "itens": [
-                "remedio"
+                "remedio",
+                "bateria nova"
             ],
             "inspecionaveis": {}
         },
@@ -54,9 +55,9 @@
                 "tesoura quebrada",
                 "pelucias",
                 "doce",
-                "moeda velha",
                 "disquete",
-                "bolsa"
+                "bolsa",
+                "bateria nova"
             ],
             "inspecionaveis": {}
         },
@@ -334,8 +335,10 @@
         "disquete": "Um disquete de 5¼ polegadas. Serve para salvar os dados do sistema no terminal.",
         "bolsa": "Uma bolsa escolar antiga, desgastadas e um pouco rasgado, deve servir para guardar alguma coisa ainda..",
         "fita isolante": "Um rolo de fita preta grossa. A cola ainda deve servir.",
-        "fios cortados": "Um punhado de fios elétricos grossos e coloridos. Estão sujos com o óleo preto do Minotauro.",
-        "chave dos fundos": "Uma chave de metal pesada e enferrujada. Parece pertencer à porta da Sala dos Fundos."
+        "fios cortados": "Um punhado de fios elétricos grossos e coloridos. Estão sujos com o óleo preto e está fervendo.",
+        "chave dos fundos": "Uma chave de metal pesada e enferrujada. Parece pertencer à porta da Sala dos Fundos.",
+        "cartao de seguranca": "Um cartão azul, com uma faixa preta na parte de trás, não possui nome, nem nada legivel, apenas 'IV', seria cartão nivel 4?.",
+        "partitura rasgada": "3 paginas cheias de notas musicais, e algumas frases e palavras soltas, 1994... 1982... 'ela'... 'quem é você?'... Não sei o que significa. "
     },
 
     "eventos_aleatorios": [

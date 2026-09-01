@@ -58,6 +58,7 @@ class GameState(BaseModel):
     chance_sprint_minotauro: int = 15
     turnos_perseguidor_aviso: int = 3
     turnos_perseguidor_morte: int = 5
+    bateria_ajuda_gerada: bool = false
     energia_min_noite: int = 90
     energia_max_noite: int = 100
     furia_noite: int = 1

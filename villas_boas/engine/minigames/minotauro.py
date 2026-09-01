@@ -237,7 +237,7 @@ class MinigameMinotauro(BaseMinigame):
         
         
         else: 
-            ui.exibir(f"{DOS_AMARELO}Comando não reconhecido no escuro. Você gasta segundos preciosos tropeçando...{RESET}")
+            ui.exibir(f"{DOS_AMARELO}Comando não reconhecido no escuro. Você gasta segundos tropeçando...{RESET}")
             turno_gasto = True 
 
         

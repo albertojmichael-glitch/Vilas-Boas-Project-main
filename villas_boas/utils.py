@@ -56,30 +56,41 @@ def atualizar_eventos_de_tempo(jogo):
                     f"\n{DOS_VERMELHO}A escuridão volta a dominar... Sua fonte de luz se apagou{RESET}"
                 )
                 ui.pausar(1.5)
+
         else:
-            jogo.turnos_no_escuro += 1
-            if jogo.turnos_no_escuro == 3:
-                ui.exibir(
-                    f"\n{DOS_AMARELO}As sombras parecem se mexer nos cantos da sua visão...{RESET}"
-                )
-            elif jogo.turnos_no_escuro == 5:
-                ui.exibir(
-                    f"\n{DOS_VERMELHO}Você escuta alguém sussurrando seu nome bem baixinho na escuridão...{RESET}"
-                )
+            if jogo.turnos_luz > 0:
+                jogo.turnos_luz -= 1
+                jogo.turnos_no_escuro = 0
+                if jogo.turnos_luz == 0:
+                    ui.exibir(f"\n{DOS_VERMELHO}A escuridão volta a dominar... Sua fonte de luz se apagou{RESET}")
+                    ui.pausar(1.5)
+            else:
+                
+                jogo.turnos_no_escuro += 1
+                
+                if jogo.turnos_no_escuro == 1:
+                    ui.exibir(f"\n{DOS_AMARELO}As sombras parecem se mexer nos cantos da sua visão...{RESET}")
+                    
+                elif jogo.turnos_no_escuro == 3:
+                    
+                    jogo.nivel_barulho = 100
+                    jogo.ai_alvo = jogo.sala_atual
+                    ui.exibir(f"\n{DOS_VERMELHO}No escuro absoluto, você entra em pânico e esbarra nos móveis. O barulho ecoa pelo corredor!{RESET}")
+                    
+                elif jogo.turnos_no_escuro >= 5:
+                    
+                    jogo.hp -= 1
+                    jogo.turnos_no_escuro = 0 
+                    
+                    if jogo.hp > 0:
+                        ui.exibir(f"\n{DOS_VERMELHO}Você tenta andar no escuro, tropeça violentamente e se machuca! (-1 HP){RESET}")
+                    else:
+                        ui.exibir(f"\n{DOS_VERMELHO}Você cai de mau jeito no escuro e bate a cabeça. Você não consegue mais levantar...{RESET}")
+                        jogo.sala_atual = "morte"
+                # ----------------------------------
+        
 
-            chance_sombra = min(1 + (jogo.turnos_no_escuro * 2), 20)
-            if random.randint(1, 100) <= chance_sombra:
-                ui.exibir("\n" + "=" * 50)
-                ui.exibir(
-                    f"{DOS_VERMELHO}Na escuridão total, dois olhos brancos se abrem a centímetros do seu rosto.{RESET}"
-                )
-                ui.exibir(
-                    f"{DOS_VERMELHO}'Você não devia ter voltado, Rogério.'{RESET}"
-                )
-                ui.pausar(4)
-                ui.exibir(f"\n{DOS_BRANCO}[ FINAL ???: MENTE FRATURADA ]{RESET}")
-                jogo.sala_atual = "morte"
-
+                    
     if getattr(jogo, "incendio", False):
         jogo.turnos_fuga -= 1
         ui.exibir(
@@ -109,7 +120,7 @@ def atualizar_eventos_de_tempo(jogo):
             ui.exibir(
                 "\n"
                 + "=" * 50
-                + f"\n{DOS_VERMELHO}Você ficou muito tempo parado. A porta é arrombada\n{RESET}"
+                + f"\n{DOS_VERMELHO}Você ficou muito tempo parado. Algo entrou na sua sala...\n{RESET}"
                 + "=" * 50
             )
             ui.pausar(4)

@@ -14,7 +14,7 @@ def processar_comando(comando, jogo, mapa):
 
     if getattr(jogo, 'estado_atual', "") == "COMBATE_ANIMATRONICO":
         if comando.lower() in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False):
-            ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você solta um soco devastador direto na mandíbula de metal do animatrônico!{RESET}")
+            ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você solta um soco direto na mandíbula de metal do animatrônico.{RESET}")
             ui.exibir(f"{DOS_AMARELO}Ele solta o seu pescoço, emite um bipe de erro e foge correndo de volta pras sombras.{RESET}")
             ui.pausar(2)
             jogo.estado_atual = "JOGO"
