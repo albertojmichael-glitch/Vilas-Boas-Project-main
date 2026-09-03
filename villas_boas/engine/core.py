@@ -389,79 +389,62 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             if gastou_turno:
                 atualizar_eventos_de_tempo(jogo)
                 jogo.erros_consecutivos = 0
+            
             else:
-                
                 jogador_correu = False
-
+                
                 
                 if comando.startswith("correr "):
                     direcao = comando.replace("correr ", "").strip()
                     comando_bruto = f"ir {direcao}"
                     comando = comando_bruto
-                    
-                    
                     jogador_correu = True
-                    jogo.nivel_barulho = 100
-                    jogo.ai_alvo = jogo.sala_atual 
-                    jogo.turnos_enjoado = 2 
-                    
-                    if jogo.inventario and len(jogo.inventario) > 0 and random.random() <= 0.25:
-                        item_perdido = random.choice(jogo.inventario)
-                        jogo.inventario.remove(item_perdido)
-                        
-                        sala_atual = jogo.mapa.get(jogo.sala_atual, {})
-                        if "itens" not in sala_atual:
-                            sala_atual["itens"] = []
-                        sala_atual["itens"].append(item_perdido)
-                        
-                        ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você corre desesperado. No pânico, você tropeça e deixa cair seu(sua) {item_perdido.upper()}!")
-                    else:
-                        ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você foge correndo! Você deixa tudo para trás num piscar de olhos")
-                
-                elif comando.startswith(("ir ", "abrir ")):
-                    jogo.nivel_barulho = min(100, jogo.nivel_barulho + 15)
-                elif comando in ["olhar", "inventario", "esperar"]:
-                    jogo.nivel_barulho = max(0, jogo.nivel_barulho - 10)
-                else:
-                    jogo.nivel_barulho = min(100, jogo.nivel_barulho + 5)
                     
                 
                 gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
                 
-                
                 if gastou_turno:
                     atualizar_eventos_de_tempo(jogo)
                     jogo.erros_consecutivos = 0
+                    
+                    
+                    if jogador_correu:
+                        jogo.nivel_barulho = 100
+                        jogo.ai_alvo = jogo.sala_atual 
+                        jogo.turnos_enjoado = 2 
+                        
+                        if jogo.inventario and len(jogo.inventario) > 0 and random.random() <= 0.25:
+                            item_perdido = random.choice(jogo.inventario)
+                            jogo.inventario.remove(item_perdido)
+                            
+                            sala_atual = jogo.mapa.get(jogo.sala_atual, {})
+                            if "itens" not in sala_atual:
+                                sala_atual["itens"] = []
+                            sala_atual["itens"].append(item_perdido)
+                            
+                            ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você corre desesperado. No pânico, você tropeça e deixa cair seu(sua) {item_perdido.upper()}!")
+                        else:
+                            ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você foge correndo! Você deixa tudo para trás num piscar de olhos")
+                        
+                        ui.buffer.append("@@TYPE@@amarelo@@10@@O animatrônico te perde de vista enquanto corre.")
+                        
+                    elif comando.startswith(("ir ", "abrir ")):
+                        jogo.nivel_barulho = min(100, jogo.nivel_barulho + 15)
+                    elif comando in ["olhar", "inventario", "esperar"]:
+                        jogo.nivel_barulho = max(0, jogo.nivel_barulho - 10)
+                    else:
+                        jogo.nivel_barulho = min(100, jogo.nivel_barulho + 5)
                     
                     
                     if not jogador_correu:
-                        processar_ia_inimigo(jogo) 
-                    else:
-                        ui.buffer.append("@@TYPE@@amarelo@@10@@A o animatronico te perde de vista enquanto corre.")
-
+                        processar_ia_inimigo(jogo)
+                        
                 else:
                     
-                    jogo.erros_consecutivos += 1
                     if jogo.erros_consecutivos >= 3:
                         jogo.nivel_barulho = min(100, jogo.nivel_barulho + 30)
                         jogo.ai_alvo = jogo.sala_atual
-                        ui.animar("Você está tropeçando e fazendo muito barulho no escuro...", 0.03, DOS_AMARELO, jogo)
-
-               
-                gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
-                
-                
-                if gastou_turno:
-                    atualizar_eventos_de_tempo(jogo)
-                    jogo.erros_consecutivos = 0
-                    processar_ia_inimigo(jogo) 
-                else:
-                    
-                    jogo.erros_consecutivos += 1
-                    if jogo.erros_consecutivos >= 3:
-                        jogo.nivel_barulho = min(100, jogo.nivel_barulho + 30)
-                        jogo.ai_alvo = jogo.sala_atual
-                        ui.animar("Seus tropeços estão fazendo muito barulho...", 0.03, DOS_AMARELO, jogo)
+                        ui.animar("Seus tropeços no escuro estão chamando muita atenção...", 0.03, DOS_AMARELO, jogo)
             
             
             if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
@@ -713,6 +696,17 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             else:
                 ui.animar("Quem é você? *A tela desliga* Você não merece nossa ajuda.", 0.05, DOS_VERMELHO, jogo)
                 ui.exibir("@@JUMPSCARE@@")
+                ui.pausar(1)
+                
+                
+                try: 
+                    from app import registrar_telemetria
+                    registrar_telemetria("MORTE", "MINIGAME_PIANISTA", jogo.dificuldade_escolhida, "Kernel Panic - Falhou no Julgamento")
+                except (ImportError, AttributeError):
+                    pass
+                    
+                from views import dar_tela_kernel_panic
+                dar_tela_kernel_panic(jogo)
                 
             jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
             jogo.estado_atual = "JOGO"

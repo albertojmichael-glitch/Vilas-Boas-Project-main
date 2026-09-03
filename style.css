@@ -640,3 +640,29 @@ input, textarea {
         transform: scale(0.42);
     }
 }
+
+
+body.kernel-panic-mode {
+    background-color: #0000aa !important; 
+    color: #ffffff !important;
+}
+
+body.kernel-panic-mode .terminal-section {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+
+body.kernel-panic-mode .verde, 
+body.kernel-panic-mode .amarelo, 
+body.kernel-panic-mode .vermelho,
+body.kernel-panic-mode .branco {
+    color: #ffffff !important;
+    text-shadow: none !important;
+}
+
+
+body.kernel-panic-mode .input-line {
+    display: none !important;
+}

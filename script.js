@@ -537,13 +537,19 @@ function novaLinha(linha, terminalEl) {
             if (terminalEl) terminalEl.scrollTop = terminalEl.scrollHeight;
             resolve();
 
+        } else if (linha.includes("@@PANIC@@")) {
+            linha = linha.replace("@@PANIC@@", "");
+            document.body.classList.add("kernel-panic-mode");
+            reproduzirBeep('erro'); 
+            resolve();
+
         } else if (linha.startsWith("@@EXIT@@")) {
             document.body.innerHTML = ""; 
             document.body.style.backgroundColor = "#000";
             resolve();
             
         } else if (linha.startsWith("@@RELOAD@@")) {
-            
+            document.body.classList.remove("kernel-panic-mode"); 
             window.location.reload();
             resolve();
 

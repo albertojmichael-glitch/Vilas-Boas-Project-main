@@ -54,7 +54,7 @@ def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
         f"{DOS_AMARELO}♔ FINAIS ALCANÇADOS: {qtd}/4{RESET}", 0.01, DOS_BRANCO, jogo
     )
     ui.animar(
-        f"{DOS_BRANCO}{c_med} Medíocre  {c_son} Bons Sonhos  {c_bom} Bom  {c_ver} Verdadeiro{RESET}\n",
+        f"{DOS_BRANCO}{c_med} Medíocre  {c_son} Bons Sonhos  {c_bom} neutro  {c_ver} Verdadeiro{RESET}\n",
         0.01,
         DOS_BRANCO,
         jogo,
@@ -171,6 +171,41 @@ def falar_pianista(acertou, ui, jogo):
             DOS_AMARELO,
             jogo,
         )
+
+def dar_tela_kernel_panic(jogo):
+    jogo.estado_atual = "FIM"
+    ui = jogo.ui_handler
+    
+    
+    ui.buffer.append("@@PANIC@@")
+    
+    ARTE_PANIC = r"""
+    .--.
+   |o_o |     -
+   |:_/ |    | |  
+  //   \ \   | |
+ (|     | )  | |
+/'\_   _/`\  (_)
+\___)=(___/ 
+
+    """
+    
+    ui.animar(ARTE_PANIC, 0, DOS_BRANCO, jogo)
+    
+    ui.animar("KERNEL PANIC - NOT SYNCING: Fatal exception in interrupt", 0, DOS_BRANCO, jogo)
+    ui.animar("Hardware CPU 0: corrupted by external psychological entity.", 0, DOS_BRANCO, jogo)
+    ui.animar("Process CAROLINE.SYS (pid: 1982, stackpage=0x00000000)", 0, DOS_BRANCO, jogo)
+    ui.animar("Call Trace:", 0, DOS_BRANCO, jogo)
+    ui.animar(" [<c010a245>] show_stack+0x7a/0x90", 0, DOS_BRANCO, jogo)
+    ui.animar(" [<c010a3c4>] show_registers+0x15a/0x1dc", 0, DOS_BRANCO, jogo)
+    ui.animar(" [<c010c140>] die_if_no_escape+0x12a/0x240", 0, DOS_BRANCO, jogo)
+    ui.animar(" [<c0000000>] DO_NOT_LOOK_BEHIND_YOU+0x666/0x666", 0, DOS_BRANCO, jogo)
+    
+    ui.exibir("\nMemory corruption detected. Dumping physical memory to disk...")
+    ui.pausar(2)
+    ui.exibir("Dump failed. The soul is too heavy.")
+    
+    ui.exibir("\nSystem halted. Press F5 to attempt a manual reboot.")
 
 
 def imprimir_contexto_sala(jogo):
@@ -404,7 +439,7 @@ def rodar_final(tipo_final, jogo):
         ui.animar("- 'Seu corpo é deixado ao chão, e você se junta a todos os outros naquele lugar.'", 0.09, DOS_VERMELHO, jogo)
 
         ui.pausar(3)
-        
+
         ui.exibir(f"\n{DOS_BRANCO}[ FINAL NEUTRO ]{RESET}")
         liberou_deus = registrar_final("bom")
 
