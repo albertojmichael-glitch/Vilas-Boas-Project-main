@@ -672,6 +672,7 @@ body.kernel-panic-mode .terminal-section {
     background-color: #0000aa !important;
     border: none !important;
     box-shadow: none !important;
+    position: relative !important;
     width: 100vw !important;
     height: 100vh !important;
     padding: 40px !important;
@@ -684,4 +685,15 @@ body.kernel-panic-mode .vermelho,
 body.kernel-panic-mode .branco {
     color: #ffffff !important;
     text-shadow: none !important;
+}
+
+.panic-img-overlay {
+    position: absolute;
+    top: 40px;            /* Altura alinhada com as orelhas do mascote */
+    left: 200px;          /* Empurra para a direita, ao lado da arte ASCII */
+    width: 180px;         /* Largura do QR Code / Imagem */
+    height: 180px;        /* Altura do QR Code / Imagem */
+    border: 10px solid #ffffff; /* Borda branca clássica grossa */
+    image-rendering: pixelated; /* Tira o desfoque, deixando os pixels rústicos e digitais */
+    z-index: 100;
 }

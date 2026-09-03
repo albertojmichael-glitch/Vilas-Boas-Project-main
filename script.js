@@ -541,6 +541,17 @@ function novaLinha(linha, terminalEl) {
             linha = linha.replace("@@PANIC@@", "");
             document.body.classList.add("kernel-panic-mode");
             reproduzirBeep('erro'); 
+            
+            
+            let imgPanic = document.createElement("img");
+            imgPanic.src = "images/image.png";
+            imgPanic.className = "panic-img-overlay";
+            imgPanic.id = "panic-img-id"; 
+            
+            
+            const terminalSec = document.querySelector('.terminal-section');
+            if (terminalSec) terminalSec.appendChild(imgPanic);
+            
             resolve();
 
         } else if (linha.startsWith("@@EXIT@@")) {
@@ -549,7 +560,10 @@ function novaLinha(linha, terminalEl) {
             resolve();
             
         } else if (linha.startsWith("@@RELOAD@@")) {
-            document.body.classList.remove("kernel-panic-mode"); 
+            document.body.classList.remove("kernel-panic-mode");
+            let img = document.getElementById("panic-img-id");
+            if (img) img.remove();
+            
             window.location.reload();
             resolve();
 
