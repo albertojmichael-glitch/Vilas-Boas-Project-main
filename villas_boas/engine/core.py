@@ -698,7 +698,6 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 ui.exibir("@@JUMPSCARE@@")
                 ui.pausar(1)
                 
-                
                 try: 
                     from app import registrar_telemetria
                     registrar_telemetria("MORTE", "MINIGAME_PIANISTA", jogo.dificuldade_escolhida, "Kernel Panic - Falhou no Julgamento")
@@ -708,9 +707,11 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 from views import dar_tela_kernel_panic
                 dar_tela_kernel_panic(jogo)
                 
-            jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
-            jogo.estado_atual = "JOGO"
-            imprimir_contexto_sala(jogo)
+                
+                return 
+                
+                
+            
 
 
     #bloco universal

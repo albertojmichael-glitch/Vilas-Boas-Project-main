@@ -641,16 +641,40 @@ input, textarea {
     }
 }
 
+/*kernel panic */
 
-body.kernel-panic-mode {
+body.kernel-panic-mode,
+body.kernel-panic-mode html {
     background-color: #0000aa !important; 
     color: #ffffff !important;
+    overflow: hidden !important; 
+}
+
+
+body.kernel-panic-mode aside,
+body.kernel-panic-mode .sidebar,
+body.kernel-panic-mode .hud,
+body.kernel-panic-mode #hud-container,
+body.kernel-panic-mode .input-line {
+    display: none !important;
+}
+
+
+body.kernel-panic-mode .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: transparent !important;
 }
 
 body.kernel-panic-mode .terminal-section {
-    background-color: transparent !important;
+    background-color: #0000aa !important;
     border: none !important;
     box-shadow: none !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    padding: 40px !important;
 }
 
 
@@ -660,9 +684,4 @@ body.kernel-panic-mode .vermelho,
 body.kernel-panic-mode .branco {
     color: #ffffff !important;
     text-shadow: none !important;
-}
-
-
-body.kernel-panic-mode .input-line {
-    display: none !important;
 }
