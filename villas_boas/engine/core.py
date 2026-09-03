@@ -508,20 +508,26 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 rodar_final("cama", jogo)
 
             elif jogo.sala_atual == "hall de entrada" and getattr(jogo, 'noite_vencida', False):
-                if getattr(jogo, 'incendio', False): 
+                
+               
+                if getattr(jogo, 'fios_cortados_inventario', False): 
                     try: 
                         from app import registrar_telemetria
                         registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro")
-                    except (ImportError, AttributeError) as e:
+                    except (ImportError, AttributeError):
                         pass
                     rodar_final("verdadeiro", jogo)
+                    
+                
                 else: 
                     try: 
                         from app import registrar_telemetria
-                        registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Bom")
-                    except (ImportError, AttributeError) as e:
+                        registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Neutro")
+                    except (ImportError, AttributeError):
                         pass
+                    
                     rodar_final("final_bom", jogo)
+
             elif jogo.estado_atual == "COMBATE_ANIMATRONICO":
                 pass 
             else:

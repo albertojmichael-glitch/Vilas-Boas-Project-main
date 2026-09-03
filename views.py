@@ -338,7 +338,7 @@ def rodar_final(tipo_final, jogo):
             jogo=jogo,
         )
         ui.animar(
-            f"{DOS_VERDE}                             [FINAL BOM]                               {RESET}",
+            f"{DOS_VERDE}                             [FINAL NEUTRO]                               {RESET}",
             0.04,
             jogo=jogo,
         )
@@ -359,15 +359,53 @@ def rodar_final(tipo_final, jogo):
         ui.animar("- 'Ainda estou aqui...'", 0.09, DOS_VERMELHO, jogo)
         ui.animar("- Amor? É voce? Mesmo???", 0.05, DOS_AMARELO, jogo)
         ui.animar("- 'Eu espero que ainda seja eu...'", 0.09, DOS_VERMELHO, jogo)
+        ui.animar("- 'eu Não SinTo maIS nADA...'", 0.1, DOS_VERMELHO, jogo)
+        ui.animar("- 'Eu não consegui te salvar, me desculpa...'", 0.09, DOS_AMARELO, jogo)
+        ui.animar("- 'Não consegui salvar ninguém, o que eu fiz.'", 0.09, DOS_AMARELO, jogo)
+        ui.animar("- 'Me ajUde, EU SINTO FALTA DE CASA.'", 0.1, DOS_VERMELHO, jogo)
+
         ui.animar(
-            "- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas.",
+            "- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas, só desista, eu não posso fazer nada.",
             0.05,
             DOS_AMARELO,
             jogo,
         )
+
+        ui.pausar(2)
+
         ui.animar("- ... *Caroline abraça Rogério*", 0.09, DOS_VERMELHO, jogo)
-        ui.animar("- 'Vamos nos encontrar no céu, meu bem.'", 0.09, DOS_VERMELHO, jogo)
-        ui.exibir(f"\n{DOS_BRANCO}[ FINAL BOM ]{RESET}")
+
+        ui.animar("- 'Eu esperO tE eNContrar Lá, meu bem.'", 0.09, DOS_VERMELHO, jogo)
+
+        ui.pausar(3)
+
+        ui.animar(
+                    "Você começa a cuspir sangue, a mão dela atravessou seu peito.",
+                    0.04,
+                    DOS_VERMELHO,
+                    jogo,
+                )
+
+        ui.pausar(2)
+        
+        ui.animar(
+                    "Nada mais faz sentido, sua visão começa a tremer, mas pela ultima vez, olha para os olhos dela.",
+                    0.04,
+                    DOS_VERMELHO,
+                    jogo,
+                )
+
+        ui.pausar(1.5)
+        
+        ui.animar("- 'Me Perdoe por isso.'", 0.09, DOS_VERMELHO, jogo)
+
+        ui.pausar(2)
+
+        ui.animar("- 'Seu corpo é deixado ao chão, e você se junta a todos os outros naquele lugar.'", 0.09, DOS_VERMELHO, jogo)
+
+        ui.pausar(3)
+        
+        ui.exibir(f"\n{DOS_BRANCO}[ FINAL NEUTRO ]{RESET}")
         liberou_deus = registrar_final("bom")
 
     elif tipo_final == "verdadeiro":
@@ -378,7 +416,7 @@ def rodar_final(tipo_final, jogo):
             jogo=jogo,
         )
         ui.animar(
-            f"{DOS_VERMELHO}                         [ FINAL VERDADEIRO ]                     {RESET}",
+            f"{DOS_VERMELHO}                        [ FINAL VERDADEIRO ]                      {RESET}",
             0.03,
             jogo=jogo,
         )
@@ -569,7 +607,7 @@ def rodar_final(tipo_final, jogo):
             jogo,
         )
         ui.animar(
-            "Toda a dor, a paranoia e o pavor que pesavam sobre seu peito desde que entrou no Vilas Boas desaparecem.",
+            "Toda a dor, a paranoia e o pavor que pesavam sobre seu peito desde que entrou aqui, simplesmente desaparece.",
             0.04,
             DOS_BRANCO,
             jogo,
@@ -616,7 +654,7 @@ def rodar_final(tipo_final, jogo):
             jogo,
         )
         ui.animar(
-            "Você empurra as portas dos fundos e sai para o ar frio da madrugada de Curitiba.",
+            "Você empurra as portas de entrada e sai para o ar frio da madrugada de Curitiba.",
             0.04,
             DOS_BRANCO,
             jogo,
