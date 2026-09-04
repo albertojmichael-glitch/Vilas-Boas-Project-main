@@ -702,7 +702,8 @@ body.kernel-panic-mode .branco {
    TERROR ANALÓGICO E INTERFERÊNCIA VISUAL
    ========================================= */
 
-.glitch-mode .terminal-section {
+/* O glitch SÓ acontece se a tag body tiver a classe glitch-mode */
+body.glitch-mode .terminal-section {
     animation: crt-flicker 0.15s infinite;
     text-shadow: 2px 0 red, -2px 0 blue !important;
 }

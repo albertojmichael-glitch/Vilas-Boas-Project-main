@@ -533,6 +533,7 @@ function novaLinha(linha, terminalEl) {
         }
 
         if (linha.startsWith("@@CLEAR@@")) {
+            document.body.classList.remove("glitch-mode", "low-power-mode", "blackout-mode", "kernel-panic-mode")
             outputDiv.innerHTML = "";
             if (terminalEl) terminalEl.scrollTop = terminalEl.scrollHeight;
             resolve();
