@@ -67,7 +67,7 @@ POS_SAIDA_X = 0
 POS_SAIDA_Y = 0
 
 
-# Variações de texto para não repetir sempre a mesma frase nas mesmas situações
+
 MSGS_PERIGO_ESQUERDA = [
     "⚠ Você sente um ar pesado em sua esquerda.",
     "⚠ Algo se arrasta lentamente à sua esquerda.",
