@@ -193,6 +193,6 @@ def processar_comando(comando, jogo, mapa):
             ui.exibir(f"{DOS_BRANCO} ☞ 'ir frente / trás / esquerda / direita'{RESET}")
             ui.exibir(f"{DOS_BRANCO} ☞ 'pegar [item]' ou 'usar [item]'{RESET}")
             ui.exibir(f"{DOS_BRANCO} ☞ 'inventario' {DOS_AMARELO}(para ver sua mochila){RESET}")
-            jogo.erros_consecutivos = 0  # Reseta o contador após ajudar
+            jogo.erros_consecutivos = 0  
             
         return False

@@ -103,40 +103,65 @@ def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
 
 def imprimir_tutorial(ui, jogo=None):
     ui.animar(
-        f"\n{DOS_AMARELO}--- DICAS DE SOBREVIVÊNCIA (TUTORIAL) ---{RESET}",
-        0.01,
-        DOS_BRANCO,
-        jogo,
+        f"\n{DOS_AMARELO}=================================================={RESET}", 
+        0.005, DOS_BRANCO, jogo
     )
     ui.animar(
-        f"{DOS_BRANCO}1. Mova-se digitando {DOS_VERDE}ir frente{DOS_BRANCO}, ou apenas o nome da sala.{RESET}",
-        0.01,
-        DOS_BRANCO,
-        jogo,
+        f"{DOS_AMARELO}   [ MANUAL DE SOBREVIVÊNCIA DO SISTEMA v1.0 ]    {RESET}", 
+        0.01, DOS_BRANCO, jogo
     )
     ui.animar(
-        f'{DOS_BRANCO}2. Use aspas para nomes compostos: {DOS_VERDE}pegar "tabua pequena de madeira"{DOS_BRANCO}.{RESET}',
-        0.01,
-        DOS_BRANCO,
-        jogo,
+        f"{DOS_AMARELO}=================================================={RESET}", 
+        0.005, DOS_BRANCO, jogo
+    )
+    
+    ui.animar(f"{DOS_BRANCO}>> NAVEGAÇÃO:{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(
+        f"   Mova-se usando direções ({DOS_VERDE}ir frente{RESET}, {DOS_VERDE}ir esquerda{RESET})", 
+        0.01, DOS_BRANCO, jogo
     )
     ui.animar(
-        f"{DOS_BRANCO}3. Você pode usar atalhos como {DOS_VERDE}p chave{DOS_BRANCO} em vez de {DOS_VERDE}pegar chave{DOS_BRANCO}.{RESET}",
-        0.01,
-        DOS_BRANCO,
-        jogo,
+        f"   ou digite o destino exato: {DOS_VERDE}ir sala de jantar{RESET}.", 
+        0.01, DOS_BRANCO, jogo
+    )
+    
+    ui.animar(f"\n{DOS_BRANCO}>> INTERAÇÃO:{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(
+        f"   Examine os detalhes ao redor com {DOS_VERDE}olhar [objeto]{RESET}.", 
+        0.01, DOS_BRANCO, jogo
     )
     ui.animar(
-        f"{DOS_BRANCO}4. Digite {DOS_VERDE}ajuda{DOS_BRANCO} a qualquer momento para ver o manual do sistema.{RESET}",
-        0.01,
-        DOS_BRANCO,
-        jogo,
+        f"   Para interagir, use {DOS_VERDE}pegar [item]{RESET} ou {DOS_VERDE}usar [item]{RESET}.", 
+        0.01, DOS_BRANCO, jogo
+    )
+    
+    ui.animar(f"\n{DOS_BRANCO}>> GERENCIAMENTO:{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(
+        f"   Digite {DOS_VERDE}inventario{RESET} (ou apenas {DOS_VERDE}i{RESET}) para checar seus bolsos.", 
+        0.01, DOS_BRANCO, jogo
     )
     ui.animar(
-        f"{DOS_AMARELO}-----------------------------------------{RESET}\n",
-        0.01,
-        DOS_BRANCO,
-        jogo,
+        f"   Dica: Atalhos funcionam. Digite {DOS_VERDE}p chave{RESET} para pegar rápido.", 
+        0.01, DOS_BRANCO, jogo
+    )
+    
+    ui.animar(f"\n{DOS_VERMELHO}>> AVISO DE SEGURANÇA:{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(
+        f"   Tropeçar no escuro ou errar comandos gera {DOS_VERMELHO}barulho{RESET}.", 
+        0.01, DOS_BRANCO, jogo
+    )
+    ui.animar(
+        f"   Ela escuta. Se precisar fugir de uma sala, digite {DOS_VERDE}correr [direção]{RESET}.", 
+        0.01, DOS_BRANCO, jogo
+    )
+    
+    ui.animar(
+        f"\n{DOS_AMARELO}Em caso de pânico absoluto, digite {DOS_VERDE}ajuda{DOS_AMARELO} para o guia completo.{RESET}", 
+        0.01, DOS_BRANCO, jogo
+    )
+    ui.animar(
+        f"{DOS_AMARELO}=================================================={RESET}\n", 
+        0.005, DOS_BRANCO, jogo
     )
 
 
@@ -466,6 +491,30 @@ def rodar_final(tipo_final, jogo):
         )
 
         ui.animar(
+            "Você acende seu isqueiro...",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+
+        )
+
+        ui.animar(
+            "Com a chama ardende, você o joga nas cortinas do hall, que começa ficar preta, e se abre por conta do fogo, mostrando a paisagem estrelada de lá fora.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+
+        )
+
+        ui.animar(
+            "Você tosse um pouco, mas assim que retoma o olhar para o fim da sala, você a vê, esperando.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+
+        )
+
+        ui.animar(
             "O estalo das chamas consome as cortinas velhas e a madeira podre da sala.",
             0.04,
             DOS_BRANCO,
@@ -478,7 +527,7 @@ def rodar_final(tipo_final, jogo):
             jogo,
         )
         ui.animar(
-            "O calor é sufocante, mas você não corre para a saída ainda. Você caminha até o centro do hall de entrada.\n",
+            "O calor é sufocante, mas você não corre para a saída ainda. Você caminha até o centro do hall.\n",
             0.04,
             DOS_BRANCO,
             jogo,
@@ -497,7 +546,7 @@ def rodar_final(tipo_final, jogo):
             jogo,
         )
         ui.animar(
-            "Você acende o isqueiro. Os olhos de plástico parecem te encarar.",
+            "Os olhos de plástico parecem te encarar.",
             0.05,
             DOS_BRANCO,
             jogo,
@@ -574,7 +623,7 @@ def rodar_final(tipo_final, jogo):
         )
 
         ui.animar(
-            "\n*(O fogo se alastra pelo restaurante, a fumaça chega no hall)*",
+            "\n*(O fogo se alastra pelo restaurante, a fumaça impregna ao teto, so que mais nada importa, aquele lugar vai arder em chamas.)*",
             0.04,
             DOS_BRANCO,
             jogo,
@@ -600,7 +649,7 @@ def rodar_final(tipo_final, jogo):
         )
         ui.animar("- Não peça desculpas, meu amor... Você veio.", 0.07, DOS_VERDE, jogo)
         ui.animar(
-            "- Durante semanas, no escuro dessa máquina, eu não tinha consciencia...",
+            "- Durante semanas, meses, no escuro dessa máquina, eu não tinha consciencia...",
             0.07,
             DOS_VERDE,
             jogo,
@@ -619,7 +668,7 @@ def rodar_final(tipo_final, jogo):
         )
 
         ui.animar(
-            "\n- Não podia te deixar presa aqui, Caroline. Esse lugar precisa queimar. Eu procurei por arquivos, descobri os horrores que aconteceram... vim para te salvar, e os outros também. Hoje acaba.",
+            "\n- Não podia te deixar presa aqui, Caroline. Esse lugar precisa queimar. Eu procurei por arquivos, descobri os horrores que aconteceram... vim para te salvar, e os outros também. Hoje todo esse terror feito de maquinas acaba.",
             0.06,
             DOS_AMARELO,
             jogo,
@@ -665,7 +714,7 @@ def rodar_final(tipo_final, jogo):
             jogo,
         )
         ui.animar("- Eu te amo.", 0.06, DOS_AMARELO, jogo)
-        ui.animar("- Eu também te amo, amor. Pra sempre.", 0.06, DOS_AMARELO, jogo)
+        ui.animar("- Eu também te amo, amor. Pra sempre.", 0.06, DOS_VERDE, jogo)
 
         ui.animar(
             "\n*(O animatrônico cai no chão, o fogo cobre o metal e o plástico rosa)*",
@@ -688,13 +737,13 @@ def rodar_final(tipo_final, jogo):
 
         ui.animar(
             "\nVocê se levanta e caminha para a saída antes que o teto desabe.",
-            0.05,
+            0.08,
             DOS_BRANCO,
             jogo,
         )
         ui.animar(
             "Você empurra as portas de entrada e sai para o ar frio da madrugada de Curitiba.",
-            0.04,
+            0.06,
             DOS_BRANCO,
             jogo,
         )

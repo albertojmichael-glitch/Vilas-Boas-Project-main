@@ -553,6 +553,33 @@ function novaLinha(linha, terminalEl) {
             if (terminalSec) terminalSec.appendChild(imgPanic);
             
             resolve();
+        
+        } else if (linha.includes("@@GLITCH_LUZ@@")) {
+            linha = linha.replace("@@GLITCH_LUZ@@", "");
+            document.body.classList.add("glitch-mode");
+            reproduzirBeep('erro'); 
+            
+            setTimeout(() => {
+                document.body.classList.remove("glitch-mode");
+            }, 1500);
+            resolve();
+
+        } else if (linha.includes("@@LOW_POWER@@")) {
+            linha = linha.replace("@@LOW_POWER@@", "");
+            document.body.classList.remove("blackout-mode"); 
+            document.body.classList.add("low-power-mode");
+            resolve();
+
+        } else if (linha.includes("@@BLACKOUT@@")) {
+            linha = linha.replace("@@BLACKOUT@@", "");
+            document.body.classList.remove("low-power-mode");
+            document.body.classList.add("blackout-mode");
+            resolve();
+
+        } else if (linha.includes("@@NORMAL_POWER@@")) {
+            linha = linha.replace("@@NORMAL_POWER@@", "");
+            document.body.classList.remove("low-power-mode", "blackout-mode");
+            resolve();
 
         } else if (linha.startsWith("@@EXIT@@")) {
             document.body.innerHTML = ""; 
@@ -561,6 +588,7 @@ function novaLinha(linha, terminalEl) {
             
         } else if (linha.startsWith("@@RELOAD@@")) {
             document.body.classList.remove("kernel-panic-mode");
+            document.body.classList.remove("low-power-mode", "blackout-mode");
             let img = document.getElementById("panic-img-id");
             if (img) img.remove();
             

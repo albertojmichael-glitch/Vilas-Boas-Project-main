@@ -129,6 +129,14 @@ class MinigameSeguranca(BaseMinigame):
     
     def imprimir_status(self):
         self.ui.limpar()
+
+        if self.energia <= 0:
+            self.ui.buffer.append("@@BLACKOUT@@")
+        elif self.energia < 15:
+            self.ui.buffer.append("@@LOW_POWER@@")
+        else:
+            self.ui.buffer.append("@@NORMAL_POWER@@")
+
         self.ui.exibir("\n" + "=" * 50)
         chance_bug = self.caroline_pos * 15
 

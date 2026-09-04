@@ -697,3 +697,64 @@ body.kernel-panic-mode .branco {
     image-rendering: pixelated; /* Tira o desfoque, deixando os pixels rústicos e digitais */
     z-index: 100;
 }
+
+/* =========================================
+   TERROR ANALÓGICO E INTERFERÊNCIA VISUAL
+   ========================================= */
+
+.glitch-mode .terminal-section {
+    animation: crt-flicker 0.15s infinite;
+    text-shadow: 2px 0 red, -2px 0 blue !important;
+}
+
+@keyframes crt-flicker {
+    0% { opacity: 0.9; transform: skewX(0deg); }
+    50% { opacity: 0.4; transform: skewX(-2deg); }
+    100% { opacity: 1.0; transform: skewX(2deg); }
+}
+
+
+body.low-power-mode {
+    background-color: #050000 !important;
+}
+body.low-power-mode .terminal-section {
+    animation: low-power-pulse 2s infinite alternate;
+}
+@keyframes low-power-pulse {
+    0% { opacity: 0.8; }
+    100% { opacity: 0.3; }
+}
+body.low-power-mode .verde,
+body.low-power-mode .branco,
+body.low-power-mode .amarelo {
+    color: #cc0000 !important; 
+    text-shadow: 0 0 5px #cc0000 !important;
+}
+
+
+body.blackout-mode {
+    background-color: #000000 !important;
+}
+
+
+body.blackout-mode .sidebar,
+body.blackout-mode aside,
+body.blackout-mode #hud-container,
+body.blackout-mode .terminal-output {
+    display: none !important;
+}
+
+
+body.blackout-mode .terminal-section {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+body.blackout-mode .input-line {
+    margin-top: 50px;
+}
+body.blackout-mode .prompt {
+    color: #aaaaaa !important;
+    text-shadow: none !important;
+}
