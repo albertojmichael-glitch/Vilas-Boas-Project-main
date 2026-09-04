@@ -55,17 +55,15 @@ CHANCE_PADRAO_SPRINT = 60
 DISTANCIA_PERIGO = 1              
 
 
-GRID_MIN_X = -1
-GRID_MAX_X = 1
+GRID_MIN_X = -2
+GRID_MAX_X = 2
 GRID_MIN_Y = 0
-GRID_MAX_Y = 3
-
+GRID_MAX_Y = 4
 
 POS_FUSIVEL_X = 0
-POS_FUSIVEL_Y = 3
+POS_FUSIVEL_Y = 4
 POS_SAIDA_X = 0
 POS_SAIDA_Y = 0
-
 
 
 MSGS_PERIGO_ESQUERDA = [
@@ -107,32 +105,31 @@ MSGS_COLISAO_MONSTRO = [
 def _sortear(lista):
     return random.choice(lista)
 
-def desenhar_radar_ascii(px, py, mx, my, fios_cortados):
-    """Gera o grid 3x4 do radar com as posições dinâmicas."""
-    
+def desenhar_radar_ascii(px, py, mx, my, fios_cortados, armadilhas):
     distancia = abs(px - mx) + abs(py - my)
     monstro_visivel = (distancia <= 1)
     
     borda = DOS_VERDE
     reset = RESET
     
-    linhas = []
-    linhas.append(f"{borda}  +=======+=======+=======+{reset}")
+    # Calcula a largura do grid dinamicamente
+    largura_grid = (GRID_MAX_X - GRID_MIN_X) + 1
+    linha_borda = f"{borda}  +" + "=======+" * largura_grid + f"{reset}"
     
+    linhas = [linha_borda]
     
     for y in range(GRID_MAX_Y, GRID_MIN_Y - 1, -1):
         miolo1 = f"{borda}  /{reset}"
         miolo2 = f"{borda}  /{reset}"
         
-        
         for x in range(GRID_MIN_X, GRID_MAX_X + 1):
             char = " "
-            
-            
             if x == px and y == py:
                 char = f"{DOS_BRANCO}●{reset}"         
             elif monstro_visivel and x == mx and y == my:
                 char = f"{DOS_VERMELHO}●{reset}"      
+            elif (x, y) in armadilhas:
+                char = f"{DOS_AMARELO}⚡{reset}" 
             elif x == POS_FUSIVEL_X and y == POS_FUSIVEL_Y and not fios_cortados:
                 char = f"{DOS_AMARELO}F{reset}"       
             elif x == POS_SAIDA_X and y == POS_SAIDA_Y:
@@ -143,10 +140,9 @@ def desenhar_radar_ascii(px, py, mx, my, fios_cortados):
             
         linhas.append(miolo1)
         linhas.append(miolo2)
-        linhas.append(f"{borda}  +=======+=======+=======+{reset}")
+        linhas.append(linha_borda)
         
     return "\n".join(linhas)
-
 
 class MinigameMinotauro(BaseMinigame):
     def __init__(self, jogo):
@@ -160,6 +156,11 @@ class MinigameMinotauro(BaseMinigame):
         self.chance_sprint = chance_raw / 100.0
         
         self.bateria = 9999 if getattr(jogo, 'god_mode', False) else BATERIA_INICIAL
+
+        
+        locais_validos = [(x, y) for x in range(GRID_MIN_X, GRID_MAX_X + 1) for y in range(GRID_MIN_Y, GRID_MAX_Y + 1) 
+                          if (x, y) not in [(POS_SAIDA_X, POS_SAIDA_Y), (POS_FUSIVEL_X, POS_FUSIVEL_Y)]]
+        self.armadilhas = random.sample(locais_validos, 4)
 
         
         self.ui = getattr(jogo, 'ui_handler', getattr(jogo, 'ui', None))
@@ -182,7 +183,7 @@ class MinigameMinotauro(BaseMinigame):
         self.ui.limpar()
         
         
-        radar_visual = desenhar_radar_ascii(self.px, self.py, self.mx, self.my, self.fios_cortados)
+        radar_visual = desenhar_radar_ascii(self.px, self.py, self.mx, self.my, self.fios_cortados, self.armadilhas)
         self.ui.exibir(radar_visual)
         
         
@@ -221,37 +222,31 @@ class MinigameMinotauro(BaseMinigame):
                 
         self.ui.exibir(f"\n[{opcoes}]")
 
-    def mover_minotauro(self):
-        """Move o minotauro. Em modo sprint, persegue o eixo em que ainda há distância,
-        evitando desperdiçar o turno de perseguição escolhendo um eixo já alinhado."""
-        if random.random() < self.chance_sprint:
-            dif_x = self.px - self.mx
-            dif_y = self.py - self.my
+    def _dar_passo_inteligente(self):
+        """Função auxiliar para pathfinding perfeito do monstro"""
+        dif_x = self.px - self.mx
+        dif_y = self.py - self.my
+        
+        pode_mover_x = dif_x != 0
+        pode_mover_y = dif_y != 0
 
-            pode_mover_x = dif_x != 0
-            pode_mover_y = dif_y != 0
-
-            if pode_mover_x and pode_mover_y:
-                mover_em_x = random.random() < 0.5
-            elif pode_mover_x:
-                mover_em_x = True
-            elif pode_mover_y:
-                mover_em_x = False
-            else:
-                
-                direcao = random.choice([(-1, 0), (1, 0), (0, -1), (0, 1)])
-                self.mx += direcao[0]
-                self.my += direcao[1]
-                mover_em_x = None
-
-            if mover_em_x is True:
+        if pode_mover_x and pode_mover_y:
+            if random.random() < 0.5:
                 self.mx += 1 if dif_x > 0 else -1
-            elif mover_em_x is False:
+            else:
                 self.my += 1 if dif_y > 0 else -1
-        else:
-            direcao = random.choice([(-1, 0), (1, 0), (0, -1), (0, 1)])
-            self.mx += direcao[0]
-            self.my += direcao[1]
+        elif pode_mover_x:
+            self.mx += 1 if dif_x > 0 else -1
+        elif pode_mover_y:
+            self.my += 1 if dif_y > 0 else -1
+
+    def mover_minotauro(self):
+        
+        self._dar_passo_inteligente()
+        
+        
+        if random.random() < self.chance_sprint:
+            self._dar_passo_inteligente()
             
         self.mx = max(GRID_MIN_X, min(GRID_MAX_X, self.mx)) 
         self.my = max(GRID_MIN_Y, min(GRID_MAX_Y, self.my))
@@ -330,6 +325,15 @@ class MinigameMinotauro(BaseMinigame):
             if self.py > GRID_MIN_Y: self.py -= 1
             else: ui.exibir("Você bate as costas na porta de metal. Ela não abre...")
             turno_gasto = True
+        
+        
+        if turno_gasto and (self.px, self.py) in self.armadilhas:
+            self.armadilhas.remove((self.px, self.py))
+            self.bateria -= 3
+            ui.buffer.append("@@GLITCH_LUZ@@")
+            ui.exibir(f"\n{DOS_VERMELHO}Você pisou em fios eletricos. A lanterna pisca e perde muita energia.{RESET}")
+            ui.pausar(1.5)
+
         elif acao == "esperar": 
             ui.exibir("Você fica imóvel aguardando...")
             turno_gasto = True

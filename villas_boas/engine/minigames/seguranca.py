@@ -50,6 +50,8 @@ class MinigameSeguranca(BaseMinigame):
         self.ui = jogo.ui_handler
         self.turno = 0
 
+        
+
         god_mode = getattr(jogo, "god_mode", False)
         self.energia = 9999 if god_mode else random.randint(
             getattr(jogo, "energia_min_noite", 70),
@@ -81,6 +83,11 @@ class MinigameSeguranca(BaseMinigame):
         self.turnos_gerador_ativo = 0
         self.usos_sistema_turno = 0
 
+        self.captcha_ativo = False
+        self.captcha_alvo = None
+        self.captcha_resposta = ""
+        self.captcha_pergunta = ""
+
         self.ui.exibir(f"{DOS_BRANCO}{ARTE_MESA_SEGURANCA}{RESET}")
         self.ui.exibir("\n" + "=" * 50)
         self.ui.exibir("Você senta na cadeira da sala de segurança.")
@@ -103,6 +110,39 @@ class MinigameSeguranca(BaseMinigame):
             "info_pesado": 1 + extra,
             "motor": CUSTO_BASE_MOTOR + extra,
         }
+    
+    def _gerar_captcha(self):
+        tipo = random.randint(1, 4)
+        if tipo == 1:
+            
+            codigo = "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789", k=6))
+            self.captcha_pergunta = f"Criptografia pesada. Digite {DOS_VERMELHO}{codigo}{DOS_AMARELO} de trás pra frente."
+            self.captcha_resposta = codigo[::-1].lower()
+            
+        elif tipo == 2:
+            
+            nums = [random.randint(11, 99) for _ in range(4)]
+            texto_nums = " ".join(map(str, nums))
+            self.captcha_pergunta = f"Falha no sequenciador. Ordene crescentemente: {DOS_VERMELHO}{texto_nums}{DOS_AMARELO} (sem espaços)."
+            nums.sort()
+            self.captcha_resposta = "".join(map(str, nums))
+            
+        elif tipo == 3:
+            
+            n1 = random.randint(2, 6)
+            n2 = random.randint(3, 9)
+            n3 = random.randint(10, 40)
+            self.captcha_pergunta = f"Pico de voltagem. Resolva rápido: {DOS_VERMELHO}({n1} * {n2}) + {n3}{DOS_AMARELO}."
+            self.captcha_resposta = str((n1 * n2) + n3)
+            
+        else:
+            
+            chars = ["#", "@", "%", "&", "$"]
+            alvo = random.choice(chars)
+            sequencia = "".join(random.choices(chars, k=16))
+            qtd = sequencia.count(alvo)
+            self.captcha_pergunta = f"Ruído de dados. Quantos símbolos '{DOS_VERMELHO}{alvo}{DOS_AMARELO}' existem em: {DOS_VERMELHO}{sequencia}{DOS_AMARELO}?"
+            self.captcha_resposta = str(qtd)
 
     def _sistema_sobrecarregado(self):
         return self.usos_sistema_turno >= LIMITE_USOS_SISTEMA
@@ -183,11 +223,38 @@ class MinigameSeguranca(BaseMinigame):
             "consertar [sistema] | esperar)"
         )
 
+        if self.captcha_ativo:
+            self.ui.buffer.append("@@LOW_POWER@@") 
+            self.ui.exibir(f"\n{DOS_AMARELO}================ OVERRIDE MANUAL REQUERIDO ================{RESET}")
+            self.ui.exibir(f"{DOS_AMARELO}{self.captcha_pergunta}{RESET}")
+            self.ui.exibir(f"{DOS_AMARELO}==========================================================={RESET}")
+            self.ui.exibir("\n[Digite a resposta para continuar]")
+            return 
+
     
     def processar_turno(self, acao, jogo):
         ui = self.ui
         acao_norm = acao.lower().strip()
         god_mode = getattr(jogo, "god_mode", False)
+
+        if self.captcha_ativo:
+            if acao_normalizada == self.captcha_resposta:
+                self.ui.exibir(f"\n{DOS_VERDE}OVERRIDE ACEITO. Sistema {self.captcha_alvo.upper()} reiniciado.{RESET}")
+                if self.captcha_alvo == "camera":
+                    self.camera_ativa = True
+                elif self.captcha_alvo == "deteccao":
+                    self.deteccao_ativa = True
+                self.ui.pausar(1)
+            else:
+                self.ui.exibir(f"\n{DOS_VERMELHO}ACESSO NEGADO. Senha incorreta. Reboot abortado.{RESET}")
+                self.ui.pausar(1)
+                self.energia -= 1 
+                
+            self.captcha_ativo = False
+            self.captcha_alvo = None
+            
+            
+            return self._processar_avanco_monstro(jogo)
 
         if acao_norm in ("pular noite", "pular", "set time 06:00") and god_mode:
             ui.exibir(f"{DOS_AMARELO}[GOD MODE] O tempo se contorce. O relógio salta para as 06:00.{RESET}")
@@ -213,8 +280,26 @@ class MinigameSeguranca(BaseMinigame):
         elif acao_norm == "ligar gerador":
             turno_passou, self.turno = self._acao_ligar_gerador(ui, self.turno)
 
-        elif acao_norm.startswith("consertar "):
-            self._acao_consertar(ui, acao_norm, custos)
+        if acao_norma == "consertar camera":
+            if self.camera_ativa:
+                self.ui.exibir("O sistema de câmeras já está operacional.")
+                return "continuar"
+            else:
+                
+                self._gerar_captcha()
+                self.captcha_ativo = True
+                self.captcha_alvo = "camera"
+                return "continuar"
+
+        elif acao_norm == "consertar deteccao" or acao_norm == "consertar detecção":
+            if self.deteccao_ativa:
+                self.ui.exibir("O sistema de detecção já está operacional.")
+                return "continuar"
+            else:
+                self._gerar_captcha()
+                self.captcha_ativo = True
+                self.captcha_alvo = "deteccao"
+                return "continuar"
 
         elif acao_norm == "ouvir":
             self._acao_ouvir(ui, custos)
