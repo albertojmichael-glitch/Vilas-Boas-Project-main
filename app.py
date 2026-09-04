@@ -161,11 +161,11 @@ else:
 
 
 class ComandoRequest(BaseModel):
-    
     comando: str = Field(
         default="", 
         max_length=256, 
-        pattern=r"^[a-zA-Z0-9\s\"\'\-\_áéíóúâêôãõçÁÉÍÓÚÂÊÔÃÕÇ]+$"
+        
+        pattern=r"^[a-zA-Z0-9\s\"\'\-\_áéíóúâêôãõçÁÉÍÓÚÂÊÔÃÕÇ\.\:]+$"
     )
     telemetria: bool = Field(default=True)
 

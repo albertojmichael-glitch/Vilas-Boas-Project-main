@@ -10,5 +10,5 @@ rcssmin==1.1.2
 rjsmin==1.2.2
 colorama>=0.4.6
 redis>=5.0.1,<6.0.0
-cryptography>=49.0.0,<50.0.0
+cryptography>=50.0.0
 setuptools>=83.0.0
