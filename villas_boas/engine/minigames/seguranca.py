@@ -109,6 +109,15 @@ class MinigameSeguranca(BaseMinigame):
 
     def _gastar_sistema(self, custo):
         self.usos_sistema_turno += 1
+        
+        
+        if self.usos_sistema_turno >= 5:
+            self.ui.exibir(f"{DOS_VERMELHO}⚠ FALHA KERNEL: PLACA MÃE DERRETIDA POR SOBRECARGA MANUAL!{RESET}")
+            self.ui.pausar(1.5)
+            from views import dar_tela_kernel_panic
+            dar_tela_kernel_panic(self.jogo)
+            return "morte" 
+            
         self.energia -= custo
 
     def _rick_na_porta(self):

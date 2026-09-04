@@ -205,6 +205,15 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.pausar(1)
             ui.exibir(f"\n{DOS_VERMELHO}[ERRO DO SISTEMA]: O arquivo AJUDA.COM foi corrompido. Você está por conta própria aqui.{RESET}")
 
+        elif comando in ["del caroline.sys", "delete caroline.sys", "erase caroline.sys", "format a:"]:
+            ui.exibir(f"{DOS_VERMELHO}Acesso Negado. O arquivo CAROLINE.SYS está enraizado na sua mente.{RESET}")
+            ui.pausar(2)
+            ui.exibir(f"{DOS_VERMELHO}Tentativa de exclusão de entidade hostil detectada. Iniciando purga do sistema...{RESET}")
+            ui.pausar(1)
+            from views import dar_tela_kernel_panic
+            dar_tela_kernel_panic(jogo)
+            return
+
         
         elif comando == "mem":
             ui.exibir(f"{DOS_BRANCO}Microsoft Disk Operation System 2007{RESET}")

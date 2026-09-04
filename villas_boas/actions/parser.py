@@ -113,6 +113,14 @@ def processar_comando(comando, jogo, mapa):
         
     elif comando.startswith("gerar ") and getattr(jogo, 'god_mode', False):
         item_desejado = comando.replace("gerar ", "").strip()
+
+        if "caroline" in item_desejado or "alma" in item_desejado:
+            ui.exibir(f"{DOS_VERMELHO}[GOD MODE ERRO FATAL] VOCÊ NÃO PODE CRIAR O QUE JÁ ESTÁ MORTO.{RESET}")
+            ui.pausar(2)
+            from views import dar_tela_kernel_panic
+            dar_tela_kernel_panic(jogo)
+            return True
+
         match_item = encontrar_melhor_match(item_desejado, list(descricoes_itens.keys()))
         
         if match_item:
