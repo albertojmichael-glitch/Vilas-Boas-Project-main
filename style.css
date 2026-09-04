@@ -704,7 +704,6 @@ body.kernel-panic-mode .branco {
 
 /* O glitch SÓ acontece se a tag body tiver a classe glitch-mode */
 body.glitch-mode .terminal-section {
-    animation: crt-flicker 0.15s infinite;
     text-shadow: 2px 0 red, -2px 0 blue !important;
 }
 
@@ -803,13 +802,7 @@ body.blackout-mode .prompt {
     pointer-events: none;
 }
 
-/* 3. Brilho do Fósforo e Aberração Cromática Sutil nos Textos */
-.terminal-output, 
-.input-line,
-.prompt,
-#hud-container {
-    /* Desloca um 'fantasma' vermelho pra direita e um ciano pra esquerda */
-    text-shadow: 1px 0px 1px rgba(255, 0, 0, 0.6), 
-                -1px 0px 1px rgba(0, 255, 255, 0.6), 
-                 0px 0px 4px rgba(255, 255, 255, 0.15) !important;
+
+.terminal-output, .input-line, .prompt, #hud-container {
+    text-shadow: 1px 0px 1px rgba(255, 0, 0, 0.6), -1px 0px 1px rgba(0, 255, 255, 0.6), 0px 0px 4px rgba(255, 255, 255, 0.15) !important;
 }
