@@ -36,8 +36,7 @@ CAVEIRA_ASCII = r'''
                      $$$e   z$$$$$$$$$$%
                       "*$c  "$$$$$$$P"
                        ."""*$$$$$$$$bc
-                    .-"    .$***$$$"""*e.
-                 .-"    .e$"     "*$c  ^*b.
+                    .-"    .e$"     "*$c  ^*b.
           .=*""""    .e$*"          "*bc  "*$e..
         .$"        .z*"               ^*$e.   "*****e.
         $$ee$c   .d"                     "*$.        3.
@@ -67,6 +66,47 @@ POS_FUSIVEL_Y = 3
 POS_SAIDA_X = 0
 POS_SAIDA_Y = 0
 
+
+# Variações de texto para não repetir sempre a mesma frase nas mesmas situações
+MSGS_PERIGO_ESQUERDA = [
+    "⚠ Você sente um ar pesado em sua esquerda.",
+    "⚠ Algo se arrasta lentamente à sua esquerda.",
+    "⚠ Um cheiro de metal queimado vem da esquerda.",
+]
+MSGS_PERIGO_DIREITA = [
+    "⚠ Você enxerga um vulto a sua direita.",
+    "⚠ Um brilho metálico reflete rapidamente à direita.",
+    "⚠ Você ouve unhas riscando a parede à direita.",
+]
+MSGS_PERIGO_FRENTE = [
+    "⚠ Uma mancha negra bloqueia sua frente.",
+    "⚠ O ar fica mais frio à sua frente.",
+    "⚠ Uma respiração pesada ecoa logo à frente.",
+]
+MSGS_PERIGO_TRAS = [
+    "⚠ Passos pesados são ouvidos atrás de você.",
+    "⚠ Algo pesado se arrasta bem atrás de você.",
+    "⚠ Uma respiração fria bate na sua nuca.",
+]
+MSGS_ESTATICA = [
+    "[!] O radar está falhando... ruídos de estática por todo lado.",
+    "[!] Estática. O radar pisca e não mostra nada por um instante.",
+    "[!] Um zumbido elétrico cobre qualquer outro som ao redor.",
+]
+MSGS_COLISAO_JOGADOR = [
+    "⚠ Você dá um passo e bate o rosto em uma carcaça de metal fria. Você recua pelo susto.⚠",
+    "⚠ Sua mão encontra algo úmido e frio na escuridão. Você recua na hora.⚠",
+    "⚠ Você tropeça em algo pesado no chão e quase cai. Recua assustado.⚠",
+]
+MSGS_COLISAO_MONSTRO = [
+    "⚠ VOCÊ TROMBA COM ALGO METÁLICO NO ESCURO. ELE ESTÁ NA SUA FRENTE⚠",
+    "⚠ ALGO ENORME PASSA BEM AO SEU LADO NO ESCURO⚠",
+    "⚠ VOCÊ SENTE O CHÃO TREMER PERTO DEMAIS DE VOCÊ⚠",
+]
+
+def _sortear(lista):
+    return random.choice(lista)
+
 def desenhar_radar_ascii(px, py, mx, my, fios_cortados):
     """Gera o grid 3x4 do radar com as posições dinâmicas."""
     
@@ -80,12 +120,12 @@ def desenhar_radar_ascii(px, py, mx, my, fios_cortados):
     linhas.append(f"{borda}  +=======+=======+=======+{reset}")
     
     
-    for y in range(3, -1, -1):
+    for y in range(GRID_MAX_Y, GRID_MIN_Y - 1, -1):
         miolo1 = f"{borda}  /{reset}"
         miolo2 = f"{borda}  /{reset}"
         
         
-        for x in [-1, 0, 1]:
+        for x in range(GRID_MIN_X, GRID_MAX_X + 1):
             char = " "
             
             
@@ -93,9 +133,9 @@ def desenhar_radar_ascii(px, py, mx, my, fios_cortados):
                 char = f"{DOS_BRANCO}●{reset}"         
             elif monstro_visivel and x == mx and y == my:
                 char = f"{DOS_VERMELHO}●{reset}"      
-            elif x == 0 and y == 3 and not fios_cortados:
+            elif x == POS_FUSIVEL_X and y == POS_FUSIVEL_Y and not fios_cortados:
                 char = f"{DOS_AMARELO}F{reset}"       
-            elif x == 0 and y == 0:
+            elif x == POS_SAIDA_X and y == POS_SAIDA_Y:
                 char = f"{DOS_VERDE}S{reset}"         
                 
             miolo1 += f"   {char}   {borda}/{reset}"
@@ -156,12 +196,12 @@ class MinigameMinotauro(BaseMinigame):
             self.ui.animar("[v] O radar não detecta nada próximo. Silêncio.")
         elif distancia == DISTANCIA_PERIGO:
             if random.random() < 0.2:
-                self.ui.exibir(f"{DOS_VERMELHO}[!] O radar está falhando... ruídos de estática por todo lado.{RESET}")
+                self.ui.exibir(f"{DOS_VERMELHO}{_sortear(MSGS_ESTATICA)}{RESET}")
             else:
-                if self.mx < self.px: self.ui.animar(f"{DOS_VERMELHO}⚠ Você sente um ar pesado em sua esquerda.{RESET}")
-                elif self.mx > self.px: self.ui.animar(f"{DOS_VERMELHO}⚠ Você enxerga um vulto a sua direita.{RESET}")
-                elif self.my > self.py: self.ui.animar(f"{DOS_VERMELHO}⚠ Uma mancha negra bloqueia sua frente.{RESET}")
-                elif self.my < self.py: self.ui.animar(f"{DOS_VERMELHO}⚠ Passos pesados são ouvidos atrás de você.{RESET}")
+                if self.mx < self.px: self.ui.animar(f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_ESQUERDA)}{RESET}")
+                elif self.mx > self.px: self.ui.animar(f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_DIREITA)}{RESET}")
+                elif self.my > self.py: self.ui.animar(f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_FRENTE)}{RESET}")
+                elif self.my < self.py: self.ui.animar(f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_TRAS)}{RESET}")
 
         
         opcoes = "ir frente | ir trás | ir esquerda | ir direita | esperar"
@@ -182,14 +222,32 @@ class MinigameMinotauro(BaseMinigame):
         self.ui.exibir(f"\n[{opcoes}]")
 
     def mover_minotauro(self):
-        
+        """Move o minotauro. Em modo sprint, persegue o eixo em que ainda há distância,
+        evitando desperdiçar o turno de perseguição escolhendo um eixo já alinhado."""
         if random.random() < self.chance_sprint:
-            if random.random() < 0.5:
-                if self.px > self.mx: self.mx += 1
-                elif self.px < self.mx: self.mx -= 1
+            dif_x = self.px - self.mx
+            dif_y = self.py - self.my
+
+            pode_mover_x = dif_x != 0
+            pode_mover_y = dif_y != 0
+
+            if pode_mover_x and pode_mover_y:
+                mover_em_x = random.random() < 0.5
+            elif pode_mover_x:
+                mover_em_x = True
+            elif pode_mover_y:
+                mover_em_x = False
             else:
-                if self.py > self.my: self.my += 1
-                elif self.py < self.my: self.my -= 1
+                
+                direcao = random.choice([(-1, 0), (1, 0), (0, -1), (0, 1)])
+                self.mx += direcao[0]
+                self.my += direcao[1]
+                mover_em_x = None
+
+            if mover_em_x is True:
+                self.mx += 1 if dif_x > 0 else -1
+            elif mover_em_x is False:
+                self.my += 1 if dif_y > 0 else -1
         else:
             direcao = random.choice([(-1, 0), (1, 0), (0, -1), (0, 1)])
             self.mx += direcao[0]
@@ -204,10 +262,10 @@ class MinigameMinotauro(BaseMinigame):
             if dist_ui > DISTANCIA_PERIGO:
                 
                 if quem_moveu == "jogador":
-                    self.ui.exibir(f"\n{DOS_VERMELHO}⚠ Você dá um passo e bate o rosto em uma carcaça de metal fria. Você recua pelo susto.⚠{RESET}")
+                    self.ui.exibir(f"\n{DOS_VERMELHO}{_sortear(MSGS_COLISAO_JOGADOR)}{RESET}")
                     self.px, self.py = px_old, py_old
                 else:
-                    self.ui.exibir(f"\n{DOS_VERMELHO}⚠ VOCÊ TROMBA COM ALGO METÁLICO NO ESCURO. ELE ESTÁ NA SUA FRENTE⚠{RESET}")
+                    self.ui.exibir(f"\n{DOS_VERMELHO}{_sortear(MSGS_COLISAO_MONSTRO)}{RESET}")
                     self.mx, self.my = mx_old, my_old
                 self.ui.pausar(2)
                 return "continuar"
@@ -229,29 +287,33 @@ class MinigameMinotauro(BaseMinigame):
                     return "morte"
         return None
 
-    def processar_turno(self, acao, jogo):
-        ui = self.ui
+    def _processar_investigacao(self, acao, jogo):
+        """Trata o comando de examinar o celular quebrado. Retorna string de resultado ou None se a ação não for essa."""
+        if acao not in ["celular quebrado", "ver celular quebrado", "olhar celular quebrado", "examinar celular quebrado", "investigar celular quebrado", "celular"]:
+            return None
 
-        if acao in ["celular quebrado", "ver celular quebrado", "olhar celular quebrado", "examinar celular quebrado", "investigar celular quebrado", "celular"]:
-            if self.px == POS_FUSIVEL_X and self.py == POS_FUSIVEL_Y: 
-                desc = jogo.mapa.get("sala de energia", {}).get("inspecionaveis", {}).get("celular quebrado", "Parece ser dela...")
-                ui.exibir(f"\n{DOS_AMARELO}🔎 {desc}{RESET}")
-            else:
-                ui.exibir("O celular quebrado está no fundo da sala (na parede central).")
-            return "continuar"
-        
+        if self.px == POS_FUSIVEL_X and self.py == POS_FUSIVEL_Y:
+            desc = jogo.mapa.get("sala de energia", {}).get("inspecionaveis", {}).get("celular quebrado", "Parece ser dela...")
+            self.ui.exibir(f"\n{DOS_AMARELO}🔎 {desc}{RESET}")
+        else:
+            self.ui.exibir("O celular quebrado está no fundo da sala (na parede central).")
+        return "continuar"
+
+    def _processar_god_mode_ataque(self, acao, jogo):
+        """Trata o ataque cheat em god mode. Retorna string de resultado ou None se não aplicável."""
         if acao in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False):
-            ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{RESET}")
-            ui.exibir(f"{DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{RESET}")
-            ui.pausar(1.5)
+            self.ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{RESET}")
+            self.ui.exibir(f"{DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{RESET}")
+            self.ui.pausar(1.5)
             return "vitoria_minotauro"
+        return None
 
+    def _processar_movimento_e_acoes(self, acao, jogo):
+        """Aplica a ação escolhida (movimento, esperar, itens, cortar fios, sair).
+        Retorna True se o turno foi consumido (o minotauro deve se mover em seguida)."""
+        ui = self.ui
         turno_gasto = False
 
-        dist_ui = abs(self.px - self.mx) + abs(self.py - self.my)
-        px_old, py_old = self.px, self.py
-        mx_old, my_old = self.mx, self.my
-        
         if acao == "ir esquerda":
             if self.px > GRID_MIN_X: self.px -= 1
             else: ui.exibir("Você bate a cara na parede...")
@@ -316,6 +378,30 @@ class MinigameMinotauro(BaseMinigame):
         else: 
             ui.exibir(f"{DOS_AMARELO}Comando não reconhecido no escuro. Você gasta segundos tropeçando...{RESET}")
             turno_gasto = True 
+
+        return turno_gasto
+
+    def processar_turno(self, acao, jogo):
+        ui = self.ui
+
+        resultado = self._processar_investigacao(acao, jogo)
+        if resultado:
+            return resultado
+
+        resultado = self._processar_god_mode_ataque(acao, jogo)
+        if resultado:
+            return resultado
+
+        dist_ui = abs(self.px - self.mx) + abs(self.py - self.my)
+        px_old, py_old = self.px, self.py
+        mx_old, my_old = self.mx, self.my
+
+        resultado_acao = self._processar_movimento_e_acoes(acao, jogo)
+        
+        if resultado_acao in ("vitoria_minotauro",):
+            return resultado_acao
+
+        turno_gasto = bool(resultado_acao)
 
         
         resultado_colisao = self._resolver_colisao(jogo, dist_ui, px_old, py_old, mx_old, my_old, quem_moveu="jogador")
