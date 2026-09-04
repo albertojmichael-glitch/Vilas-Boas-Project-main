@@ -29,7 +29,6 @@ body {
     font-size: 1.3rem;
     font-weight: 500;
     overflow: hidden;
-    animation: crt-flicker 0.15s infinite;
     position: relative;
     cursor: crosshair;
 }
@@ -703,7 +702,9 @@ body.kernel-panic-mode .branco {
    ========================================= */
 
 /* O glitch SÓ acontece se a tag body tiver a classe glitch-mode */
-body.glitch-mode .terminal-section {
+body.glitch-mode .terminal-section,
+body.glitch-mode .container-tv {
+    animation: crt-flicker 0.15s infinite;
     text-shadow: 2px 0 red, -2px 0 blue !important;
 }
 
@@ -787,7 +788,7 @@ body.blackout-mode .prompt {
     pointer-events: none; /* Permite que o mouse clique através do efeito */
 }
 
-/* 2. Curvatura e Escurecimento das Bordas (Vignette) */
+
 .terminal-section::after {
     content: " ";
     display: block;
@@ -796,13 +797,9 @@ body.blackout-mode .prompt {
     left: 0;
     bottom: 0;
     right: 0;
-    /* Cria aquela sombra profunda nos cantos simulando a caixa da TV */
-    box-shadow: inset 0 0 120px rgba(0,0,0,0.95);
+    /* Reduzido de 0.95 para 0.4 para não escurecer o jogo! */
+    box-shadow: inset 0 0 120px rgba(0,0,0,0.4);
     z-index: 51;
     pointer-events: none;
 }
 
-
-.terminal-output, .input-line, .prompt, #hud-container {
-    text-shadow: 1px 0px 1px rgba(255, 0, 0, 0.6), -1px 0px 1px rgba(0, 255, 255, 0.6), 0px 0px 4px rgba(255, 255, 255, 0.15) !important;
-}
