@@ -201,20 +201,20 @@ def dar_tela_kernel_panic(jogo):
     jogo.estado_atual = "FIM"
     ui = jogo.ui_handler
     
-    # Limpa o histórico de chat ANTES de pintar a tela de azul
+
     ui.limpar()
     
-    # Envia o gatilho para o JavaScript mudar a tela
+    
     ui.buffer.append("@@PANIC@@")
     
     ARTE_PANIC = r"""
     .--.
-   |o_o |     -
+   |0_0 |     -
    |:_/ |    | |  
-  //   \ \   | |
- (|     | )  | |
-/'\_   _/`\  (_)
-\___)=(___/ 
+  //    \\   | |
+ (|      |)  | |
+/'\_   _/`\  ( )
+\___)=(___/  
 
     """
     
