@@ -58,14 +58,14 @@ class MinigameSeguranca(BaseMinigame):
             getattr(jogo, "energia_max_noite", 100),
         )
 
+        
         bonus_luz = max(0, getattr(jogo, "turnos_luz", 0) - 3) * 5
         bonus_bateria = getattr(jogo, "inventario", []).count("bateria nova") * 10
         self.energia += bonus_luz + bonus_bateria
+        
+        self.mensagem_bonus = "" 
         if bonus_luz > 0 or bonus_bateria > 0:
-            self.ui.buffer.append(
-                f"@@TYPE@@verde@@15@@[SISTEMA] Baterias extras detectadas no "
-                f"inventário. Energia redirecionada: +{bonus_luz + bonus_bateria}%"
-            )
+            self.mensagem_bonus = f"{DOS_VERDE}[SISTEMA] Baterias extras conectadas. Energia redirecionada: +{bonus_luz + bonus_bateria}%{RESET}"
 
         self.porta_fechada = False
         self.erro_camera = False
@@ -178,6 +178,11 @@ class MinigameSeguranca(BaseMinigame):
             self.ui.buffer.append("@@NORMAL_POWER@@")
 
         self.ui.exibir("\n" + "=" * 50)
+
+        if getattr(self, "mensagem_bonus", "") and self.turno == 0:
+            self.ui.exibir(self.mensagem_bonus)
+            self.ui.exibir("=" * 50)
+
         chance_bug = self.caroline_pos * 15
 
         def bug(texto, chance):
@@ -192,6 +197,9 @@ class MinigameSeguranca(BaseMinigame):
             hora_disp = f"0{(self.turno * 15) // 60}:??"
         else:
             hora_disp = f"0{(self.turno * 15) // 60}:{(self.turno * 15) % 60:02d}"
+
+        god_mode = getattr(self.jogo, "god_mode", False)
+        texto_energia = "∞" if god_mode else f"{self.energia}%"
 
         texto_energia = "∞" if self.energia > 100 else f"{self.energia}%"
         self.ui.exibir(bug(f"RELOGIO: {hora_disp}", chance_bug))

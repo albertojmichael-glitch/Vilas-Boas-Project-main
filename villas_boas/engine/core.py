@@ -517,13 +517,14 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "MINIGAME_MINOTAURO"
             jogo.minigame_atual.imprimir_status()
 
-        elif (
-            (comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"] or jogo.sala_atual == "01")
-            and not getattr(jogo, 'noite_vencida', False)
-            and comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"]
-        ):
-            if "cartao de seguranca" not in jogo.inventario and not getattr(jogo, 'god_mode', False):
-                ui.exibir(f"{DOS_VERMELHO}os monitores e o computador estão bloqueados. O sistema exige a inserção de um 'Cartão de Segurança nivel IV'.{RESET}")
+        
+        elif comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"]:
+            if jogo.sala_atual != "01":
+                ui.exibir("Não há nenhuma cadeira de segurança aqui.")
+            elif getattr(jogo, 'noite_vencida', False):
+                ui.exibir(f"{DOS_AMARELO}A mesa de controle está desligada.{RESET}")
+            elif "cartao de seguranca" not in jogo.inventario and not getattr(jogo, 'god_mode', False):
+                ui.exibir(f"{DOS_VERMELHO}Os monitores e o computador estão bloqueados. O sistema exige a inserção de um 'Cartão de Segurança Nível IV'.{RESET}")
             else:
                 jogo.sala_atual = "01"
                 jogo.minigame_atual = MinigameSeguranca(jogo)
