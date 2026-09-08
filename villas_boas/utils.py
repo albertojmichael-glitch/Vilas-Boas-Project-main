@@ -116,14 +116,14 @@ def atualizar_eventos_de_tempo(jogo):
             # Reseta os turnos se ele entrou na Saferoom
             jogo.turnos_mesma_sala = 0
 
-    elif jogo.dificuldade_escolhida == "PESADELO":
-        if jogo.posicao_perseguidor != "morte" and jogo.sala_atual not in salas_seguras_ia:
+    elif jogo.dificuldade_escolhida == "PESADELO" and jogo.posicao_perseguidor != "morte" and jogo.sala_atual not in salas_seguras_ia:
             sala_monstro = jogo.mapa.get(jogo.posicao_perseguidor, {})
+            
             conexoes = [
                 v for k, v in sala_monstro.items()
                 if k not in ["descrição", "itens", "inspecionaveis"]
                 and v in jogo.mapa
-                and v not in salas_seguras_ia # O monstro não anda para salas seguras
+                and v not in salas_seguras_ia 
             ]
             if conexoes and random.random() < 0.40:
                 jogo.posicao_perseguidor = random.choice(conexoes)
