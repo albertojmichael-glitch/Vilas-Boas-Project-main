@@ -611,13 +611,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 rodar_final("verdadeiro", jogo)
                 return
 
-            if verificar_final_de_jogo(jogo):
-                pass
-            elif jogo.estado_atual == "COMBATE_ANIMATRONICO":
-                pass
-            else:
-                if jogo.estado_atual == "JOGO":
-                    imprimir_contexto_sala(jogo)
+            
+            if not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
+                imprimir_contexto_sala(jogo)
 
     # minigame do cofre
     elif jogo.estado_atual == "MINIGAME_COFRE":
