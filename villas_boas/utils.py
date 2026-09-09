@@ -45,7 +45,7 @@ def atualizar_eventos_de_tempo(jogo):
         return
 
     # 1. DEFINIÇÃO DAS SALAS ILUMINADAS (ZONAS SEGURAS DE LUZ)
-    salas_iluminadas = ["sala de fliperamas", "hall de entrada", "sala de refrigeração", "01"]
+    salas_iluminadas = ["sala de fliperamas", "hall de entrada", "sala de refrigeração", "01", "balcão", "mesas de jantar"]
 
     if getattr(jogo, "amanheceu", False) or jogo.sala_atual in salas_iluminadas:
         jogo.turnos_no_escuro = 0

@@ -207,6 +207,31 @@ def _usar_tabua_pequena_de_madeira(jogo, mapa, item):
         ui.exibir("Não há onde usar a tábua aqui.")
     return True
 
+def _usar_cura(jogo, mapa, item):
+    ui = jogo.ui_handler
+    
+    
+    hp_maximo = 2 if jogo.dificuldade_escolhida == "PESADELO" else 3
+    if getattr(jogo, "god_mode", False):
+        hp_maximo = 9999
+
+    
+    if jogo.hp >= hp_maximo:
+        ui.exibir(f"Você já está se sentindo bem. Melhor guardar isso para depois.")
+        return False
+
+    
+    jogo.hp += 1
+    jogo.inventario.remove(item)
+
+    
+    if item == "remedio":
+        ui.exibir(f"{DOS_VERDE}Você engole o relaxante muscular vencido. Seus músculos destravam e a dor diminui (+1 HP).{RESET}")
+    elif item == "doce":
+        ui.exibir(f"{DOS_VERDE}Você mastiga o doce velho. O pico de açúcar te dá um pouco mais de resistência (+1 HP).{RESET}")
+    
+    return True
+
 
 # Dispatcher: mapeia o item (já resolvido por encontrar_melhor_match) para
 # o handler responsável. As duas grafias da tábua apontam para o mesmo
@@ -219,6 +244,8 @@ _USAR_HANDLERS = {
     "disquete": _usar_disquete,
     "tábua pequena de madeira": _usar_tabua_pequena_de_madeira,
     "tabua pequena de madeira": _usar_tabua_pequena_de_madeira,
+    "remedio": _usar_cura,  
+    "doce": _usar_cura      
 }
 
 
