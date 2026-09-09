@@ -480,20 +480,19 @@ function atualizarSidebar(estado) {
     if (invList) {
         invList.innerHTML = "";
         
-        let qtdBolsas = 0;
-        if (estado.inventario) {
-            qtdBolsas = estado.inventario.filter(item => item === "bolsa").length;
-        }
         
+        let qtdBolsas = estado.bolsas || 0;
         const limiteMaximo = 3 + (qtdBolsas * 3);
-        const qtdAtual = estado.inventario ? estado.inventario.length : 0;
+        const inventario = estado.inventario || [];
+        const qtdAtual = inventario.length;
         
         if (invTitulo) {
             invTitulo.textContent = `INV (${qtdAtual}/${limiteMaximo}):`;
         }
 
+        
         if (qtdAtual > 0) {
-            estado.inventario.forEach(item => {
+            inventario.forEach(item => {
                 let li = document.createElement("li");
                 li.textContent = `- ${item}`;
                 li.className = "branco";
@@ -504,6 +503,31 @@ function atualizarSidebar(estado) {
             li.textContent = "Vazio";
             li.className = "amarelo";
             invList.appendChild(li);
+        }
+
+        
+        let slotsContainer = document.getElementById("inv-slots-container");
+        if (!slotsContainer) {
+            slotsContainer = document.createElement("div");
+            slotsContainer.id = "inv-slots-container";
+            slotsContainer.className = "inv-slots-container";
+            invList.parentElement.appendChild(slotsContainer); 
+        }
+        
+        slotsContainer.innerHTML = ""; 
+
+        
+        for (let i = 0; i < limiteMaximo; i++) {
+            let slotBox = document.createElement("div");
+            slotBox.className = "inv-slot";
+            
+            if (i < qtdAtual) {
+                slotBox.classList.add("cheio"); 
+            } else {
+                slotBox.classList.add("vazio"); 
+            }
+            
+            slotsContainer.appendChild(slotBox);
         }
     }
 }

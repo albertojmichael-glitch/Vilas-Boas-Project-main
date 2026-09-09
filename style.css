@@ -734,6 +734,32 @@ body.blackout-mode .prompt {
     text-shadow: none !important;
 }
 
+ /* slot do inventario */
+ 
+.inv-slots-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.inv-slot {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #33ff00; /* Borda da caixa vazia */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Quando o Slot estiver ocupado, desenhamos um círculo dentro */
+.inv-slot.cheio::after {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border: 2px solid #33ff00;
+    border-radius: 50%;
+}
 
 
 

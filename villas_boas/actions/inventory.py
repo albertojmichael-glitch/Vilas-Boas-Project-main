@@ -18,6 +18,14 @@ def cmd_pegar(comando, jogo, mapa):
         return False
     item = match_item
 
+    if item == "bolsa":
+        jogo.bolsas_coletadas = getattr(jogo, "bolsas_coletadas", 0) + 1
+        itens_chao.remove("bolsa")
+        ui.exibir(f"{DOS_VERDE}Você equipou a bolsa! Seu limite de inventário aumentou permanentemente (+3 slots).{RESET}")
+        return True
+        
+    limite_atual = MAX_INVENTARIO + (getattr(jogo, "bolsas_coletadas", 0) * 3)
+
     qtd_bolsas = jogo.inventario.count("bolsa")
     limite_atual = MAX_INVENTARIO + (qtd_bolsas * 3)
     if len(jogo.inventario) >= limite_atual and not getattr(jogo, "god_mode", False):

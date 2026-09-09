@@ -518,7 +518,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.minigame_atual.imprimir_status()
 
         
-        elif comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira", "f", "frente", "reto"]:
+        elif comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"]:
             if jogo.sala_atual != "01":
                 ui.exibir("Não há nenhuma cadeira de segurança aqui.")
             elif getattr(jogo, 'noite_vencida', False):

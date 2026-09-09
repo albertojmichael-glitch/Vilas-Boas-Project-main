@@ -403,6 +403,8 @@ def gerar_resposta_json(jogo):
         luz = jogo.turnos_luz if not getattr(jogo, "god_mode", False) else "∞"
         inv = jogo.inventario
         som = getattr(jogo, "nivel_barulho", 0) 
+        bolsas = getattr(jogo, "bolsas_coletadas", 0)
+
         sala = (
             jogo.sala_atual.upper()
             if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"]
@@ -419,6 +421,7 @@ def gerar_resposta_json(jogo):
                 "inventario": inv,
                 "sala": sala,
                 "saidas": saidas,
+                "bolsas": bolsas
             },
         }
     )
