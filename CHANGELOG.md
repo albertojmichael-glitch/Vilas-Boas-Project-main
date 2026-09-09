@@ -3,7 +3,43 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
-## (Atualização do Sistema) - Patch de Expansão, Estabilidade e Segurança
+## (atualização do sistema) - Patch de Estabilidade, Expansão e Arquitetura (09/09/26)
+
+* **Correções de Bugs**
+
+Corrigido um bug crítico no roteamento de comandos que bloqueava a movimentação geral pelo mapa.
+
+Resolvido crash do servidor em produção causado pela validação rigorosa do Pydantic em estados não mapeados do minigame.
+
+Corrigido o alinhamento distorcido dos caracteres ASCII no radar da Sala de Energia.
+
+* **Interface e Visual (UI/UX)**
+
+Otimização do CSS: Remoção de filtros escuros e sobreposições desnecessárias. O efeito de monitor CRT agora é limpo e legível.
+
+Nova UI de Inventário: A barra lateral agora renderiza caixas visuais (slots) para representar a capacidade e os itens carregados.
+
+Integração de gatilhos visuais dinâmicos (glitches, alteração de cores e apagões) perfeitamente sincronizados com as narrativas dos finais do jogo.
+
+* **Mecânicas e Gameplay**
+
+Reformulação do Inventário: O item "bolsa" agora atua como um upgrade instantâneo, expandindo a capacidade máxima em 3 slots sem ocupar espaço útil.
+
+Minigame de Segurança: Introduzido o sistema de "Reboot Manual". Reparos críticos agora exigem a resolução de captchas lógicos gerados aleatoriamente enquanto o turno corre.
+
+Minigame do Minotauro: Expansão do grid para 5x5, introdução de armadilhas elétricas visíveis que penalizam recursos e IA aprimorada com perseguição implacável.
+
+Minigame do Cofre: Implementação de charadas textuais dinâmicas e limite estrito de 3 falhas antes do travamento temporário do painel.
+
+Minigame do Duto: Adição de variações textuais para acertos e erros, reduzindo a fadiga de leitura.
+
+* **Arquitetura de Código**
+
+Refatoração completa do motor de inventário, substituindo cadeias condicionais rígidas pelo padrão de projeto Action Dispatcher para o uso e combinação de itens.
+
+Limpeza e modularização do loop principal, com extração de funções auxiliares isoladas para telemetria, pós-processamento de turno e verificação de fim de jogo.
+
+## (Atualização do Sistema) - Patch de Expansão, Estabilidade e Segurança (28/08/26)
 
 * **Sequência de Boot em CRT:** Implementação de uma introdução interativa simulando o ligar de uma TV de tubo clássica.
 * **Camadas Visuais Dinâmicas:** Adição de estágios de transição reais incluindo Estática (com trepidação de imagem), Barras de Cor SMPTE e Tela Azul de VCR ("VIDEO 2 CONECTADO") antes de revelar o terminal.
