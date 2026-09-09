@@ -53,6 +53,8 @@ class GameState(BaseModel):
     turnos_no_escuro: int = 0
     turnos_enjoado: int = 0
     sala_atual: str = "entrada"
+    cofre_tentativas: int = 0
+    jon_erros: int = 0
     turnos_mesma_sala: int = 0
     dificuldade_escolhida: str = "NORMAL"
     chance_sprint_minotauro: int = 15

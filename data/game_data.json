@@ -340,29 +340,22 @@
         "cartao de seguranca": "Um cartão azul, com uma faixa preta na parte de trás, não possui nome, nem nada legivel, apenas 'IV', seria cartão nivel 4?.",
         "partitura rasgada": "3 paginas cheias de notas musicais, e algumas frases e palavras soltas, 1994... 1982... 'ela'... 'quem é você?'... Não sei o que significa. "
     },
-
     "eventos_aleatorios": [
-    {
-      "mensagem": "Você ouve um estalo alto vindo do teto. Algo pesado se moveu lá em cima...",
-      "item_drop": null
-    },
-    
-    {
-      "mensagem": "Você tropeça em algo no escuro que faz um som metálico...",
-      "item_drop": "fita isolante"
-    },
-
-    {
-      "mensagem": "Uma risada infantil, distorcida e estática, ecoa rapidamente pela sala e some.",
-      "item_drop": null
-    },
-
-    {
-      "mensagem": "Você encontra algo caído próximo à parede.",
-      "item_drop": "bateria nova"
-    }
-  ]
-
-
-
+        {
+            "mensagem": "Você ouve um estalo alto vindo do teto. Algo pesado se moveu lá em cima...",
+            "item_drop": "bateria nova"
+        },
+        {
+            "mensagem": "Você tropeça em algo no escuro que faz um som metálico...",
+            "item_drop": "fita isolante"
+        },
+        {
+            "mensagem": "Uma risada infantil, distorcida e estática, ecoa rapidamente pela sala e some.",
+            "item_drop": "doce"
+        },
+        {
+            "mensagem": "Você encontra algo caído próximo à parede.",
+            "item_drop": "bateria nova"
+        }
+    ]
 }
