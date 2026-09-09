@@ -12,28 +12,31 @@ def cmd_pegar(comando, jogo, mapa):
     item = comando.replace("pegar ", "").strip()
     sala = mapa.get(jogo.sala_atual, {})
     itens_chao = sala.get("itens", [])
+    
     match_item = encontrar_melhor_match(item, itens_chao)
     if not match_item:
         ui.exibir(f"Não há nenhum '{item}' aqui para pegar.")
         return False
+        
     item = match_item
 
+    
     if item == "bolsa":
         jogo.bolsas_coletadas = getattr(jogo, "bolsas_coletadas", 0) + 1
         itens_chao.remove("bolsa")
         ui.exibir(f"{DOS_VERDE}Você equipou a bolsa! Seu limite de inventário aumentou permanentemente (+3 slots).{RESET}")
         return True
-        
-    limite_atual = MAX_INVENTARIO + (getattr(jogo, "bolsas_coletadas", 0) * 3)
 
-    qtd_bolsas = jogo.inventario.count("bolsa")
+    
+    qtd_bolsas = getattr(jogo, "bolsas_coletadas", 0)
     limite_atual = MAX_INVENTARIO + (qtd_bolsas * 3)
+
+    
     if len(jogo.inventario) >= limite_atual and not getattr(jogo, "god_mode", False):
-        ui.exibir(
-            f"{DOS_VERMELHO}Sua mochila está cheia! Você precisa largar algo antes.{RESET}"
-        )
+        ui.exibir(f"{DOS_VERMELHO}Sua mochila está cheia! Você precisa largar algo antes.{RESET}")
         return False
 
+    
     jogo.inventario.append(item)
     itens_chao.remove(item)
     ui.exibir(f"{DOS_VERDE}Você pegou: {item}{RESET}")

@@ -152,38 +152,27 @@ def desbloquear_conquista(jogo, id_conquista, nome_exibicao):
         ui.buffer.append(f"@@TYPE@@amarelo@@0@@♔ CONQUISTA DESBLOQUEADA: {nome_exibicao} ♔")
 
 
-# ---------------------------------------------------------------------------
-# Cofre da sala 01 — senha continua sendo "1994" (mesmo contrato de antes:
-# ninguém no resto do jogo mudou, só a experiência ao redor da senha).
-# Em vez de o jogador simplesmente saber a senha do nada, o cofre agora
-# entrega uma charada visual toda vez que é aberto ou reconsultado, e
-# guarda o número de tentativas erradas na própria sessão do minigame
-# (jogo.cofre_tentativas), sem precisar de nenhum estado novo na state
-# machine principal — continua tudo dentro de MINIGAME_COFRE.
-# ---------------------------------------------------------------------------
+
 
 MAX_TENTATIVAS_COFRE = 3
 
-# Cada dígito da senha "1994" ganha uma pista textual curta e temática,
-# na ordem em que aparecem. O jogador precisa juntar os quatro para
-# formar o número — um pouco de trabalho de dedução em vez de um número
-# jogado na tela.
-_PISTAS_DIGITO_COFRE = {
-    "1": "Um unico ponto de luz acende sozinho na unidade, o primeiro som da noite.",
-    "9": "Nove marcas de unha, em 2 vezes, na fileira da lateral do metal.",
-    "4": "Quatro cadeiras na sala do piano. Só uma nunca foi ocupada de novo.",
-}
 
+_PISTAS_COFRE = [
+    "[1º dígito] Um único ponto de luz acende sozinho na unidade, o primeiro som da noite.",
+    "[2º e 3º dígitos] Nove marcas de unha, em 2 vezes, na fileira da lateral do metal.",
+    "[4º dígito] Quatro cadeiras na sala do piano. Só uma nunca foi ocupada de novo."
+]
 
 def gerar_charada_cofre(jogo):
     """Monta o texto de pistas embaralhando a ordem de exibição a cada
-    tentativa, para não virar decoreba de posição."""
-    senha = "1994"
-    ordem = list(enumerate(senha))
-    random.shuffle(ordem)
+    tentativa, mas mantendo a integridade das frases."""
+    pistas = _PISTAS_COFRE.copy()
+    random.shuffle(pistas)
+    
     linhas = []
-    for posicao, digito in ordem:
-        linhas.append(f"  [{posicao + 1}º dígito] {_PISTAS_DIGITO_COFRE[digito]}")
+    for pista in pistas:
+        linhas.append(f"  {pista}")
+        
     return "\n".join(linhas)
 
 
