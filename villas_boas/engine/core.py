@@ -617,7 +617,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             sala.setdefault("itens", [])
 
             if "chave dos fundos" not in jogo.inventario and "chave dos fundos" not in sala["itens"]:
-                if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
+                if len(jogo.inventario) < (MAX_INVENTARIO + (getattr(jogo, "bolsas_coletadas", 0) * 3)) or getattr(jogo, 'god_mode', False):
                     ui.exibir(f"{DOS_AMARELO}Você encontrou a 'chave dos fundos' suja de graxa lá dentro!{RESET}")
                     jogo.inventario.append("chave dos fundos")
                 else:
@@ -724,7 +724,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         sala.setdefault("itens", [])
 
         if "chave da cozinha" not in jogo.inventario and "chave da cozinha" not in sala["itens"]:
-            if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
+            if len(jogo.inventario) < (MAX_INVENTARIO + (getattr(jogo, "bolsas_coletadas", 0) * 3)) or getattr(jogo, 'god_mode', False):
                 jogo.inventario.append("chave da cozinha")
                 ui.exibir(f"{DOS_VERDE}⛋ Você obteve: CHAVE DA COZINHA{RESET}")
                 jogo.inventario.append("partitura rasgada")
