@@ -222,10 +222,21 @@ class MinigameMinotauro(BaseMinigame):
                 
         self.ui.exibir(f"\n[{opcoes}]")
 
-    def _dar_passo_inteligente(self):
-        """Função auxiliar para pathfinding perfeito do monstro"""
-        dif_x = self.px - self.mx
-        dif_y = self.py - self.my
+    def _dar_passo(self, alvo_x, alvo_y, chance_erro=0.0):
+        """Função auxiliar para pathfinding com taxa de erro baseada em som/escuro"""
+        if random.random() < chance_erro:
+            
+            dx = random.choice([-1, 0, 1])
+            dy = random.choice([-1, 0, 1])
+            if dx == 0 and dy == 0: 
+                dy = 1 
+            self.mx += dx
+            self.my += dy
+            return
+
+        
+        dif_x = alvo_x - self.mx
+        dif_y = alvo_y - self.my
         
         pode_mover_x = dif_x != 0
         pode_mover_y = dif_y != 0
@@ -240,14 +251,31 @@ class MinigameMinotauro(BaseMinigame):
         elif pode_mover_y:
             self.my += 1 if dif_y > 0 else -1
 
-    def mover_minotauro(self):
-        
-        self._dar_passo_inteligente()
-        
-        
-        if random.random() < self.chance_sprint:
-            self._dar_passo_inteligente()
+    def mover_minotauro(self, acao_jogador):
+
+        chance_erro = 0.25 # 25% de chance de errar o caminho
+        acao_norm = acao_jogador.lower().strip()
+
+        # 2. Estratégia de Furtividade
+        if acao_norm == "esperar":
+            chance_erro = 0.75 
             
+        
+        distancia_inicial = abs(self.px - self.mx) + abs(self.py - self.my)
+        if acao_norm in ["pegar tesoura", "cortar fios"] and distancia_inicial <= 2:
+            
+            chance_erro = 0.90 
+
+        
+        self._dar_passo(self.px, self.py, chance_erro)
+        
+        
+        distancia_atual = abs(self.px - self.mx) + abs(self.py - self.my)
+        if distancia_atual > 1 and random.random() < self.chance_sprint:
+           
+            self._dar_passo(self.px, self.py, chance_erro / 2.0)
+            
+        
         self.mx = max(GRID_MIN_X, min(GRID_MAX_X, self.mx)) 
         self.my = max(GRID_MIN_Y, min(GRID_MAX_Y, self.my))
 
@@ -421,7 +449,7 @@ class MinigameMinotauro(BaseMinigame):
                     return "morte"
                 
             mx_old, my_old = self.mx, self.my
-            self.mover_minotauro()
+            self.mover_minotauro(acao)
                 
             
             resultado_colisao = self._resolver_colisao(jogo, dist_ui, px_old, py_old, mx_old, my_old, quem_moveu="monstro")

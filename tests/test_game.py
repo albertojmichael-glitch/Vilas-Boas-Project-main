@@ -28,6 +28,7 @@ def jogo_base():
     jogo.ui_handler = DummyUI()
     jogo.estado_atual = "JOGO"
     return jogo
+
 def test_fuzzy_matching_itens():
     """Garante que o jogador pode errar algumas letras e o jogo ainda entende o item."""
     opcoes = ["lanterna", "bateria nova", "chave dos fundos", "fios cortados"]
@@ -35,11 +36,13 @@ def test_fuzzy_matching_itens():
     assert encontrar_melhor_match("chave fundos", opcoes) == "chave dos fundos"
     assert encontrar_melhor_match("bateria", opcoes) == "bateria nova"
     assert encontrar_melhor_match("pudim", opcoes) is None
+
 def test_alias_movimentacao(jogo_base):
     """Garante que 'f' vira 'ir frente' e movimenta o jogador."""
     jogo_base.sala_atual = "entrada"
     processar_comando("f", jogo_base, jogo_base.mapa)
     assert jogo_base.sala_atual == "sala de jantar"
+
 def test_inventario_cheio_sem_bolsa(jogo_base):
     """Testa se o jogo bloqueia pegar itens com limite de 3 (sem a bolsa)."""
     jogo_base.inventario = ["item1", "item2", "item3"]
@@ -50,14 +53,27 @@ def test_inventario_cheio_sem_bolsa(jogo_base):
     assert len(jogo_base.inventario) == 3
     output = " ".join(jogo_base.ui_handler.buffer)
     assert "Sua mochila está cheia" in output
+
 def test_inventario_aumenta_com_bolsa(jogo_base):
-    """Garante que ter a bolsa aumenta o limite para 6 e permite pegar o papel."""
-    jogo_base.inventario = ["item1", "item2", "bolsa"]
+    """Garante que ter coletado a bolsa aumenta o limite para 6 e permite pegar itens extras."""
+    
+    jogo_base.inventario = ["item1", "item2", "item3"] 
+    
+    
+    jogo_base.bolsas_coletadas = 1 
+    
+    
     jogo_base.sala_atual = "entrada"
     jogo_base.mapa["entrada"]["itens"] = ["papel"]
+    
+    
+    from villas_boas.actions.parser import processar_comando
     processar_comando("pegar papel", jogo_base, jogo_base.mapa)
+    
+    
     assert "papel" in jogo_base.inventario
     assert len(jogo_base.inventario) == 4
+
 def test_transicao_morte_animatronico(jogo_base):
     """Se tentar bater no animatronico SEM God Mode, tem que morrer instantaneamente."""
     jogo_base.estado_atual = "COMBATE_ANIMATRONICO"
@@ -66,6 +82,7 @@ def test_transicao_morte_animatronico(jogo_base):
     assert gastou_turno is True
     assert jogo_base.sala_atual == "morte"
     assert jogo_base.estado_atual == "FIM"
+
 def test_vitoria_animatronico_god_mode(jogo_base):
     """Se tentar bater COM God Mode, ele espanta o monstro e volta pro jogo normal."""
     jogo_base.estado_atual = "COMBATE_ANIMATRONICO"
@@ -74,6 +91,7 @@ def test_vitoria_animatronico_god_mode(jogo_base):
     assert jogo_base.sala_atual != "morte"
     assert jogo_base.estado_atual == "JOGO"
     assert jogo_base.posicao_perseguidor == "longe"
+
 def test_minotauro_derrota_escuro(jogo_base):
     """Testa se andar direto para o minotauro gera morte (Soft-lock preventivo)."""
     minigame = MinigameMinotauro(jogo_base)
@@ -81,6 +99,7 @@ def test_minotauro_derrota_escuro(jogo_base):
     minigame.mx, minigame.my = 0, 1
     resultado = minigame.processar_turno("esperar", jogo_base)
     assert resultado == "morte"
+
 def test_seguranca_energia_esgotada(jogo_base):
     """Testa se a energia acaba ao ser muito gasta e aciona o apagão."""
     minigame = MinigameSeguranca(jogo_base)
@@ -90,6 +109,7 @@ def test_seguranca_energia_esgotada(jogo_base):
     assert minigame.porta_fechada is False
     output = " ".join(jogo_base.ui_handler.buffer)
     assert "Sem energia" in output
+
 def test_salvar_e_carregar_autosave(jogo_base, tmp_path):
     """Cria um arquivo de save temporário, altera dados, salva e garante que carrega os dados exatos."""
     import state
