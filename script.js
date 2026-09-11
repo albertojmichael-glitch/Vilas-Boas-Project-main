@@ -478,17 +478,14 @@ window.onload = function() {
     const idReplay = urlParams.get('replay');
 
     if (idReplay) {
-        
         iniciarReplay(idReplay);
     } else {
-        
-        iniciarJogoNovo(); 
+        iniciarJogo(); 
     }
 
     carregarPreferencias();
     if(onloadOriginal) onloadOriginal();
 };
-
 
 const terminalSection = document.querySelector('.terminal-section');
 
@@ -902,7 +899,7 @@ async function fetchSeguro(url, options) {
     try {
         const res = await fetch(url, options);
         if (!res.ok) throw new Error("Servidor offline");
-        const data = await res.json(); // <--- AQUI ESTÁ A NOSSA RESPOSTA!
+        const data = await res.json(); 
 
         const tempoDecorrido = Date.now() - startTime;
         if (tempoDecorrido < 300) {
@@ -911,20 +908,20 @@ async function fetchSeguro(url, options) {
         
         loadingSpinner.style.display = 'none';
         
-        // 1. Processa os textos e a interface
+        
         await processarLinhas(data.linhas, data.estado);
         
-        // 2. Dispara os pop-ups de Conquistas (agora no jogo normal também!)
+        
         if (data.novas_conquistas) {
             processarConquistas(data.novas_conquistas);
         }
 
-        // 3. Gatilho da Tela de Arcade / Leaderboard
+        
         if (data.estado) {
             if (data.estado.estado_jogo === "FIM" && data.estado.tempo_final > 0) {
                 setTimeout(() => {
                     mostrarTelaDePontuacao(data.estado.tempo_final);
-                }, 5000); // Espera 5 segundos antes de mostrar a tela
+                }, 5000); 
             }
         }
 
@@ -945,6 +942,21 @@ async function fetchSeguro(url, options) {
         inputField.disabled = false;
         inputField.focus();
     }
+
+    function iniciarJogo() {
+    fetchSeguro('/iniciar', { method: 'GET' });
+}
+
+async function enviarComando(comando) {
+    fetchSeguro('/comando', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            comando: comando, 
+            telemetria: pref_telemetria 
+        })
+    });
+}
 }
 
 
