@@ -199,10 +199,10 @@ try:
     with open(JSON_PATH, "r", encoding="utf-8") as f:
         _dados = json.load(f)
 except FileNotFoundError:
-    print(f"❌ ERRO FATAL: Arquivo de dados não encontrado em {JSON_PATH}")
+    print(f"ERRO FATAL: Arquivo de dados não encontrado em {JSON_PATH}")
     _dados = {"mapa_original": {}, "descricoes_itens": {}}
 except json.JSONDecodeError as e:
-    print(f"❌ ERRO FATAL: JSON malformado. Verifique a sintaxe: {e}")
+    print(f"ERRO FATAL: JSON malformado. Verifique a sintaxe: {e}")
     _dados = {"mapa_original": {}, "descricoes_itens": {}}
 
 

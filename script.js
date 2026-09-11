@@ -18,14 +18,21 @@ const saidasEl = document.getElementById('hud-saidas');
 
 
 let audioCtx = null;
+let masterGainNode = null; // Controlador global
 let ambientOsc = null;
 let crtOsc = null;
+let pref_volume = 1.0; // Volume padrão
 
 function obterAudioContext() {
     if (!audioCtx) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (AudioContextClass) {
             audioCtx = new AudioContextClass();
+            
+            // Cria o nó de volume mestre e o conecta na saída final (caixas de som)
+            masterGainNode = audioCtx.createGain();
+            masterGainNode.gain.value = pref_volume;
+            masterGainNode.connect(audioCtx.destination);
         }
     }
     if (audioCtx && audioCtx.state === 'suspended') {
@@ -34,6 +41,20 @@ function obterAudioContext() {
     return audioCtx;
 }
 
+// NOVO: Sistema de Legendas de Áudio
+let legendaTimeout;
+function mostrarLegendaDeAudio(texto) {
+    const legendaDiv = document.getElementById('audio-captions');
+    if (legendaDiv) {
+        legendaDiv.textContent = `[ Áudio: ${texto} ]`;
+        legendaDiv.classList.remove('hidden');
+        
+        clearTimeout(legendaTimeout);
+        legendaTimeout = setTimeout(() => {
+            legendaDiv.classList.add('hidden');
+        }, 2000); // Some após 2 segundos
+    }
+}
 function iniciarSomAmbiente() {
     const ctx = obterAudioContext();
     if (!ctx || ambientOsc) return;
@@ -46,7 +67,7 @@ function iniciarSomAmbiente() {
     ambientGain.gain.value = 0.025; 
 
     ambientOsc.connect(ambientGain);
-    ambientGain.connect(ctx.destination);
+    ambientGain.connect(masterGainNode);
     ambientOsc.start();
 
     
@@ -57,7 +78,7 @@ function iniciarSomAmbiente() {
     crtGain.gain.value = 0.005; 
 
     crtOsc.connect(crtGain);
-    crtGain.connect(ctx.destination);
+    crtGain.connect(masterGainNode);
     crtOsc.start();
 }
 
@@ -79,7 +100,7 @@ function tocarSomDigito() {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(masterGainNode);
 
     osc.start();
     osc.stop(ctx.currentTime + 0.05);
@@ -101,7 +122,7 @@ function tocarBipEntrada() {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(masterGainNode);
 
     osc.start();
     osc.stop(ctx.currentTime + 0.06);
@@ -125,7 +146,7 @@ function tocarPassoMetalico() {
     subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
 
     subOsc.connect(subGain);
-    subGain.connect(ctx.destination);
+    subGain.connect(masterGainNode);
     subOsc.start(t);
     subOsc.stop(t + 0.25);
 
@@ -140,7 +161,7 @@ function tocarPassoMetalico() {
     metalGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
 
     metalOsc.connect(metalGain);
-    metalGain.connect(ctx.destination);
+    metalGain.connect(masterGainNode);
     metalOsc.start(t);
     metalOsc.stop(t + 0.18);
 }
@@ -154,7 +175,7 @@ function reproduzirBeep(tipo = 'sucesso') {
     const gain = ctx.createGain();
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(masterGainNode);
 
     if (tipo === 'erro') {
         osc.type = 'sawtooth'; 
@@ -291,11 +312,13 @@ function carregarPreferencias() {
     const savedTele = localStorage.getItem('vilasBoasTelemetry');
     const savedSpeed = localStorage.getItem('vilasBoasSpeed');
     const savedCRT = localStorage.getItem('vilasBoasCRT');
+    
 
     if (savedTele !== null) {
     pref_telemetria = (savedTele === 'true');
     teleCheckbox.checked = pref_telemetria;
     }
+
 
     teleCheckbox.addEventListener('change', (e) => {
         pref_telemetria = e.target.checked;
@@ -326,6 +349,30 @@ function carregarPreferencias() {
         localStorage.setItem('vilasBoasCRT', ativado);
         aplicarEfeitoCRT(ativado);
     });
+
+    
+    const savedVolume = localStorage.getItem('vilasBoasVolume');
+    
+    if (savedVolume !== null) {
+        pref_volume = parseFloat(savedVolume);
+        document.getElementById('volume-slider').value = pref_volume;
+        document.getElementById('volume-val-display').innerText = `${Math.round(pref_volume * 100)}%`;
+        if (masterGainNode) masterGainNode.gain.value = pref_volume;
+    }
+
+    const volSlider = document.getElementById('volume-slider');
+    if (volSlider) {
+        volSlider.addEventListener('input', (e) => {
+            pref_volume = parseFloat(e.target.value);
+            localStorage.setItem('vilasBoasVolume', pref_volume);
+            document.getElementById('volume-val-display').innerText = `${Math.round(pref_volume * 100)}%`;
+            
+            
+            if (masterGainNode) {
+                masterGainNode.gain.value = pref_volume;
+            }
+        });
+    }
 }
 
 function atualizarLabelVelocidade(val) {
@@ -846,7 +893,7 @@ function triggerJumpscare() {
         scareOsc.frequency.value = 130;
         scareGain.gain.value = 0.6; 
         scareOsc.connect(scareGain);
-        scareGain.connect(ctx.destination);
+        scareGain.connect(masterGainNode);
         scareOsc.start();
         scareOsc.stop(ctx.currentTime + 0.15); 
     }
@@ -878,10 +925,10 @@ function ligarTV() {
     const tvOverlay = document.getElementById("tv-overlay");
     const contentArea = document.getElementById("tv-content-area");
 
-    // 0 Segundos: Estática
+    
     layerStatic.classList.add("static-active");
 
-    // 1.5 Segundos: Barras de Cor
+    
     setTimeout(() => {
         layerStatic.classList.remove("static-active");
         layerStatic.classList.add("hidden");
@@ -897,33 +944,33 @@ function ligarTV() {
         }
     }, 1500);
 
-    // 3 Segundos: Tela Azul
+    
     setTimeout(() => {
         layerColorBars.classList.add("hidden");
         layerBlue.classList.remove("hidden");
         if (window.colorBarOsc) window.colorBarOsc.stop();
     }, 3000);
 
-    // 4.5 Segundos: Entra no Jogo e Inicia o ZOOM
+    
     setTimeout(() => {
         layerBlue.classList.add("hidden");
         layerGame.classList.remove("hidden"); 
         
-        // A Mágica do Zoom:
-        tvFrame.classList.add("zoom-into-tv");       // Aproxima a TV inteira
-        tvOverlay.classList.add("fade-out-tv");      // A carcaça de plástico some gradualmente
-        contentArea.classList.add("expand-screen");  // A tela do jogo estica pra 100% da tela
+        
+        tvFrame.classList.add("zoom-into-tv");       
+        tvOverlay.classList.add("fade-out-tv");      
+        contentArea.classList.add("expand-screen");  
     }, 4500);
 
-    // 6 Segundos: Limpeza e Início Real
+    
     setTimeout(() => {
         const tvRoom = document.getElementById("tv-room");
         const containerJogo = document.querySelector(".container");
         
-        document.body.appendChild(containerJogo); // Salva o jogo
-        tvRoom.remove();                          // Destrói a TV
+        document.body.appendChild(containerJogo); 
+        tvRoom.remove();                         
         
-        iniciarJogo(); // Dá o boot no servidor
+        iniciarJogo(); 
     }, 6000);
 }
 

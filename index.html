@@ -70,12 +70,14 @@
                     </aside>
                 </div>
 
+                <div id="audio-captions" class="hidden" aria-live="polite"></div>
+
                     
-                    <button id="help-btn" class="help-float" onclick="openHelp()" aria-label="Abrir menu de ajuda">?</button>
-                    <button id="settings-btn" class="help-float" style="right: 70px;" onclick="openSettings()" aria-label="Abrir configurações">⚙</button>
+                <button id="help-btn" class="help-float" onclick="openHelp()" aria-label="Abrir menu de ajuda">?</button>
+                <button id="settings-btn" class="help-float" style="right: 70px;" onclick="openSettings()" aria-label="Abrir configurações">⚙</button>
                     
                     
-                    <button id="saves-btn" class="help-float" style="right: 130px;" onclick="openSaves()" aria-label="Gerenciar Saves">💾</button>
+                <button id="saves-btn" class="help-float" style="right: 130px;" onclick="openSaves()" aria-label="Gerenciar Saves">💾</button>
 
             
                 <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true">
@@ -87,6 +89,11 @@
                         <div>
                             <label style="color: #fff;">Velocidade do Texto: <span id="speed-val-display" class="amarelo">Atual (1x)</span></label>
                             <input type="range" id="speed-slider" min="0" max="2" step="0.5" value="1" style="width: 100%; margin-top: 5px;">
+                        </div>
+
+                        <div style="margin-top: 10px;">
+                            <label style="color: #fff;">Volume Principal: <span id="volume-val-display" class="verde">100%</span></label>
+                            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1" style="width: 100%; margin-top: 5px;">
                         </div>
 
                         

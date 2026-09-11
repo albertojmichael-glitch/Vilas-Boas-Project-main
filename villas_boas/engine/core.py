@@ -206,10 +206,11 @@ def imprimir_painel_cofre(jogo, primeira_vez=False):
 # depurar sem mudar o fluxo do jogo.
 # ---------------------------------------------------------------------------
 
-def registrar_telemetria_segura(evento, sala, dificuldade, motivo):
+
+def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
     try:
         from app import registrar_telemetria
-        registrar_telemetria(evento, sala, dificuldade, motivo)
+        registrar_telemetria(evento, sala, dificuldade, motivo, jogo)
     except (ImportError, AttributeError) as e:
         logger.warning(f"Falha ao registrar telemetria ({evento}/{motivo}): {e}")
 
@@ -270,26 +271,26 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
 
 def verificar_final_de_jogo(jogo):
     if jogo.sala_atual == "morte":
-        registrar_telemetria_segura("MORTE", jogo.sala_atual, jogo.dificuldade_escolhida, "Morte no Mapa")
+        registrar_telemetria_segura("MORTE", jogo.sala_atual, jogo.dificuldade_escolhida, "Morte no Mapa", jogo)
         dar_tela_de_morte(jogo)
         return True
 
     if jogo.sala_atual == "saida":
-        registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Covarde")
+        registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Covarde", jogo)
         rodar_final("saida", jogo)
         return True
 
     if jogo.sala_atual == "cama":
-        registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Dorminhoco")
+        registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Dorminhoco", jogo)
         rodar_final("cama", jogo)
         return True
 
     if jogo.sala_atual == "hall de entrada" and getattr(jogo, 'noite_vencida', False):
         if getattr(jogo, 'fios_cortados_inventario', False):
-            registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro")
+            registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro", jogo)
             rodar_final("verdadeiro", jogo)
         else:
-            registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Neutro")
+            registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Neutro", jogo)
             rodar_final("final_bom", jogo)
         return True
 
@@ -597,7 +598,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
 
             # gatilho do final verdadeiro (incêndio)
             if jogo.estado_atual == "FIM" and getattr(jogo, 'incendio', False):
-                registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro")
+                registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro", jogo)
                 rodar_final("verdadeiro", jogo)
                 return
 
@@ -688,7 +689,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 jogo.hp -= 1
                 jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
                 if jogo.hp <= 0:
-                    registrar_telemetria_segura("MORTE", "MINIGAME_JON", jogo.dificuldade_escolhida, "Morto pelo Porco")
+                    registrar_telemetria_segura("MORTE", "MINIGAME_JON", jogo.dificuldade_escolhida, "Morto pelo Porco", jogo)
                     dar_tela_de_morte(jogo)
                 else:
                     jogo.estado_atual = "JOGO"
@@ -822,7 +823,8 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
 
                 registrar_telemetria_segura(
                     "MORTE", "MINIGAME_PIANISTA", jogo.dificuldade_escolhida,
-                    "Kernel Panic - Falhou no Julgamento"
+                    "Kernel Panic - Falhou no Julgamento",
+                    jogo
                 )
 
                 from views import dar_tela_kernel_panic
@@ -831,21 +833,24 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 return
 
     # bloco universal (minigames orientados a objeto: Segurança e Minotauro)
-    elif jogo.estado_atual.startswith("MINIGAME_") and hasattr(jogo, 'minigame_atual') and jogo.minigame_atual is not None:
-
-        if isinstance(jogo.minigame_atual, dict):
-            dados_salvos = jogo.minigame_atual
+    elif jogo.estado_atual in ["MINIGAME_SEGURANCA", "MINIGAME_MINOTAURO"]:
+        
+        
+        if getattr(jogo, 'minigame_atual', None) is None:
             if jogo.estado_atual == "MINIGAME_SEGURANCA":
                 jogo.minigame_atual = MinigameSeguranca(jogo)
             elif jogo.estado_atual == "MINIGAME_MINOTAURO":
                 jogo.minigame_atual = MinigameMinotauro(jogo)
+            
+            
+            if getattr(jogo, 'minigame_dados', {}):
+                jogo.minigame_atual.__dict__.update(jogo.minigame_dados)
+        
+        
+        jogo.minigame_atual.jogo = jogo
+        jogo.minigame_atual.ui = jogo.ui_handler
 
-            jogo.minigame_atual.__dict__.update(dados_salvos)
-            jogo.minigame_atual.jogo = jogo
-
-        if hasattr(jogo.minigame_atual, 'ui'):
-            jogo.minigame_atual.ui = jogo.ui_handler
-
+        
         partes = extrair_argumentos(comando)
         verbo = partes[0] if partes else ""
         mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
@@ -861,10 +866,10 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "FIM"
             jogo.sala_atual = "morte"
             jogo.minigame_atual = None
-            registrar_telemetria_segura("MORTE", jogo.estado_atual, jogo.dificuldade_escolhida, "Falhou em um Minigame")
+            registrar_telemetria_segura("MORTE", jogo.estado_atual, jogo.dificuldade_escolhida, "Falhou em um Minigame", jogo)
             dar_tela_de_morte(jogo)
 
-        elif resultado.startswith("vitoria_"):
+        elif isinstance(resultado, str) and resultado.startswith("vitoria_"):
             jogo.estado_atual = "JOGO"
             jogo.minigame_atual = None
 
@@ -884,5 +889,16 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você. Você sobreviveu.{RESET}")
 
             imprimir_contexto_sala(jogo)
+
+        
+        if getattr(jogo, 'minigame_atual', None) is not None:
+            
+            jogo.minigame_dados = {
+                k: v for k, v in jogo.minigame_atual.__dict__.items() 
+                if k not in ["jogo", "ui"]
+            }
+        else:
+            
+            jogo.minigame_dados = {}
 
         return

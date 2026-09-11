@@ -456,3 +456,4 @@ class MinigameMinotauro(BaseMinigame):
             if resultado_colisao: return resultado_colisao
                 
         return "continuar"
+        

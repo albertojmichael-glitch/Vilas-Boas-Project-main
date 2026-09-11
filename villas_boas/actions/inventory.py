@@ -233,9 +233,7 @@ def _usar_cura(jogo, mapa, item):
     return True
 
 
-# Dispatcher: mapeia o item (já resolvido por encontrar_melhor_match) para
-# o handler responsável. As duas grafias da tábua apontam para o mesmo
-# handler, reproduzindo o `or` do if/elif original.
+
 _USAR_HANDLERS = {
     "lanterna": _usar_lanterna,
     "chave dos fundos": _usar_chave_dos_fundos,
@@ -266,9 +264,7 @@ def cmd_usar(comando, jogo, mapa):
     return handler(jogo, mapa, item)
 
 
-# ==========================================
-# FUNÇÕES DE COMBINAÇÃO DE ITENS
-# ==========================================
+
 
 def _combinar_tesoura_fita(jogo, mapa, ui):
     ui.exibir(f"{DOS_VERDE}Você enrola a fita isolante na tesoura quebrada. Ela está consertada.{RESET}")
@@ -277,7 +273,7 @@ def _combinar_tesoura_fita(jogo, mapa, ui):
     jogo.inventario.append("tesoura")
     return True
 
-# Dispatcher de Combinações usando frozenset (a ordem dos itens não importa)
+
 _COMBINAR_HANDLERS = {
     frozenset(["tesoura quebrada", "fita isolante"]): _combinar_tesoura_fita,
     

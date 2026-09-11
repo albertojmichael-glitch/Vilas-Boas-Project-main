@@ -263,28 +263,39 @@ def obter_caminho_autosave(sid):
     return Path(SAVES_DIR_ENV) / f"autosave_{sid}.json"
 
 
-def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
+def registrar_telemetria(evento, sala, dificuldade, detalhes="", jogo=None):
     if not mongo_client or not session.get("permite_telemetria", True):
         return
 
     try:
-        
         evento_seguro = str(evento)[:50]
         sala_segura = str(sala)[:50]
         dif_segura = str(dificuldade)[:50]
         det_seguros = str(detalhes)[:256]
         
-        
         if any(v.startswith('$') for v in [evento_seguro, sala_segura, dif_segura]):
             return
 
-        telemetry_collection.insert_one({
+        
+        doc = {
             "evento": evento_seguro,
             "sala": sala_segura,
             "dificuldade": dif_segura,
             "detalhes": det_seguros,
             "timestamp": time.time(),
-        })
+        }
+        
+        
+        if jogo:
+            doc.update({
+                "hp_restante": getattr(jogo, 'hp', 0),
+                "luz_restante": getattr(jogo, 'turnos_luz', 0),
+                "nivel_barulho": getattr(jogo, 'nivel_barulho', 0),
+                "inventario_qtd": len(getattr(jogo, 'inventario', [])),
+                "bolsas": getattr(jogo, 'bolsas_coletadas', 0)
+            })
+
+        telemetry_collection.insert_one(doc)
         
     
     except Exception as e:  # noqa: BLE001
@@ -605,7 +616,6 @@ def ver_telemetria():
     if not mongo_client:
         return jsonify({"erro": "Sem banco de dados conectado."}), 400
         
-   
     mortes = telemetry_collection.count_documents({"evento": "MORTE"})
     vitorias = telemetry_collection.count_documents({"evento": "VITORIA"})
     
@@ -616,17 +626,54 @@ def ver_telemetria():
         {"$sort": {"total": -1}},                         
         {"$limit": 5}                                     
     ]
-    
     ranking_mortes = list(telemetry_collection.aggregate(pipeline_salas))
+    
+    
+    pipeline_motivos = [
+        {"$match": {"evento": "MORTE"}},
+        {"$group": {"_id": "$detalhes", "total": {"$sum": 1}}},
+        {"$sort": {"total": -1}},
+        {"$limit": 5}
+    ]
+    ranking_motivos = list(telemetry_collection.aggregate(pipeline_motivos))
+
+    
+    pipeline_medias = [
+        {"$match": {"evento": "MORTE"}},
+        {"$group": {
+            "_id": None,
+            "avg_luz": {"$avg": "$luz_restante"},
+            "avg_barulho": {"$avg": "$nivel_barulho"},
+            "avg_inv": {"$avg": "$inventario_qtd"}
+        }}
+    ]
+    medias_raw = list(telemetry_collection.aggregate(pipeline_medias))
+    medias = medias_raw[0] if medias_raw else {"avg_luz": 0, "avg_barulho": 0, "avg_inv": 0}
+    if "_id" in medias:
+        del medias["_id"]
+
+    
+    pipeline_finais = [
+        {"$match": {"evento": "VITORIA"}},
+        {"$group": {"_id": "$detalhes", "total": {"$sum": 1}}},
+        {"$sort": {"total": -1}}
+    ]
+    ranking_finais = list(telemetry_collection.aggregate(pipeline_finais))
     
     return jsonify({
         "geral": {
             "mortes_totais": mortes,
             "vitorias_totais": vitorias,
         },
-        "top_salas_mortais": ranking_mortes
+        "top_salas_mortais": ranking_mortes,
+        "causas_de_morte": ranking_motivos,
+        "finais_alcancados": ranking_finais,
+        "autopsia_da_morte": {
+            "luz_media_restante": round(medias.get("avg_luz") or 0, 2),
+            "barulho_medio": round(medias.get("avg_barulho") or 0, 2),
+            "itens_na_mochila": round(medias.get("avg_inv") or 0, 2)
+        }
     })
-
 
 @app.route("/share/generate", methods=["GET"])
 @limiter.limit("5 per minute")

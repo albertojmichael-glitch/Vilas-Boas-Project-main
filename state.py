@@ -87,6 +87,7 @@ class GameState(BaseModel):
     jon_caminho_certo: list[str] = Field(default_factory=list)
     web_consertos: dict[str, Any] = Field(default_factory=dict)
     web_julgamento: dict[str, Any] = Field(default_factory=dict)
+    minigame_dados: dict[str, Any] = Field(default_factory=dict)
     mapa: dict[str, Any] = Field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
 
     _ui_handler: Any = PrivateAttr(default=None)
