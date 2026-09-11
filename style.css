@@ -823,17 +823,17 @@ body.blackout-mode .prompt {
    ========================================= */
 .achievements-float {
     position: fixed;
-    bottom: 80px; /* Fica acima das legendas de áudio e do botão de ajuda */
+    bottom: 80px;
     right: 20px;
     background: #111;
     color: #ffda33;
     border: 1px solid #ffda33;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    border-radius: 0; /* Removido o arredondamento para ficar quadrado/retro */
+    width: 45px;
+    height: 45px;
     cursor: pointer;
     z-index: 1000;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -847,26 +847,27 @@ body.blackout-mode .prompt {
 }
 
 .achievements-content {
-    max-width: 700px;
-    max-height: 80vh;
+    max-width: 850px; /* Janela mais larga para caberem 2 colunas confortáveis */
+    max-height: 85vh;
     overflow-y: auto;
-    background: #111;
+    background: #0a0a0a;
     border: 2px solid #ffda33;
+    border-radius: 0;
+    padding: 30px;
+    position: relative;
 }
 
 .achievements-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 15px;
-    padding: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
 }
 
-/* O Card Individual */
+/* O Card Individual - Visual Terminal */
 .achievement-card {
-    border: 1px solid #444;
-    background: #1a1a1a;
+    border: 1px dashed #444;
+    background: transparent;
     padding: 15px;
-    border-radius: 8px;
     display: flex;
     align-items: center;
     gap: 15px;
@@ -875,38 +876,50 @@ body.blackout-mode .prompt {
 
 /* Estado: Bloqueada */
 .achievement-card.locked {
-    opacity: 0.4;
+    opacity: 0.5;
     filter: grayscale(100%);
     border-color: #333;
 }
 
 /* Estado: Desbloqueada */
 .achievement-card.unlocked {
-    border-color: #55ff55;
-    box-shadow: 0 0 10px rgba(85, 255, 85, 0.15);
-    background: #152515; /* Um leve tom esverdeado de fundo */
+    border: 1px solid #55ff55;
+    background: rgba(85, 255, 85, 0.05);
+    box-shadow: inset 0 0 15px rgba(85, 255, 85, 0.05);
 }
 
 .achieve-card-icon {
     font-size: 2.5rem;
-    min-width: 50px;
+    min-width: 60px;
     text-align: center;
+    color: #555;
+}
+
+.achievement-card.unlocked .achieve-card-icon {
+    color: #55ff55;
+    text-shadow: 0 0 5px rgba(85, 255, 85, 0.5);
 }
 
 .achieve-card-info h3 {
     margin: 0 0 5px 0;
     font-size: 1.1rem;
-    color: #fff;
-    font-family: 'Courier New', Courier, monospace;
+    color: #888;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
 }
 
 .achieve-card-info p {
     margin: 0;
     font-size: 0.85rem;
-    color: #aaa;
+    color: #666;
     line-height: 1.3;
+    font-family: monospace;
 }
 
 .achievement-card.unlocked .achieve-card-info h3 {
     color: #55ff55;
+}
+
+.achievement-card.unlocked .achieve-card-info p {
+    color: #ddd;
 }

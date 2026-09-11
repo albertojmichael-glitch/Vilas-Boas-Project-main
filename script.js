@@ -179,7 +179,7 @@ function abrirModalConquistas() {
     });
 
     
-    title.innerText = `🏆 SUAS CONQUISTAS (${quantidadeDesbloqueada}/${CATALOGO_CONQUISTAS.length}) 🏆`;
+    title.innerText = `♛ SUAS CONQUISTAS (${quantidadeDesbloqueada}/${CATALOGO_CONQUISTAS.length}) ♛`;
 
     modal.classList.remove('hidden');
 }
@@ -1131,7 +1131,7 @@ async function iniciarReplay(idReplay) {
     if (modoReplayAtivo) return;
 
     try {
-        // 1. Pega os dados no Backend
+        
         const response = await fetch(`/api/replay/${idReplay}`);
         const data = await response.json();
 
@@ -1161,7 +1161,7 @@ async function iniciarReplay(idReplay) {
 
         await sleep(2500); 
 
-        // 3. Toca a fita ("Fantasma" digitando)
+        
         for (let i = 0; i < comandos.length; i++) {
             if (!modoReplayAtivo) break;
 
@@ -1218,15 +1218,13 @@ async function iniciarReplay(idReplay) {
     }
 }
 
-// ==========================================
-// SISTEMA DE LEADERBOARD & ARCADE SCORE
-// ==========================================
+
 
 function mostrarTelaDePontuacao(segundosTotais) {
     const modal = document.getElementById('arcade-score-modal');
     const display = document.getElementById('score-time-display');
     
-    // Formata o tempo (MM:SS:ms)
+    
     const mins = Math.floor(segundosTotais / 60);
     const secs = Math.floor(segundosTotais % 60);
     const ms = Math.floor((segundosTotais % 1) * 100); 
@@ -1254,6 +1252,6 @@ function iniciarLoginESalvar() {
         return;
     }
     
-    // Alerta temporário antes de plugarmos o backend do GitHub
+    
     alert(`Preparando para conectar como ${iniciais}... Em breve!`);
 }

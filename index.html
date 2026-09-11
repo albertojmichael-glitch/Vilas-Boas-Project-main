@@ -82,13 +82,34 @@
                 <div id="audio-captions" class="hidden" aria-live="polite"></div>
 
                     
-                <button id="help-btn" class="help-float" onclick="openHelp()" aria-label="Abrir menu de ajuda">?</button>
-                <button id="settings-btn" class="help-float" style="right: 70px;" onclick="openSettings()" aria-label="Abrir configurações">⚙</button>
-                <button id="achievements-btn" class="achievements-float" onclick="abrirModalConquistas()" aria-label="Ver Conquistas">♛</button>
-                    
-                    
+                
+                <button id="help-btn" class="help-float" style="right: 20px;" onclick="openHelp()" aria-label="Abrir menu de ajuda">?</button>
+                <button id="settings-btn" class="help-float" style="right: 75px;" onclick="openSettings()" aria-label="Abrir configurações">⚙</button>
                 <button id="saves-btn" class="help-float" style="right: 130px;" onclick="openSaves()" aria-label="Gerenciar Saves">❏</button>
+                <button id="achievements-btn" class="help-float" style="right: 185px; color: #ffda33; border-color: #ffda33;" onclick="abrirModalConquistas()" aria-label="Ver Conquistas">♛</button>
+                
 
+                
+                <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true">
+                    <div class="modal-content" style="max-width: 500px; border-color: #55ff55;">
+                        <span class="close-btn" onclick="closeHelp()">&times;</span>
+                        <h2 style="color: #55ff55; text-align: center;">[ MANUAL DO SISTEMA ]</h2>
+                        
+                        <div style="text-align: left; margin-top: 20px; color: #fff; font-family: 'Courier New', monospace; font-size: 1rem; line-height: 1.6;">
+                            <p><span style="color: #55ff55;">ir [frente/trás/esquerda/direita]</span> - Move seu personagem.</p>
+                            <p><span style="color: #55ff55;">olhar</span> - Examina a sala atual.</p>
+                            <p><span style="color: #55ff55;">pegar [item]</span> - Guarda um item na mochila.</p>
+                            <p><span style="color: #55ff55;">usar [item]</span> - Usa um item da mochila.</p>
+                            <p><span style="color: #55ff55;">inventario</span> - Mostra os itens que você tem.</p>
+                            
+                            <div style="margin-top: 20px; padding: 10px; border: 1px dashed #ffda33; color: #ffda33;">
+                                <strong>DICA DE SOBREVIVÊNCIA:</strong><br>
+                                A escuridão é silenciosa. Siga a Luz.
+                            </div>
+                        </div>
+                        <button class="close-btn" onclick="closeHelp()" style="margin-top: 25px; width: 100%;">FECHAR (ESC)</button>
+                    </div>
+                </div>
             
                 <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true">
                     <h2>[ CONFIGURAÇÕES ]</h2>
@@ -125,18 +146,18 @@
                     <button class="close-btn" onclick="closeSettings()" style="margin-top: 25px;">FECHAR (ESC)</button>
                 </div>
 
-                <!-- NOVO: Modal de Conquistas -->
+                
                 <div id="achievements-modal" class="modal hidden" aria-hidden="true">
                     <div class="modal-content achievements-content">
                         <span class="close-btn" onclick="fecharModalConquistas()">&times;</span>
-                        <h2 style="color: #ffda33; text-align: center; margin-bottom: 20px;" id="achievements-title">♛ SUAS CONQUISTAS ♛</h2>
+                        <h2 style="color: #ffda33; text-align: center; margin-bottom: 25px; font-family: 'Courier New', monospace; letter-spacing: 2px;" id="achievements-title">♛ SUAS CONQUISTAS ♛</h2>
                         <div id="achievements-grid" class="achievements-grid">
-                            <!-- Os cards serão gerados dinamicamente pelo JS aqui dentro -->
+                            
                         </div>
                     </div>
                 </div>
 
-                <!-- NOVO: Modal de Fim de Jogo / Leaderboard -->
+                
                 <div id="arcade-score-modal" class="modal hidden">
                     <div class="modal-content" style="border-color: #55ff55; text-align: center; max-width: 450px;">
                         <h2 style="color: #55ff55; font-size: 2rem; margin-bottom: 5px;">VITÓRIA</h2>
@@ -149,7 +170,7 @@
 
                         <p style="color: #fff;">REGISTRE SEU TEMPO NO QUADRO DE LÍDERES</p>
                         
-                        <!-- Input de 3 letras Arcade -->
+                        
                         <div style="margin: 20px 0;">
                             <input type="text" id="arcade-initials" maxlength="3" placeholder="___" 
                                 style="font-size: 3rem; text-align: center; width: 120px; text-transform: uppercase; letter-spacing: 10px; background: #000; color: #ffda33; border: 2px solid #ffda33;"
