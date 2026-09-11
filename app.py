@@ -392,7 +392,6 @@ def gerar_resposta_json(jogo):
             for linha in jogo.ui_handler.buffer
             if linha.strip() != ""
         ]
-        # Limpa o buffer original do jogo para o próximo turno
         jogo.ui_handler.buffer.clear()
 
     # 2. Captura as conquistas do turno e limpa a mochila de envio
@@ -400,7 +399,14 @@ def gerar_resposta_json(jogo):
     if hasattr(jogo, 'novas_conquistas_turno'):
         jogo.novas_conquistas_turno.clear()
 
-    # 3. Monta o pacote final (usando a variável 'linhas' preenchida!)
+    # --- NOVO: Lógica restaurada para a "sala" no HUD ---
+    estado_jogo = getattr(jogo, "estado_atual", "")
+    if estado_jogo in ["MENU", "AGUARDANDO_DIR"]:
+        sala_exibicao = "SISTEMA"
+    else:
+        sala_exibicao = getattr(jogo, "sala_atual", "SISTEMA").upper()
+
+    # 3. Monta o pacote final
     resposta = {
         "linhas": linhas, 
         "estado": {
@@ -408,9 +414,9 @@ def gerar_resposta_json(jogo):
             "inventario": getattr(jogo, "inventario", []),
             "luz_restante": getattr(jogo, "turnos_luz", 0),
             "bolsas_coletadas": getattr(jogo, "bolsas_coletadas", 0),
-            "estado_jogo": getattr(jogo, "estado_atual", ""),
+            "estado_jogo": estado_jogo,
             "tempo_final": getattr(jogo, "tempo_total_segundos", 0.0),
-            "sala": getattr(jogo, "sala_atual", "SISTEMA") # Recolocado para os testes passarem
+            "sala": sala_exibicao # <--- Resolvido!
         },
         "novas_conquistas": conquistas_enviadas
     }
