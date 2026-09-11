@@ -384,80 +384,37 @@ def salvar_save_web(jogo):
 
 def gerar_resposta_json(jogo):
     linhas = []
-    saidas, hp, luz, inv, sala = [], "...", "...", [], "BOOT"
-
-    if jogo:
-        if hasattr(jogo.ui_handler, "buffer"):
-            linhas = [
-                ansi_para_html(linha)
-                for linha in jogo.ui_handler.buffer
-                if linha.strip() != ""
-            ]
-            jogo.ui_handler.buffer.clear()
-
-        if (
-            getattr(jogo, "estado_atual", "") not in ["FIM", "MENU", "AGUARDANDO_DIR"]
-            and jogo.sala_atual in jogo.mapa
-        ):
-            chaves_ignoradas = [
-                "descrição",
-                "itens",
-                "inspecionaveis",
-                "cofre_important",
-                "cadeira",
-            ]
-            saidas = [
-                k.title()
-                for k in jogo.mapa[jogo.sala_atual]
-                if k not in chaves_ignoradas
-                and isinstance(jogo.mapa[jogo.sala_atual][k], str)
-            ]
-
-        hp = jogo.hp if not getattr(jogo, "god_mode", False) else "∞"
-        luz = jogo.turnos_luz if not getattr(jogo, "god_mode", False) else "∞"
-        inv = jogo.inventario
-        som = getattr(jogo, "nivel_barulho", 0) 
-        bolsas = getattr(jogo, "bolsas_coletadas", 0)
-
-        sala = (
-            jogo.sala_atual.upper()
-            if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"]
-            else "SISTEMA"
-        )
     
+    # 1. Captura e converte as linhas para HTML
+    if jogo and hasattr(jogo, "ui_handler") and hasattr(jogo.ui_handler, "buffer"):
+        linhas = [
+            ansi_para_html(linha)
+            for linha in jogo.ui_handler.buffer
+            if linha.strip() != ""
+        ]
+        # Limpa o buffer original do jogo para o próximo turno
+        jogo.ui_handler.buffer.clear()
+
+    # 2. Captura as conquistas do turno e limpa a mochila de envio
     conquistas_enviadas = getattr(jogo, 'novas_conquistas_turno', []).copy()
     if hasattr(jogo, 'novas_conquistas_turno'):
         jogo.novas_conquistas_turno.clear()
 
+    # 3. Monta o pacote final (usando a variável 'linhas' preenchida!)
     resposta = {
-        "linhas": jogo.ui_handler.buffer,
+        "linhas": linhas, 
         "estado": {
             "hp": getattr(jogo, "hp", 0),
             "inventario": getattr(jogo, "inventario", []),
             "luz_restante": getattr(jogo, "turnos_luz", 0),
             "bolsas_coletadas": getattr(jogo, "bolsas_coletadas", 0),
-            "estado_jogo": getattr(jogo, "estado_atual", ""), # Para o JS saber se o jogo acabou
-            "tempo_final": getattr(jogo, "tempo_total_segundos", 0.0) # <--- NOVO
+            "estado_jogo": getattr(jogo, "estado_atual", ""),
+            "tempo_final": getattr(jogo, "tempo_total_segundos", 0.0),
+            "sala": getattr(jogo, "sala_atual", "SISTEMA") # Recolocado para os testes passarem
         },
         "novas_conquistas": conquistas_enviadas
     }
     return jsonify(resposta)
-
-    return jsonify(
-        {
-            "linhas": linhas,
-            "estado": {
-                "hp": hp,
-                "luz": luz,
-                "som": som,
-                "inventario": inv,
-                "sala": sala,
-                "saidas": saidas,
-                "bolsas": bolsas
-            },
-        }
-    )
-
 
 
 @app.route("/")
