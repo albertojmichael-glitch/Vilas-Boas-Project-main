@@ -480,7 +480,11 @@ window.onload = function() {
     if (idReplay) {
         iniciarReplay(idReplay);
     } else {
-        iniciarJogo(); 
+        
+        const tvRoom = document.getElementById("tv-room");
+        if (!tvRoom) {
+            iniciarJogo(); 
+        }
     }
 
     carregarPreferencias();

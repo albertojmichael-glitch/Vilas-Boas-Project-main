@@ -467,6 +467,7 @@ def iniciar_jogo():
 
     MEMORIA_SESSOES[sid] = jogo
 
+    jogo.ui_handler.limpar() 
     imprimir_tela_boot(jogo.ui_handler)
 
     resposta = gerar_resposta_json(jogo)
