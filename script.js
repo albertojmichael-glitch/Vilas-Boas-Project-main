@@ -5,10 +5,12 @@ let historicoComandos = [];
 let posicaoHistorico = -1;
 let comandoDigitadoAtual = "";
 let pref_telemetria = true;
+let modoReplayAtivo = false;
 
 const terminal = document.getElementById('terminal');
 const loadingSpinner = document.getElementById('loading');
-const inputLineDiv = document.querySelector('.input-line'); 
+const inputLineDiv = document.querySelector('.input-line');
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const hpEl = document.getElementById('hud-hp');
 const luzEl = document.getElementById('hud-luz');
@@ -406,6 +408,17 @@ document.addEventListener('keydown', function(event) {
 
 const onloadOriginal = window.onload;
 window.onload = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const idReplay = urlParams.get('replay');
+
+    if (idReplay) {
+        
+        iniciarReplay(idReplay);
+    } else {
+        
+        iniciarJogoNovo(); 
+    }
+
     carregarPreferencias();
     if(onloadOriginal) onloadOriginal();
 };
@@ -994,4 +1007,89 @@ function fazerNada() {
     
 }
 
+async function iniciarReplay(idReplay) {
+    if (modoReplayAtivo) return;
 
+    try {
+        // 1. Pega os dados no Backend
+        const response = await fetch(`/api/replay/${idReplay}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            adicionarLinhaTerminal(`[ SISTEMA ] ${data.erro}`, "vermelho");
+            return;
+        }
+
+        const comandos = data.log_comandos;
+        if (!comandos || comandos.length === 0) {
+            adicionarLinhaTerminal("[ SISTEMA ] Fita de replay vazia.", "amarelo");
+            return;
+        }
+
+        
+        modoReplayAtivo = true;
+        const inputCmd = document.getElementById('cmd');
+        if (inputCmd) {
+            inputCmd.disabled = true;
+            inputCmd.placeholder = "ASSISTINDO REPLAY...";
+        }
+
+        adicionarLinhaTerminal("=========================================", "amarelo");
+        adicionarLinhaTerminal(`[ SISTEMA ] REPLAY INICIADO: ${data.jogador}`, "amarelo");
+        adicionarLinhaTerminal(`[ SISTEMA ] DESTINO FINAL: ${data.sala_final}`, "amarelo");
+        adicionarLinhaTerminal("=========================================", "amarelo");
+
+        await sleep(2500); 
+
+        // 3. Toca a fita ("Fantasma" digitando)
+        for (let i = 0; i < comandos.length; i++) {
+            if (!modoReplayAtivo) break;
+
+            const comando = comandos[i];
+
+            
+            if (inputCmd) {
+                inputCmd.value = "";
+                for (let char of comando) {
+                    inputCmd.value += char;
+                    await sleep(70); 
+                }
+            }
+
+            await sleep(400); 
+
+            
+            adicionarLinhaTerminal(`C:\\> ${comando}`, "branco");
+            if (inputCmd) inputCmd.value = ""; 
+
+            
+            const resPost = await fetch('/comando', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ comando: comando, telemetria: false }) 
+            });
+
+            const resData = await resPost.json();
+            
+            
+            if (typeof processarRespostaBackend === "function") {
+                processarRespostaBackend(resData); 
+            } else if (resData.linhas) {
+                
+                resData.linhas.forEach(linha => adicionarLinhaTerminal(linha));
+            }
+
+            await sleep(1500); 
+        }
+
+        
+        adicionarLinhaTerminal("=========================================", "amarelo");
+        adicionarLinhaTerminal("[ SISTEMA ] FIM DA FITA DE REPLAY", "amarelo");
+        adicionarLinhaTerminal("Recarregue a página (F5) para jogar de verdade.", "verde");
+
+    } catch (erro) {
+        console.error("Erro no replay:", erro);
+        adicionarLinhaTerminal("[ SISTEMA ] Erro de conexão ao buscar a fita.", "vermelho");
+        modoReplayAtivo = false;
+    }
+}

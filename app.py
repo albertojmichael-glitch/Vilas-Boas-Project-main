@@ -21,6 +21,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from pydantic import BaseModel, Field, ValidationError
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 try:
     import redis
@@ -292,7 +293,8 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes="", jogo=None):
                 "luz_restante": getattr(jogo, 'turnos_luz', 0),
                 "nivel_barulho": getattr(jogo, 'nivel_barulho', 0),
                 "inventario_qtd": len(getattr(jogo, 'inventario', [])),
-                "bolsas": getattr(jogo, 'bolsas_coletadas', 0)
+                "bolsas": getattr(jogo, 'bolsas_coletadas', 0),
+                "log_comandos": getattr(jogo, 'log_comandos', [])
             })
 
         telemetry_collection.insert_one(doc)
@@ -530,6 +532,16 @@ def receber_comando():
 
     tem_save = obter_caminho_autosave(sid).exists()
 
+    
+    comando = dados.get("comando", "").strip()
+        
+    
+    if comando:
+        jogo.log_comandos.append(comando)
+            
+    # Motor principal
+    processar_comando(comando, jogo, jogo.mapa)
+
     try:
         processar_fluxo_jogo(
             comando, jogo, tem_save=tem_save, callback_load_save=carregar_save_web
@@ -674,6 +686,25 @@ def ver_telemetria():
             "itens_na_mochila": round(medias.get("avg_inv") or 0, 2)
         }
     })
+
+@app.route("/api/replay/<id_replay>", methods=["GET"])
+def obter_replay(id_replay):
+    if not mongo_client:
+        return jsonify({"erro": "Banco de dados inativo"}), 500
+        
+    try:
+        doc = telemetry_collection.find_one({"_id": ObjectId(id_replay)})
+        if not doc:
+            return jsonify({"erro": "Replay não encontrado ou expirado."}), 404
+            
+        return jsonify({
+            "jogador": doc.get("evento"),
+            "sala_final": doc.get("sala"),
+            "log_comandos": doc.get("log_comandos", [])
+        })
+    except Exception:
+        return jsonify({"erro": "ID de replay inválido."}), 400
+
 
 @app.route("/share/generate", methods=["GET"])
 @limiter.limit("5 per minute")
