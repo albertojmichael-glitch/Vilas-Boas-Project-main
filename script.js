@@ -942,8 +942,9 @@ async function fetchSeguro(url, options) {
         inputField.disabled = false;
         inputField.focus();
     }
+}
 
-    function iniciarJogo() {
+function iniciarJogo() {
     fetchSeguro('/iniciar', { method: 'GET' });
 }
 
@@ -956,7 +957,6 @@ async function enviarComando(comando) {
             telemetria: pref_telemetria 
         })
     });
-}
 }
 
 
