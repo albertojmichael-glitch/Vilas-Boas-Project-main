@@ -398,7 +398,7 @@ def salvar_save_web(jogo):
 def gerar_resposta_json(jogo):
     linhas = []
     
-    # 1. Captura e converte as linhas para HTML
+    
     if jogo and hasattr(jogo, "ui_handler") and hasattr(jogo.ui_handler, "buffer"):
         linhas = [
             ansi_para_html(linha)
@@ -407,19 +407,19 @@ def gerar_resposta_json(jogo):
         ]
         jogo.ui_handler.buffer.clear()
 
-    # 2. Captura as conquistas do turno e limpa a mochila de envio
+    
     conquistas_enviadas = getattr(jogo, 'novas_conquistas_turno', []).copy()
     if hasattr(jogo, 'novas_conquistas_turno'):
         jogo.novas_conquistas_turno.clear()
 
-    # --- NOVO: Lógica restaurada para a "sala" no HUD ---
+    
     estado_jogo = getattr(jogo, "estado_atual", "")
     if estado_jogo in ["MENU", "AGUARDANDO_DIR"]:
         sala_exibicao = "SISTEMA"
     else:
         sala_exibicao = getattr(jogo, "sala_atual", "SISTEMA").upper()
 
-    # 3. Monta o pacote final
+    
     resposta = {
         "linhas": linhas, 
         "estado": {
@@ -429,7 +429,8 @@ def gerar_resposta_json(jogo):
             "bolsas_coletadas": getattr(jogo, "bolsas_coletadas", 0),
             "estado_jogo": estado_jogo,
             "tempo_final": getattr(jogo, "tempo_total_segundos", 0.0),
-            "sala": sala_exibicao # <--- Resolvido!
+            "som": getattr(jogo, "nivel_barulho", 0),
+            "sala": sala_exibicao 
         },
         "novas_conquistas": conquistas_enviadas
     }

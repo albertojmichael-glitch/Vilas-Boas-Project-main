@@ -627,8 +627,8 @@ function atualizarSidebar(estado) {
 
     const luzVal = document.getElementById("luz-val");
     if (luzVal) {
-        luzVal.textContent = estado.luz !== undefined ? estado.luz : "??";
-        luzVal.className = (estado.luz === "∞" || estado.luz > 3) ? "verde" : "vermelho";
+        luzVal.textContent = estado.luz_restante !== undefined ? estado.luz_restante : "??";
+        luzVal.className = (estado.luz_restante === "∞" || estado.luz_restante > 3) ? "verde" : "vermelho";
     }
 
     const somVal = document.getElementById("som-val");
@@ -646,7 +646,7 @@ function atualizarSidebar(estado) {
         invList.innerHTML = "";
         
         
-        let qtdBolsas = estado.bolsas || 0;
+        let qtdBolsas = estado.bolsas_coletadas || 0;
         const limiteMaximo = 3 + (qtdBolsas * 3);
         const inventario = estado.inventario || [];
         const qtdAtual = inventario.length;
@@ -676,6 +676,12 @@ function atualizarSidebar(estado) {
             slotsContainer = document.createElement("div");
             slotsContainer.id = "inv-slots-container";
             slotsContainer.className = "inv-slots-container";
+
+            slotsContainer.style.display = "flex";
+            slotsContainer.style.flexWrap = "wrap"; 
+            slotsContainer.style.gap = "5px";       
+            slotsContainer.style.marginTop = "10px";
+
             invList.parentElement.appendChild(slotsContainer); 
         }
         
