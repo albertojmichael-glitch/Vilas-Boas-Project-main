@@ -781,5 +781,132 @@ body.blackout-mode .prompt {
     transition: opacity 0.3s;
 }
 
+/* SISTEMA DE CONQUISTAS (TOAST)*/
+#achievement-toast {
+    position: fixed;
+    top: -100px; 
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    border: 2px solid #55ff55;
+    color: #55ff55;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 9999;
+    box-shadow: 0 0 15px rgba(85, 255, 85, 0.4);
+    transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-family: 'Courier New', monospace;
+}
 
+#achievement-toast.show {
+    top: 20px; 
+}
 
+.achieve-icon {
+    font-size: 2rem;
+}
+
+.achieve-title {
+    font-size: 0.8rem;
+    color: #ffda33;
+}
+
+.achieve-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* =========================================
+   MENU DE CONQUISTAS (MODAL)
+   ========================================= */
+.achievements-float {
+    position: fixed;
+    bottom: 80px; /* Fica acima das legendas de áudio e do botão de ajuda */
+    right: 20px;
+    background: #111;
+    color: #ffda33;
+    border: 1px solid #ffda33;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 1000;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.achievements-float:hover {
+    background: #ffda33;
+    color: #111;
+    box-shadow: 0 0 10px rgba(255, 218, 51, 0.5);
+}
+
+.achievements-content {
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: #111;
+    border: 2px solid #ffda33;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+    padding: 10px;
+}
+
+/* O Card Individual */
+.achievement-card {
+    border: 1px solid #444;
+    background: #1a1a1a;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+}
+
+/* Estado: Bloqueada */
+.achievement-card.locked {
+    opacity: 0.4;
+    filter: grayscale(100%);
+    border-color: #333;
+}
+
+/* Estado: Desbloqueada */
+.achievement-card.unlocked {
+    border-color: #55ff55;
+    box-shadow: 0 0 10px rgba(85, 255, 85, 0.15);
+    background: #152515; /* Um leve tom esverdeado de fundo */
+}
+
+.achieve-card-icon {
+    font-size: 2.5rem;
+    min-width: 50px;
+    text-align: center;
+}
+
+.achieve-card-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.achieve-card-info p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #aaa;
+    line-height: 1.3;
+}
+
+.achievement-card.unlocked .achieve-card-info h3 {
+    color: #55ff55;
+}

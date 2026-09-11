@@ -130,6 +130,72 @@ function tocarBipEntrada() {
     osc.stop(ctx.currentTime + 0.06);
 }
 
+// O Catálogo Mestre Frontend (Deve espelhar o do backend)
+const CATALOGO_CONQUISTAS = [
+    { id: "primeira_morte", nome: "Sangue no Carpete", desc: "Bem-vindo ao Vilas Boas.", icone: "☠" },
+    { id: "mente_brilhante", nome: "Mente Brilhante", desc: "Abra o cofre na primeira tentativa.", icone: "★" },
+    { id: "labirinto", nome: "Labirinto", desc: "Sobreviva à Sala de Energia.", icone: "☄" },
+    { id: "acumulador", nome: "Acumulador", desc: "Encha todos os 15 espaços do inventário.", icone: "☑" },
+    { id: "glicose", nome: "Glicose Duvidosa", desc: "Coma o doce velho encontrado no chão.", icone: "✴" },
+    { id: "trapaceiro", nome: "Hacker", desc: "Ative o God Mode.", icone: "☣" },
+    { id: "normal_zerado", nome: "Fim do Expediente", desc: "Sobreviva à noite na dificuldade Normal.", icone: "♨" },
+    { id: "final_bom", nome: "Sobrevivente", desc: "Alcance o Final Neutro.", icone: "☀" },
+    { id: "final_verdadeiro", nome: "A Verdade", desc: "Alcance o Final Verdadeiro.", icone: "✦" },
+    { id: "pesadelo_neutro", nome: "Pesadelo Superado", desc: "Alcance o Final Neutro no modo PESADELO.", icone: "♛" },
+    { id: "pesadelo_verdadeiro", nome: "Mestre do Pesadelo", desc: "Alcance o Final Verdadeiro no modo PESADELO.", icone: "♚" }
+];
+
+function abrirModalConquistas() {
+    const modal = document.getElementById('achievements-modal');
+    const grid = document.getElementById('achievements-grid');
+    const title = document.getElementById('achievements-title');
+
+    
+    const salvas = JSON.parse(localStorage.getItem('vilasBoasAchievements') || '{}');
+    
+    grid.innerHTML = ''; 
+    let quantidadeDesbloqueada = 0;
+
+    CATALOGO_CONQUISTAS.forEach(conquista => {
+        const estaDesbloqueada = !!salvas[conquista.id]; 
+        if (estaDesbloqueada) quantidadeDesbloqueada++;
+
+        
+        const card = document.createElement('div');
+        card.className = `achievement-card ${estaDesbloqueada ? 'unlocked' : 'locked'}`;
+        
+        
+        const nomeExibicao = estaDesbloqueada ? conquista.nome : '???';
+        const descExibicao = estaDesbloqueada ? conquista.desc : 'Continue explorando para desbloquear.';
+
+        card.innerHTML = `
+            <div class="achieve-card-icon">${conquista.icone}</div>
+            <div class="achieve-card-info">
+                <h3>${nomeExibicao}</h3>
+                <p>${descExibicao}</p>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+
+    
+    title.innerText = `🏆 SUAS CONQUISTAS (${quantidadeDesbloqueada}/${CATALOGO_CONQUISTAS.length}) 🏆`;
+
+    modal.classList.remove('hidden');
+}
+
+function fecharModalConquistas() {
+    document.getElementById('achievements-modal').classList.add('hidden');
+}
+
+// Fechar o modal se o jogador clicar no fundo escuro fora da janela
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('achievements-modal');
+    if (e.target === modal) {
+        fecharModalConquistas();
+    }
+});
+
 
 function tocarPassoMetalico() {
     const ctx = obterAudioContext();
@@ -490,6 +556,44 @@ inputField.addEventListener("keydown", async function(event) {
     }
 });
 
+let toastTimeout;
+
+function processarConquistas(listaConquistas) {
+    if (!listaConquistas || listaConquistas.length === 0) return;
+
+    
+    let salvas = JSON.parse(localStorage.getItem('vilasBoasAchievements') || '{}');
+    
+    listaConquistas.forEach(conquista => {
+        
+        if (!salvas[conquista.id]) {
+            salvas[conquista.id] = conquista; 
+            
+            
+            if (typeof reproduzirBeep === "function") reproduzirBeep('sucesso');
+            
+            
+            mostrarToastConquista(conquista);
+        }
+    });
+
+    
+    localStorage.setItem('vilasBoasAchievements', JSON.stringify(salvas));
+}
+
+function mostrarToastConquista(conquista) {
+    const toast = document.getElementById('achievement-toast');
+    document.getElementById('achieve-icon').innerText = conquista.icone;
+    document.getElementById('achieve-name').innerText = conquista.nome;
+    
+    toast.classList.remove('hidden');
+    toast.classList.add('show');
+    
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000); // O balão some após 4 segundos
+}
 
 function atualizarSidebar(estado) {
     if (!estado) return;
@@ -1077,6 +1181,10 @@ async function iniciarReplay(idReplay) {
             } else if (resData.linhas) {
                 
                 resData.linhas.forEach(linha => adicionarLinhaTerminal(linha));
+            }
+
+            if (resData.novas_conquistas) {
+                processarConquistas(resData.novas_conquistas);
             }
 
             await sleep(1500); 

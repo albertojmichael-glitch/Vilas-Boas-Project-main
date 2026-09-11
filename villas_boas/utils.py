@@ -6,6 +6,24 @@ import unicodedata
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERMELHO, RESET, default_ui
 
 
+
+CONQUISTAS_DB = {
+    "primeira_morte": {"id": "primeira_morte", "nome": "Sangue no Carpete", "desc": "Bem-vindo ao Vilas Boas.", "icone": "☠"},
+    "mente_brilhante": {"id": "mente_brilhante", "nome": "Mente Brilhante", "desc": "Abra o cofre na primeira tentativa.", "icone": "★"},
+    "toureiro": {"id": "labirinto", "nome": "Labirinto", "desc": "Sobreviva à Sala de Energia.", "icone": "☄"},
+    "acumulador": {"id": "acumulador", "nome": "Acumulador", "desc": "Encha todos os 15 espaços do inventário.", "icone": "☑"},
+    "glicose": {"id": "glicose", "nome": "Glicose Duvidosa", "desc": "Coma o doce velho encontrado no chão.", "icone": "✴"},
+    "trapaceiro": {"id": "trapaceiro", "nome": "Hacker", "desc": "Ative o God Mode.", "icone": "☣"},
+    
+    
+    "normal_zerado": {"id": "normal_zerado", "nome": "Fim do Expediente", "desc": "Sobreviva à noite na dificuldade Normal.", "icone": "♨"},
+    "final_bom": {"id": "final_bom", "nome": "Sobrevivente", "desc": "Alcance o Final Neutro.", "icone": "☀"},
+    "final_verdadeiro": {"id": "final_verdadeiro", "nome": "A Verdade", "desc": "Alcance o Final Verdadeiro.", "icone": "✦"},
+    "pesadelo_neutro": {"id": "pesadelo_neutro", "nome": "Pesadelo Superado", "desc": "Alcance o Final Neutro no modo PESADELO.", "icone": "♛"},
+    "pesadelo_verdadeiro": {"id": "pesadelo_verdadeiro", "nome": "Sonhador", "desc": "Alcance o Final Verdadeiro no modo PESADELO.", "icone": "♚"}
+}
+
+
 def normalizar(texto):
     texto_sem_acento = (
         unicodedata.normalize("NFKD", texto).encode("ASCII", "ignore").decode("utf-8")

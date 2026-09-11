@@ -260,6 +260,16 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
         processar_ia_inimigo(jogo)
 
 
+
+def desbloquear_conquista(jogo, id_conquista):
+    
+    if id_conquista in CONQUISTAS_DB:
+        
+        if id_conquista not in jogo.conquistas: 
+            jogo.conquistas.append(id_conquista)
+            jogo.novas_conquistas_turno.append(CONQUISTAS_DB[id_conquista])
+
+
 # ---------------------------------------------------------------------------
 # Helper novo: checagem de finais
 # Extrai a cascata "morte / saida / cama / hall de entrada" que ficava
@@ -273,6 +283,7 @@ def verificar_final_de_jogo(jogo):
     if jogo.sala_atual == "morte":
         registrar_telemetria_segura("MORTE", jogo.sala_atual, jogo.dificuldade_escolhida, "Morte no Mapa", jogo)
         dar_tela_de_morte(jogo)
+        desbloquear_conquista(jogo, "primeira_morte")
         return True
 
     if jogo.sala_atual == "saida":
@@ -289,9 +300,25 @@ def verificar_final_de_jogo(jogo):
         if getattr(jogo, 'fios_cortados_inventario', False):
             registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro", jogo)
             rodar_final("verdadeiro", jogo)
+            
+            # --- Gatilhos: Final Verdadeiro ---
+            desbloquear_conquista(jogo, "final_verdadeiro")
+            if jogo.dificuldade_escolhida == "PESADELO":
+                desbloquear_conquista(jogo, "pesadelo_verdadeiro")
+            elif jogo.dificuldade_escolhida == "NORMAL":
+                desbloquear_conquista(jogo, "normal_zerado")
+                
         else:
             registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Neutro", jogo)
             rodar_final("final_bom", jogo)
+            
+            # --- Gatilhos: Final Neutro ---
+            desbloquear_conquista(jogo, "final_bom")
+            if jogo.dificuldade_escolhida == "PESADELO":
+                desbloquear_conquista(jogo, "pesadelo_neutro")
+            elif jogo.dificuldade_escolhida == "NORMAL":
+                desbloquear_conquista(jogo, "normal_zerado")
+                
         return True
 
     return False
@@ -493,6 +520,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.animar(f"{DOS_AMARELO}MODO DEUS ATIVADO. ACESSO AOS BASTIDORES CONCEDIDO.{RESET}\n", 0.04, jogo=jogo)
             ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna brilha com a força de uma estrela...{RESET}", 0.04, jogo=jogo)
             imprimir_contexto_sala(jogo)
+            desbloquear_conquista(jogo, "trapaceiro")
         else:
             ui.animar(f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}", 0.04, jogo=jogo)
 
@@ -599,6 +627,14 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             # gatilho do final verdadeiro (incêndio)
             if jogo.estado_atual == "FIM" and getattr(jogo, 'incendio', False):
                 registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro", jogo)
+                
+                # --- Gatilhos: Final Verdadeiro (Pelo Incêndio) ---
+                desbloquear_conquista(jogo, "final_verdadeiro")
+                if jogo.dificuldade_escolhida == "PESADELO":
+                    desbloquear_conquista(jogo, "pesadelo_verdadeiro")
+                elif jogo.dificuldade_escolhida == "NORMAL":
+                    desbloquear_conquista(jogo, "normal_zerado")
+                    
                 rodar_final("verdadeiro", jogo)
                 return
 
@@ -611,6 +647,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
             imprimir_painel_cofre(jogo, primeira_vez=True)
+        
 
         elif comando == "1994":
             ui.exibir(f"{DOS_VERDE} Um som de 'click'. A pesada porta de metal se abre.{RESET}")
@@ -630,6 +667,11 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.cofre_tentativas = 0
             jogo.estado_atual = "JOGO"
             imprimir_contexto_sala(jogo)
+
+        if tentativa == senha_correta:
+            ui.exibir("O cofre abriu!")
+            if getattr(jogo, "cofre_tentativas", 0) == 0:
+                desbloquear_conquista(jogo, "mente_brilhante")
 
         else:
             jogo.cofre_tentativas = getattr(jogo, 'cofre_tentativas', 0) + 1
@@ -691,6 +733,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 if jogo.hp <= 0:
                     registrar_telemetria_segura("MORTE", "MINIGAME_JON", jogo.dificuldade_escolhida, "Morto pelo Porco", jogo)
                     dar_tela_de_morte(jogo)
+                    desbloquear_conquista(jogo, "primeira_morte")
                 else:
                     jogo.estado_atual = "JOGO"
                     imprimir_contexto_sala(jogo)
@@ -868,6 +911,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.minigame_atual = None
             registrar_telemetria_segura("MORTE", jogo.estado_atual, jogo.dificuldade_escolhida, "Falhou em um Minigame", jogo)
             dar_tela_de_morte(jogo)
+            desbloquear_conquista(jogo, "primeira_morte")
 
         elif isinstance(resultado, str) and resultado.startswith("vitoria_"):
             jogo.estado_atual = "JOGO"
@@ -878,6 +922,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                     jogo.sala_atual = "01"
 
             elif resultado == "vitoria_minotauro":
+                desbloquear_conquista(jogo, "toureiro")
                 jogo.sala_atual = "sala dos fundos"
                 if getattr(jogo, 'god_mode', False) and not getattr(jogo, 'fios_cortados_inventario', False):
                     jogo.inventario.append("fios cortados")

@@ -89,6 +89,7 @@ class GameState(BaseModel):
     web_julgamento: dict[str, Any] = Field(default_factory=dict)
     minigame_dados: dict[str, Any] = Field(default_factory=dict)
     log_comandos: list[str] = Field(default_factory=list)
+    novas_conquistas_turno: list[dict] = Field(default_factory=list)
     mapa: dict[str, Any] = Field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
 
     _ui_handler: Any = PrivateAttr(default=None)

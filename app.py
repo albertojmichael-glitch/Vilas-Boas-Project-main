@@ -423,6 +423,22 @@ def gerar_resposta_json(jogo):
             if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"]
             else "SISTEMA"
         )
+    
+    conquistas_enviadas = getattr(jogo, 'novas_conquistas_turno', []).copy()
+    if hasattr(jogo, 'novas_conquistas_turno'):
+        jogo.novas_conquistas_turno.clear()
+
+    resposta = {
+        "linhas": jogo.ui_handler.buffer,
+        "estado": {
+            "hp": getattr(jogo, "hp", 0),
+            "inventario": getattr(jogo, "inventario", []),
+            "luz_restante": getattr(jogo, "turnos_luz", 0),
+            "bolsas_coletadas": getattr(jogo, "bolsas_coletadas", 0)
+        },
+        "novas_conquistas": conquistas_enviadas
+    }
+    return jsonify(resposta)
 
     return jsonify(
         {
@@ -506,7 +522,6 @@ def receber_comando():
         session["sid"] = sid
         session.permanent = True
         session.modified = True
-
         MEMORIA_SESSOES[sid] = GameState()
         MEMORIA_SESSOES[sid].estado_atual = "AGUARDANDO_DIR"
 
@@ -517,32 +532,20 @@ def receber_comando():
     try:
         requisicao = ComandoRequest(**dados)
         comando = requisicao.comando
-
         session["permite_telemetria"] = requisicao.telemetria
-
     except ValidationError:
-        return jsonify(
-            {
-                "linhas": [
-                    "@@TYPE@@vermelho@@15@@[ ERRO DE SEGURANÇA ] O formato do comando enviado é inválido ou excede 256 caracteres."
-                ],
-                "estado": {},
-            }
-        ), 400
+        # Se falhar na segurança, avisa a UI e aborta o turno
+        jogo.ui_handler.buffer.append("@@TYPE@@vermelho@@0@@[ ERRO DE SEGURANÇA ]: Payload inválido.")
+        return gerar_resposta_json(jogo), 400
 
     tem_save = obter_caminho_autosave(sid).exists()
 
-    
-    comando = dados.get("comando", "").strip()
-        
-    
+    # Grava a fita de replay
     if comando:
         jogo.log_comandos.append(comando)
-            
-    # Motor principal
-    processar_comando(comando, jogo, jogo.mapa)
 
     try:
+        # O processar_fluxo_jogo é o verdadeiro Maestro. Ele cuida de tudo!
         processar_fluxo_jogo(
             comando, jogo, tem_save=tem_save, callback_load_save=carregar_save_web
         )
@@ -562,6 +565,7 @@ def receber_comando():
                 f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {e!s}"
             )
 
+    # Devolvemos a resposta finalizada para o frontend
     return gerar_resposta_json(jogo)
 
 
