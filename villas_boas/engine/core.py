@@ -5,6 +5,7 @@ import logging
 
 from villas_boas.actions import processar_comando
 from villas_boas.actions.parser import normalizar
+from villas_boas.utils import CONQUISTAS_DB
 
 from villas_boas.engine.minigames.seguranca import MinigameSeguranca
 from villas_boas.engine.minigames.minotauro import MinigameMinotauro
@@ -142,14 +143,7 @@ ARTE_COFRE_TENSO = r'''
 '''
 
 
-def desbloquear_conquista(jogo, id_conquista, nome_exibicao):
-    if not hasattr(jogo, 'conquistas'):
-        jogo.conquistas = []
 
-    if id_conquista not in jogo.conquistas:
-        jogo.conquistas.append(id_conquista)
-        ui = jogo.ui_handler
-        ui.buffer.append(f"@@TYPE@@amarelo@@0@@♔ CONQUISTA DESBLOQUEADA: {nome_exibicao} ♔")
 
 
 
@@ -262,12 +256,10 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
 
 
 def desbloquear_conquista(jogo, id_conquista):
-    
-    if id_conquista in CONQUISTAS_DB:
-        
-        if id_conquista not in jogo.conquistas: 
-            jogo.conquistas.append(id_conquista)
-            jogo.novas_conquistas_turno.append(CONQUISTAS_DB[id_conquista])
+    # Condição unida (SIM102) e usando o CONQUISTAS_DB que acabamos de importar
+    if id_conquista in CONQUISTAS_DB and id_conquista not in jogo.conquistas: 
+        jogo.conquistas.append(id_conquista)
+        jogo.novas_conquistas_turno.append(CONQUISTAS_DB[id_conquista])
 
 
 # ---------------------------------------------------------------------------
@@ -285,6 +277,9 @@ def verificar_final_de_jogo(jogo):
         dar_tela_de_morte(jogo)
         desbloquear_conquista(jogo, "primeira_morte")
         return True
+    
+    if jogo.sala_atual in ["saida", "cama", "hall de entrada"] and getattr(jogo, 'estado_atual', '') != "FIM":
+        jogo.tempo_total_segundos = time.time() - jogo.tempo_inicio
 
     if jogo.sala_atual == "saida":
         registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Covarde", jogo)
@@ -651,6 +646,10 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
 
         elif comando == "1994":
             ui.exibir(f"{DOS_VERDE} Um som de 'click'. A pesada porta de metal se abre.{RESET}")
+
+            if getattr(jogo, "cofre_tentativas", 0) == 0:
+                desbloquear_conquista(jogo, "mente_brilhante")
+                
             sala = jogo.mapa[jogo.sala_atual]
             sala.setdefault("itens", [])
 
@@ -668,10 +667,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "JOGO"
             imprimir_contexto_sala(jogo)
 
-        if tentativa == senha_correta:
-            ui.exibir("O cofre abriu!")
-            if getattr(jogo, "cofre_tentativas", 0) == 0:
-                desbloquear_conquista(jogo, "mente_brilhante")
+        
 
         else:
             jogo.cofre_tentativas = getattr(jogo, 'cofre_tentativas', 0) + 1

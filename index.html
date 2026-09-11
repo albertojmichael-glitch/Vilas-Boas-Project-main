@@ -135,6 +135,33 @@
                     </div>
                 </div>
 
+                <!-- NOVO: Modal de Fim de Jogo / Leaderboard -->
+                <div id="arcade-score-modal" class="modal hidden">
+                    <div class="modal-content" style="border-color: #55ff55; text-align: center; max-width: 450px;">
+                        <h2 style="color: #55ff55; font-size: 2rem; margin-bottom: 5px;">VITÓRIA</h2>
+                        <p id="score-ending-text" style="color: #ffda33; font-size: 1.2rem;">Final Verdadeiro</p>
+                        
+                        <div style="margin: 20px 0; padding: 15px; border: 1px dashed #fff; background: #222;">
+                            <p style="color: #fff; margin: 0; font-size: 1.2rem;">TEMPO TOTAL</p>
+                            <h1 id="score-time-display" style="color: #55ff55; font-size: 3rem; margin: 10px 0;">00:00:00</h1>
+                        </div>
+
+                        <p style="color: #fff;">REGISTRE SEU TEMPO NO QUADRO DE LÍDERES</p>
+                        
+                        <!-- Input de 3 letras Arcade -->
+                        <div style="margin: 20px 0;">
+                            <input type="text" id="arcade-initials" maxlength="3" placeholder="___" 
+                                style="font-size: 3rem; text-align: center; width: 120px; text-transform: uppercase; letter-spacing: 10px; background: #000; color: #ffda33; border: 2px solid #ffda33;"
+                                oninput="this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '')">
+                        </div>
+
+                        <button id="btn-login-submit" class="help-float" style="position: relative; right: 0; bottom: 0; width: 100%; border-radius: 4px; font-family: 'Courier New'; font-size: 1.2rem;" onclick="iniciarLoginESalvar()">
+                            CONECTAR COM GITHUB E SALVAR
+                        </button>
+                        <p style="margin-top: 15px; font-size: 0.8rem; cursor: pointer; color: #888; text-decoration: underline;" onclick="fecharArcadeModal()">Pular (Não salvar na nuvem)</p>
+                    </div>
+                </div>
+
                 
                 <div id="saves-modal" class="modal hidden" role="dialog" aria-modal="true">
                     <h2>[ GERENCIADOR DE SAVES ]</h2>

@@ -22,6 +22,7 @@ from flask_limiter.util import get_remote_address
 from pydantic import BaseModel, Field, ValidationError
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+from bson.errors import InvalidId
 
 try:
     import redis
@@ -434,7 +435,9 @@ def gerar_resposta_json(jogo):
             "hp": getattr(jogo, "hp", 0),
             "inventario": getattr(jogo, "inventario", []),
             "luz_restante": getattr(jogo, "turnos_luz", 0),
-            "bolsas_coletadas": getattr(jogo, "bolsas_coletadas", 0)
+            "bolsas_coletadas": getattr(jogo, "bolsas_coletadas", 0),
+            "estado_jogo": getattr(jogo, "estado_atual", ""), # Para o JS saber se o jogo acabou
+            "tempo_final": getattr(jogo, "tempo_total_segundos", 0.0) # <--- NOVO
         },
         "novas_conquistas": conquistas_enviadas
     }
@@ -706,7 +709,7 @@ def obter_replay(id_replay):
             "sala_final": doc.get("sala"),
             "log_comandos": doc.get("log_comandos", [])
         })
-    except Exception:
+    except InvalidId: 
         return jsonify({"erro": "ID de replay inválido."}), 400
 
 

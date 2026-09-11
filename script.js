@@ -902,7 +902,7 @@ async function fetchSeguro(url, options) {
     try {
         const res = await fetch(url, options);
         if (!res.ok) throw new Error("Servidor offline");
-        const data = await res.json();
+        const data = await res.json(); // <--- AQUI ESTÁ A NOSSA RESPOSTA!
 
         const tempoDecorrido = Date.now() - startTime;
         if (tempoDecorrido < 300) {
@@ -910,7 +910,23 @@ async function fetchSeguro(url, options) {
         }
         
         loadingSpinner.style.display = 'none';
+        
+        // 1. Processa os textos e a interface
         await processarLinhas(data.linhas, data.estado);
+        
+        // 2. Dispara os pop-ups de Conquistas (agora no jogo normal também!)
+        if (data.novas_conquistas) {
+            processarConquistas(data.novas_conquistas);
+        }
+
+        // 3. Gatilho da Tela de Arcade / Leaderboard
+        if (data.estado) {
+            if (data.estado.estado_jogo === "FIM" && data.estado.tempo_final > 0) {
+                setTimeout(() => {
+                    mostrarTelaDePontuacao(data.estado.tempo_final);
+                }, 5000); // Espera 5 segundos antes de mostrar a tela
+            }
+        }
 
         if (url === '/comando') { 
             mostrarSalvando(); 
@@ -929,22 +945,6 @@ async function fetchSeguro(url, options) {
         inputField.disabled = false;
         inputField.focus();
     }
-}
-
-function iniciarJogo() {
-    fetchSeguro('/iniciar', { method: 'GET' });
-}
-
-async function enviarComando(comando) {
-    fetchSeguro('/comando', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        
-        body: JSON.stringify({ 
-            comando: comando, 
-            telemetria: pref_telemetria 
-        })
-    });
 }
 
 
@@ -1200,4 +1200,44 @@ async function iniciarReplay(idReplay) {
         adicionarLinhaTerminal("[ SISTEMA ] Erro de conexão ao buscar a fita.", "vermelho");
         modoReplayAtivo = false;
     }
+}
+
+// ==========================================
+// SISTEMA DE LEADERBOARD & ARCADE SCORE
+// ==========================================
+
+function mostrarTelaDePontuacao(segundosTotais) {
+    const modal = document.getElementById('arcade-score-modal');
+    const display = document.getElementById('score-time-display');
+    
+    // Formata o tempo (MM:SS:ms)
+    const mins = Math.floor(segundosTotais / 60);
+    const secs = Math.floor(segundosTotais % 60);
+    const ms = Math.floor((segundosTotais % 1) * 100); 
+    
+    display.innerText = 
+        String(mins).padStart(2, '0') + ':' + 
+        String(secs).padStart(2, '0') + ':' + 
+        String(ms).padStart(2, '0');
+
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.getElementById('arcade-initials').focus();
+    }
+}
+
+function fecharArcadeModal() {
+    const modal = document.getElementById('arcade-score-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function iniciarLoginESalvar() {
+    const iniciais = document.getElementById('arcade-initials').value;
+    if (iniciais.length < 3) {
+        alert("Por favor, digite 3 letras para o painel do fliperama!");
+        return;
+    }
+    
+    // Alerta temporário antes de plugarmos o backend do GitHub
+    alert(`Preparando para conectar como ${iniciais}... Em breve!`);
 }
