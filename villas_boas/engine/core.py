@@ -1,6 +1,7 @@
 import random
 import copy
 import logging
+import time
 
 
 from villas_boas.actions import processar_comando
@@ -649,7 +650,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
 
             if getattr(jogo, "cofre_tentativas", 0) == 0:
                 desbloquear_conquista(jogo, "mente_brilhante")
-                
+
             sala = jogo.mapa[jogo.sala_atual]
             sala.setdefault("itens", [])
 
