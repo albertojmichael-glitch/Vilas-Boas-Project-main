@@ -14,6 +14,9 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 import pymongo
+
+from flask import url_for 
+from authlib.integrations.flask_client import OAuth
 from cachetools import TTLCache
 from flask import Flask, jsonify, redirect, request, send_from_directory, session
 from flask_cors import CORS
@@ -67,6 +70,15 @@ app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
 _key_hash = hashlib.sha256((app.secret_key).encode()).digest()
 CIPHER_SUITE = Fernet(base64.urlsafe_b64encode(_key_hash))
 
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
+
 
 if IS_PRODUCTION:
     app.config.update(
@@ -109,6 +121,7 @@ MONGO_URI = os.environ.get("MONGO_URI")
 if MONGO_URI:
     mongo_client = MongoClient(MONGO_URI)
     db = mongo_client["villasboas_db"]
+    leaderboard_collection = db["leaderboard"]
     saves_collection = db["saves"]
     telemetry_collection = db["telemetry"]
     shares_collection = db["shares"]
@@ -766,6 +779,51 @@ def listar_saves_paginados():
     except (pymongo.errors.PyMongoError, ValueError) as e:
         logger.error(f"Erro ao listar saves paginados: {e}")
         return jsonify({"erro": "Erro interno do servidor"}), 500
+
+
+@app.route("/login/google")
+def login_google():
+    # Pega as iniciais que o jogador digitou no fliperama e salva temporariamente na sessão
+    iniciais = request.args.get("iniciais", "???").upper()[:3]
+    session["arcade_initials"] = iniciais
+    
+    # Gera a URL de volta para o seu site
+    redirect_uri = url_for("auth_google_callback", _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route("/auth/google/callback")
+def auth_google_callback():
+    sid = session.get("sid")
+    if not sid or sid not in MEMORIA_SESSOES:
+        return "Sessão de jogo não encontrada. Jogue novamente para registrar.", 400
+
+    try:
+        # Pega as informações do jogador no Google
+        token = google.authorize_access_token()
+        user_info = token.get("userinfo")
+        email_jogador = user_info.get("email")
+        
+        jogo = MEMORIA_SESSOES[sid]
+        iniciais = session.get("arcade_initials", "UNK")
+        
+        # Salva o recorde no Banco de Dados
+        if mongo_client and getattr(jogo, "tempo_total_segundos", 0) > 0:
+            registro = {
+                "iniciais": iniciais,
+                "email": email_jogador,
+                "tempo_segundos": jogo.tempo_total_segundos,
+                "final_alcancado": jogo.sala_atual,
+                "dificuldade": jogo.dificuldade_escolhida,
+                "timestamp": time.time()
+            }
+            leaderboard_collection.insert_one(registro)
+            
+        # Redireciona de volta para o jogo com uma flag de sucesso
+        return redirect("/?leaderboard=sucesso")
+        
+    except Exception as e:
+        logger.error(f"Erro no OAuth do Google: {e}")
+        return "Falha na autenticação com o Google.", 500
 
 
 @app.after_request

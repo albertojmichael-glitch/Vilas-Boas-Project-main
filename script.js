@@ -1252,6 +1252,25 @@ function iniciarLoginESalvar() {
         return;
     }
     
-    
-    alert(`Preparando para conectar como ${iniciais}... Em breve!`);
+    // Trava o botão para evitar duplos cliques
+    const btn = document.getElementById('btn-login-submit');
+    btn.innerText = "CONECTANDO...";
+    btn.disabled = true;
+
+    // Redireciona o navegador para o Google, levando as 3 letras na mochila (URL)
+    window.location.href = `/login/google?iniciais=${iniciais}`;
 }
+
+// NOVO: Lê a URL quando o jogador volta do Google
+const originalOnload = window.onload;
+window.onload = function() {
+    if (originalOnload) originalOnload(); // Roda o seu onload existente (TV, replay, etc)
+    
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("leaderboard") === "sucesso") {
+        reproduzirBeep('sucesso');
+        alert("Sua pontuação foi registrada no Quadro de Líderes Global!");
+        // Limpa a URL para não ficar repetindo o alerta se ele der F5
+        window.history.replaceState({}, document.title, "/"); 
+    }
+};
