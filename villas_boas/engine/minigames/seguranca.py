@@ -254,10 +254,8 @@ class MinigameSeguranca(BaseMinigame):
         else:
             hora_disp = f"0{(self.turno * 15) // 60}:{(self.turno * 15) % 60:02d}"
 
-        god_mode = getattr(self.jogo, "god_mode", False)
-        texto_energia = "∞" if getattr(jogo, 'god_mode', False) else f"{self.energia}%"
+        texto_energia = "∞" if getattr(self.jogo, 'god_mode', False) else f"{self.energia}%"
 
-        texto_energia = "∞" if getattr(jogo, 'god_mode', False) else f"{self.energia}%"
         self.ui.exibir(bug(f"RELOGIO: {hora_disp}", chance_bug))
         self.ui.exibir(bug(f"ENERGIA: {texto_energia}", chance_bug))
         self.ui.exibir(bug(f"PORTA CENTRAL: {'Fechada' if self.porta_fechada else 'Aberta'}", chance_bug))
