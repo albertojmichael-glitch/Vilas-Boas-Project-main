@@ -324,11 +324,11 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     comando = normalizar(comando_bruto)
     ui = jogo.ui_handler
 
-    if comando.startswith("tp ") and getattr(jogo, 'god_mode', False):
-        if "MINIGAME" in getattr(jogo, "estado_atual", ""):
-            jogo.estado_atual = "JOGO"
-            jogo.minigame_atual = None
-            ui.exibir(f"{DOS_AMARELO}[GOD MODE] Sequência do minigame abortada via distorção espacial.{RESET}")
+    # --- NOVO: SALVAGUARDA GLOBAL PARA O GOD MODE ---
+    if comando.startswith("tp ") and getattr(jogo, 'god_mode', False) and "MINIGAME" in getattr(jogo, "estado_atual", ""):
+        jogo.estado_atual = "JOGO"
+        jogo.minigame_atual = None
+        ui.exibir(f"{DOS_AMARELO}[GOD MODE] Sequência do minigame abortada via distorção espacial.{RESET}")
 
     if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
         jogo.sala_atual = "01"
