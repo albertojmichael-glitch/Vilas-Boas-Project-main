@@ -465,23 +465,15 @@ class MinigameSeguranca(BaseMinigame):
                 # Retorna 'morte', 'vitoria_seguranca', etc., rompendo o loop imediatamente.
                 return resultado
 
-        if self.minutos >= 360:  # Adapte 'self.minutos' para o nome da sua variável de tempo
+        turno_final_val = getattr(self, 'TURNO_FINAL', 24)
+        
+        if self.turno >= turno_final_val:
             ui.limpar()
             ui.animar(f"{DOS_VERDE}06:00 AM{RESET}", 0.1, jogo=jogo)
             ui.animar(f"{DOS_BRANCO}Os sistemas entram em modo de espera diurno. Você sobreviveu.{RESET}", 0.05, jogo=jogo)
             ui.pausar(2)
             jogo.noite_vencida = True
             return "vitoria_seguranca"
-
-        # =====================================================================
-        # 5. VERIFICAÇÃO DE CONDIÇÃO DE VITÓRIA (AMANHECER)
-        # =====================================================================
-        turno_final_val = getattr(self, 'TURNO_FINAL', 36)
-        if self.turno >= turno_final_val:
-            return self._checar_fim_de_noite(jogo)
-
-        # Mantém o jogador dentro do loop do minigame de segurança
-        return "continuar"
 
     
     def _acao_fechar_porta(self, ui, custos):
