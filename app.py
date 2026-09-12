@@ -824,7 +824,7 @@ def auth_google_callback():
         # Redireciona de volta para o jogo com uma flag de sucesso
         return redirect("/?leaderboard=sucesso")
         
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Erro no OAuth do Google: {e}")
         return "Falha na autenticação com o Google.", 500
 
