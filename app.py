@@ -17,6 +17,7 @@ import pymongo
 
 from flask import url_for 
 from authlib.integrations.flask_client import OAuth
+from werkzeug.middleware.proxy_fix import ProxyFix
 from cachetools import TTLCache
 from flask import Flask, jsonify, redirect, request, send_from_directory, session
 from flask_cors import CORS
@@ -63,6 +64,7 @@ if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 
 app.secret_key = SECRET_KEY or "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024 
 

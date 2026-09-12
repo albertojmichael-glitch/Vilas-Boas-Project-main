@@ -263,12 +263,14 @@ class MinigameSeguranca(BaseMinigame):
             if acao_norm == getattr(self, "captcha_resposta", ""):
                 ui.exibir(f"\n{DOS_VERDE}OVERRIDE ACEITO. Protocolos de segurança validados.{RESET}")
                 ui.exibir(f"{DOS_VERDE}Sistema {self.captcha_alvo.upper()} reiniciado e operacional.{RESET}")
-                
+
                 # Restaura o sistema específico que o jogador escolheu consertar
                 if self.captcha_alvo == "camera":
-                    self.camera_ativa = True
+                    self.erro_camera = False
                 elif self.captcha_alvo == "deteccao":
-                    self.deteccao_ativa = True
+                    self.erro_deteccao = False
+                elif self.captcha_alvo == "relogio":
+                    self.erro_relogio = False
                 ui.pausar(1.5)
             else:
                 # Punição severa: Além de perder o turno, a tela sofre glitch, 
@@ -330,7 +332,7 @@ class MinigameSeguranca(BaseMinigame):
         # Correção do Typo: 'acao_norma' corrigido para 'acao_norm'.
         # O comando consertar foi totalmente blindado contra tentativas redundantes.
         elif acao_norm in ("consertar camera", "consertar câmera"):
-            if getattr(self, "camera_ativa", False):
+            if not self.erro_camera:
                 ui.exibir(f"{DOS_AMARELO}Diagnóstico: O sistema de câmeras já está operacional e transmitindo.{RESET}")
                 return "continuar"
             else:
@@ -340,13 +342,23 @@ class MinigameSeguranca(BaseMinigame):
                 return "continuar"
 
         elif acao_norm in ("consertar deteccao", "consertar detecção"):
-            if getattr(self, "deteccao_ativa", False):
+            if not self.erro_deteccao:
                 ui.exibir(f"{DOS_AMARELO}Diagnóstico: O sistema de detecção (radar) já está operando normalmente.{RESET}")
                 return "continuar"
             else:
                 self._gerar_captcha()
                 self.captcha_ativo = True
                 self.captcha_alvo = "deteccao"
+                return "continuar"
+
+        elif acao_norm in ("consertar relogio", "consertar relógio"):
+            if not self.erro_relogio:
+                ui.exibir(f"{DOS_AMARELO}Diagnóstico: O relógio já está sincronizado corretamente.{RESET}")
+                return "continuar"
+            else:
+                self._gerar_captcha()
+                self.captcha_ativo = True
+                self.captcha_alvo = "relogio"
                 return "continuar"
 
         elif acao_norm == "ouvir":
@@ -521,31 +533,6 @@ class MinigameSeguranca(BaseMinigame):
         self.turnos_gerador_ativo = GERADOR_DURACAO_TURNOS
         self.alberto_troll = False
         return True, turno + 1
-
-    def _acao_consertar(self, ui, acao_norm, custos):
-        sistema = acao_norm.replace("consertar ", "", 1).strip()
-        custo = custos["info_leve"]
-
-        if self.apagao > 0:
-            ui.exibir("Não há energia.")
-            return
-        if sistema not in SISTEMAS_VALIDOS:
-            ui.exibir("Sistema não reconhecido.")
-            return
-        if self.energia <= custo:
-            ui.exibir("Energia insuficiente para acessar o painel de manutenção.")
-            return
-
-        self.energia -= custo
-        if sistema == "camera":
-            self.erro_camera = False
-            ui.exibir(f"Câmeras online. (-{custo}% Energia)")
-        elif sistema == "relogio":
-            self.erro_relogio = False
-            ui.exibir(f"Relógio sincronizado. (-{custo}% Energia)")
-        elif sistema == "deteccao":
-            self.erro_deteccao = False
-            ui.exibir(f"Sensores calibrados. (-{custo}% Energia)")
 
     def _acao_ouvir(self, ui, custos):
         custo = custos["info_leve"]

@@ -324,6 +324,12 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     comando = normalizar(comando_bruto)
     ui = jogo.ui_handler
 
+    if comando.startswith("tp ") and getattr(jogo, 'god_mode', False):
+        if "MINIGAME" in getattr(jogo, "estado_atual", ""):
+            jogo.estado_atual = "JOGO"
+            jogo.minigame_atual = None
+            ui.exibir(f"{DOS_AMARELO}[GOD MODE] Sequência do minigame abortada via distorção espacial.{RESET}")
+
     if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
         jogo.sala_atual = "01"
 
@@ -740,7 +746,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     elif jogo.estado_atual == "MINIGAME_CONSERTOS_CABECA":
         jogo.web_consertos["cabeca"] = comando
         jogo.estado_atual = "MINIGAME_CONSERTOS_TRONCO"
-        nome_cabeca = "Urso" if comando == "2" else "Coelho"
+        nome_cabeca = "Urso" if comando == "1" else "Coelho"
         ui.exibir(f"{DOS_VERDE}Você encaixa a cabeça de {nome_cabeca}. Os olhos de vidro piscam uma vez, sozinhos.{RESET}")
         ui.exibir(f"\n{DOS_AMARELO}[ FASE 2: SELEÇÃO DE PEÇAS ]{RESET}")
         ui.exibir("Escolha o Tronco (1- Fino | 2- Robusto): ")
@@ -761,6 +767,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         nome_pernas = "Pelúcia" if pernas == "2" else "Aço"
         ui.exibir(f"{DOS_VERDE}As pernas de {nome_pernas} travam no lugar. A montagem está completa.{RESET}")
         ui.exibir(f"\n{DOS_VERDE}CONSERTO CONCLUÍDO. O ANIMATRÔNICO SORRI PARA VOCÊ!{RESET}")
+        ui.exibir(f"\n{DOS_VERMELHO}ele começa a sangrar, e a gritar no seu ouvido.{RESET}")
         sala = jogo.mapa[jogo.sala_atual]
         sala.setdefault("itens", [])
 
@@ -842,6 +849,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         else:
             if len(jogo.web_julgamento["vitimas"]) == 0:
                 jogo.web_julgamento["pontos"] += 1
+            
             if jogo.web_julgamento["pontos"] == 5:
                 ui.animar("Obrigado por voltar pela gente, Rogério...", 0.08, DOS_VERDE, jogo)
                 ui.exibir(f"{DOS_VERDE}⛋ Um compartimento do piano se abre. Você obteve o CARTÃO DE SEGURANÇA{RESET}")
@@ -856,6 +864,11 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                     else:
                         ui.exibir(f"{DOS_AMARELO}⛋ Mochila cheia! A bateria nova caiu no chão.{RESET}")
                         sala["itens"].append("bateria nova")
+                
+                
+                jogo.estado_atual = "JOGO"
+                imprimir_contexto_sala(jogo)
+                
             else:
                 ui.animar("Quem é você? *A tela desliga* Você não merece nossa ajuda.", 0.05, DOS_VERMELHO, jogo)
                 ui.exibir("@@JUMPSCARE@@")

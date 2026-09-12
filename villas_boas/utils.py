@@ -11,7 +11,7 @@ CONQUISTAS_DB = {
     "primeira_morte": {"id": "primeira_morte", "nome": "Sangue no Carpete", "desc": "Bem-vindo ao Vilas Boas.", "icone": "☠"},
     "mente_brilhante": {"id": "mente_brilhante", "nome": "Mente Brilhante", "desc": "Abra o cofre na primeira tentativa.", "icone": "★"},
     "toureiro": {"id": "labirinto", "nome": "Labirinto", "desc": "Sobreviva à Sala de Energia.", "icone": "☄"},
-    "acumulador": {"id": "acumulador", "nome": "Acumulador", "desc": "Encha todos os 15 espaços do inventário.", "icone": "☑"},
+    "acumulador": {"id": "acumulador", "nome": "Acumulador", "desc": "Encha todos os 9 espaços do inventário.", "icone": "☑"},
     "glicose": {"id": "glicose", "nome": "Glicose Duvidosa", "desc": "Coma o doce velho encontrado no chão.", "icone": "✴"},
     "trapaceiro": {"id": "trapaceiro", "nome": "Hacker", "desc": "Ative o God Mode.", "icone": "☣"},
     

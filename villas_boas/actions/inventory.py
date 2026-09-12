@@ -43,7 +43,7 @@ def cmd_pegar(comando, jogo, mapa):
 
     qtd_bolsas = getattr(jogo, "bolsas_coletadas", 0)
     limite_atual = 3 + (qtd_bolsas * 3)
-    if limite_atual == 15 and len(jogo.inventario) == 15:
+    if limite_atual == 9 and len(jogo.inventario) == 9:
         from villas_boas.engine.core import desbloquear_conquista
         desbloquear_conquista(jogo, "acumulador")
         
