@@ -3,6 +3,48 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## Atualização de Infraestrutura, Nuvem e Balanceamento
+
+* **Novos Recursos e Mecânicas**
+
+Integrado sistema de autenticação via Google OAuth2 para registro de recordes no Quadro de Líderes Global (Leaderboard).
+
+Adicionado suporte a atalhos de movimentação de uma letra (F para frente, A para trás, E para esquerda, D para direita), funcionais na exploração geral e no minigame do Minotauro.
+
+Implementada nova mecânica de falha no minigame do Minotauro: quando ocorre estática no radar, o sistema agora gera indicadores falsos de ameaça em formato de cruz para desorientar o jogador.
+
+Ambiente de produção configurado para deploy no Railway, incluindo servidor WSGI (Gunicorn), Procfile e middleware de ProxyFix para forçar o roteamento seguro via HTTPS.
+
+* **Interface e Experiência do Usuário (UI/UX)**
+
+Reformulado o design do painel de Conquistas para se adequar à estética DOS 1982: janela redimensionada, substituição de ícones modernos por caracteres de texto puro (coroa ASCII) e bordas tracejadas nos itens bloqueados.
+
+Reestruturada a hierarquia do arquivo HTML (DOM) para garantir que os botões flutuantes e modais (Ajuda, Configurações, Conquistas, Saves) não sejam deletados da memória após a transição da animação da TV.
+
+Restaurado o layout do Manual do Sistema (janela de Ajuda) e alinhamento corrigido da barra flutuante de tarefas.
+
+Otimizada a renderização dos espaços do inventário no painel lateral (HUD), aplicando quebra de linha automática (flex-wrap) para evitar distorções visuais ao adquirir muitas bolsas.
+
+* **Correções de Bugs (Bugfixes)**
+
+Corrigido o bug da "Tela Azul Falsa" (Kernel Panic): usar o comando de teleporte do modo desenvolvedor durante um minigame agora encerra a sessão adequadamente em vez de punir o jogador com morte letal.
+
+Corrigido travamento na máquina de estados após a conclusão do minigame do Julgamento do Pianista, devolvendo o controle normal do terminal ao jogador.
+
+Corrigida a falta de sincronia entre os pacotes de dados do Backend e do Frontend, restaurando a exibição em tempo real do nível de Som, turnos exatos de Luz e limite de espaços da Bolsa no HUD.
+
+Blindado o analisador de texto (parser) do minigame do Minotauro, que agora ignora espaços em branco invisíveis digitados acidentalmente pelo jogador.
+
+Corrigido o bug de "Dupla Inicialização", onde a leitura de carregamento da BIOS sobrepunha os textos na tela principal.
+
+Balanceado o limite do inventário para 9 espaços totais e corrigida a lógica de ativação da conquista "Acumulador".
+
+* **Segurança e Estabilidade**
+
+Atualização de Segurança (Hotfix): Bibliotecas Authlib (para >=1.7.1) e Requests (para >=2.33.0) atualizadas para mitigar vulnerabilidades estruturais (CSRF, bypass de autenticação e DoS) detectadas na auditoria da esteira de produção.
+
+Refatoração global nas rotas do Flask para garantir tratamento de exceções seguro em respostas de API.
+
 ## (atualização do sistema) - Patch de Estabilidade, Expansão e Arquitetura (09/09/26)
 
 * **Correções de Bugs**
