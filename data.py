@@ -99,6 +99,7 @@ ARTE_PORCO = r"""
                         |_\  |--^.  /
                           /_]'|_| /_)_/
                              /_]'  /_]'
+        A tela apresenta problemas...
 """
 
 ARTE_ROBO = r'''

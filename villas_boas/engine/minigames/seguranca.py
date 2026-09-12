@@ -163,6 +163,62 @@ class MinigameSeguranca(BaseMinigame):
     def _rick_na_porta(self):
         return self.rick_pos >= RICK_POS_PORTA
 
+    def _processar_avanco_monstro(self, jogo):
+        """
+        Avança os animatrônicos durante o tempo perdido no override manual (captcha).
+        Reaproveita a mesma lógica de movimento do turno normal, mas SEM cobrar
+        energia da porta nem disparar eventos de calor/gerador — aqui é só o
+        monstro se aproveitando da distração do jogador no terminal.
+        Retorna 'morte' se alguém invadiu a sala, ou None para continuar.
+        """
+        ui = self.ui
+        god_mode = getattr(jogo, "god_mode", False)
+
+        
+        if self.porta_fechada:
+            if self.rick_pos == RICK_POS_ATAQUE:
+                self.rick_pos = 0
+                ui.exibir("\n Você ouve batidas na porta enquanto digita, e passos se afastando logo depois.")
+            if self._caroline_na_porta():
+                self.caroline_pos = 0
+                self.caroline_caminho = random.choice(["porta", "tubulacao"])
+                ui.exibir("\n Um estrondo na porta. Ela recuou...")
+
+        
+        rick_ataque = (self.rick_pos >= RICK_POS_ATAQUE) or (
+            self.rick_pos == RICK_POS_PORTA and random.random() < 0.3
+        )
+        carol_porta_ataque = self.caroline_caminho == "porta" and (
+            (self.caroline_pos >= CAROLINE_POS_ATAQUE_PORTA)
+            or (self.caroline_pos == CAROLINE_POS_PORTA and random.random() < 0.3)
+        )
+        carol_duto_ataque = self.caroline_caminho == "tubulacao" and self.caroline_pos >= CAROLINE_POS_ATAQUE_DUTO
+        jon_ataque = self.jon_pos >= JON_POS_ATAQUE
+
+        invasao = (
+            (rick_ataque and not self.porta_fechada)
+            or (carol_porta_ataque and not self.porta_fechada)
+            or jon_ataque
+            or carol_duto_ataque
+        )
+
+        if invasao:
+            if god_mode:
+                ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] Um animatrônico entra na sala... mas você o encara. Ele pede desculpas e sai de fininho.{RESET}")
+                self.rick_pos = 0
+                self.caroline_pos = 0
+                self.jon_pos = 0
+            else:
+                ui.exibir("\n Distraído com o override, você não percebe a sombra até ser tarde demais.")
+                ui.exibir("@@JUMPSCARE@@")
+                ui.pausar(2)
+                return "morte"
+
+        
+        self._mover_animatronicos(ui)
+
+        return None
+
     def _caroline_na_porta(self):
         return self.caroline_caminho == "porta" and self.caroline_pos >= CAROLINE_POS_PORTA
 
@@ -199,9 +255,9 @@ class MinigameSeguranca(BaseMinigame):
             hora_disp = f"0{(self.turno * 15) // 60}:{(self.turno * 15) % 60:02d}"
 
         god_mode = getattr(self.jogo, "god_mode", False)
-        texto_energia = "∞" if god_mode else f"{self.energia}%"
+        texto_energia = "∞" if getattr(jogo, 'god_mode', False) else f"{self.energia}%"
 
-        texto_energia = "∞" if self.energia > 100 else f"{self.energia}%"
+        texto_energia = "∞" if getattr(jogo, 'god_mode', False) else f"{self.energia}%"
         self.ui.exibir(bug(f"RELOGIO: {hora_disp}", chance_bug))
         self.ui.exibir(bug(f"ENERGIA: {texto_energia}", chance_bug))
         self.ui.exibir(bug(f"PORTA CENTRAL: {'Fechada' if self.porta_fechada else 'Aberta'}", chance_bug))
@@ -410,6 +466,14 @@ class MinigameSeguranca(BaseMinigame):
             if resultado is not None:
                 # Retorna 'morte', 'vitoria_seguranca', etc., rompendo o loop imediatamente.
                 return resultado
+
+        if self.minutos >= 360:  # Adapte 'self.minutos' para o nome da sua variável de tempo
+            ui.limpar()
+            ui.animar(f"{DOS_VERDE}06:00 AM{RESET}", 0.1, jogo=jogo)
+            ui.animar(f"{DOS_BRANCO}Os sistemas entram em modo de espera diurno. Você sobreviveu.{RESET}", 0.05, jogo=jogo)
+            ui.pausar(2)
+            jogo.noite_vencida = True
+            return "vitoria_seguranca"
 
         # =====================================================================
         # 5. VERIFICAÇÃO DE CONDIÇÃO DE VITÓRIA (AMANHECER)
