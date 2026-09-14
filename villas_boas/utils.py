@@ -3,7 +3,7 @@ import random
 import shlex
 import unicodedata
 
-from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERMELHO, RESET, default_ui
+from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERMELHO, DOS_VERDE, RESET, default_ui
 
 
 
