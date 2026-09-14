@@ -61,43 +61,36 @@ def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
     )
 
     ui.animar(
-        f"{DOS_BRANCO}[1] INICIAR: MODO NORMAL (Velocidade MS-DOS Padrão){RESET}",
-        0.01,
-        DOS_BRANCO,
-        jogo,
+        f"{DOS_BRANCO}[1] INICIAR: MODO NORMAL (Velocidade MS-DOS Padrão){RESET}", 0.01, DOS_BRANCO, jogo
     )
     ui.animar(
-        f"{DOS_AMARELO}[2] INICIAR: MODO NORMAL (Texto Rápido — Sem Delays){RESET}",
-        0.01,
-        DOS_BRANCO,
-        jogo,
+        f"{DOS_AMARELO}[2] INICIAR: MODO NORMAL (Texto Rápido — Sem Delays){RESET}", 0.01, DOS_BRANCO, jogo
     )
     ui.animar(
-        f"{DOS_VERMELHO}[3] INICIAR: MODO PESADELO (Velocidade MS-DOS Padrão){RESET}",
-        0.01,
-        DOS_BRANCO,
-        jogo,
+        f"{DOS_VERMELHO}[3] INICIAR: MODO PESADELO (Velocidade MS-DOS Padrão){RESET}", 0.01, DOS_BRANCO, jogo
     )
     ui.animar(
-        f"{DOS_AMARELO}[4] INICIAR: MODO PESADELO (Texto Rápido — Sem Delays){RESET}",
-        0.01,
-        DOS_BRANCO,
-        jogo,
+        f"{DOS_AMARELO}[4] INICIAR: MODO PESADELO (Texto Rápido — Sem Delays){RESET}", 0.01, DOS_BRANCO, jogo
+    )
+    
+    # --- NOVAS OPÇÕES DE DIFICULDADE ---
+    ui.animar(
+        f"{DOS_AMARELO}[5] INICIAR: MODOS DE DESAFIO{RESET}", 0.01, DOS_BRANCO, jogo
+    )
+    ui.animar(
+        f"{DOS_AMARELO}[6] INICIAR: MODO PERSONALIZADO{RESET}", 0.01, DOS_BRANCO, jogo
     )
 
     if tem_autosave:
         ui.animar(
-            f"{DOS_VERDE}[5] CONTINUAR JOGO (Autosave Encontrado){RESET}\n",
-            0.01,
-            DOS_BRANCO,
-            jogo,
+            f"{DOS_VERDE}[7] CONTINUAR JOGO (Autosave Encontrado){RESET}\n", 0.01, DOS_BRANCO, jogo
         )
         ui.animar(
-            f"{DOS_VERDE}SELECIONE UMA OPÇÃO (1-5): {RESET}", 0.01, DOS_BRANCO, jogo
+            f"{DOS_VERDE}SELECIONE UMA OPÇÃO (1-7): {RESET}", 0.01, DOS_BRANCO, jogo
         )
     else:
         ui.animar(
-            f"\n{DOS_VERDE}SELECIONE UMA OPÇÃO (1-4): {RESET}", 0.01, DOS_BRANCO, jogo
+            f"\n{DOS_VERDE}SELECIONE UMA OPÇÃO (1-6): {RESET}", 0.01, DOS_BRANCO, jogo
         )
 
 
@@ -163,6 +156,11 @@ def imprimir_tutorial(ui, jogo=None):
         f"{DOS_AMARELO}=================================================={RESET}\n", 
         0.005, DOS_BRANCO, jogo
     )
+
+    try:
+        from data import ARTE_ENTRADA
+        ui.animar(f"{DOS_BRANCO}{ARTE_ENTRADA}{RESET}", 0.005, jogo=jogo)
+    except ImportError: pass
 
 
 def dar_dica_jon(passo_certo, ui):
@@ -359,9 +357,14 @@ def rodar_final(tipo_final, jogo):
         
         # O terror ataca no retrovisor
         ui.buffer.append("@@GLITCH_LUZ@@")
-        ui.animar("Você olha pelo retrovisor. Algo metálico se mexe no banco de trás.", 0.05, DOS_VERMELHO, jogo)
+        ui.animar("Você olha pelo retrovisor. Algo se mexe no banco de trás.", 0.05, DOS_VERMELHO, jogo)
         ui.pausar(1)
         ui.buffer.append("@@BLACKOUT@@")
+
+        try:
+            from data import ARTE_FINAL_MEDIOCRE
+            ui.animar(f"{DOS_BRANCO}{ARTE_FINAL_MEDIOCRE}{RESET}", 0.005, jogo=jogo)
+        except ImportError: pass
         
         ui.exibir(f"\n{DOS_VERMELHO}[ FINAL MEDÍOCRE: ALGO TE SEGUIU... ]{RESET}")
         liberou_deus = registrar_final("mediocre")
@@ -418,6 +421,11 @@ def rodar_final(tipo_final, jogo):
         
         ui.animar("Seu corpo é deixado ao chão, e você se junta a todos os outros naquele lugar.", 0.09, DOS_BRANCO, jogo)
         ui.pausar(2)
+
+        try:
+            from data import ARTE_FINAL_NEUTRO
+            ui.animar(f"{DOS_BRANCO}{ARTE_FINAL_NEUTRO}{RESET}", 0.005, jogo=jogo)
+        except ImportError: pass
 
         ui.exibir(f"\n{DOS_BRANCO}[ FINAL NEUTRO: ESCURIDÃO ]{RESET}")
         liberou_deus = registrar_final("bom")
@@ -484,10 +492,15 @@ def rodar_final(tipo_final, jogo):
         ui.animar(f"\n{DOS_VERDE}[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.{RESET}", 0.05, jogo=jogo)
 
         ui.pausar(1.5)
-        # O Fogo Acaba. O site volta à cor normal
+        
         ui.buffer.append("@@NORMAL_POWER@@")
         ui.animar("\nVocê se levanta e empurra as portas de entrada, saindo para o ar frio da madrugada.", 0.08, DOS_BRANCO, jogo)
         ui.animar("Pela calçada de Curitiba, você vê a fumaça subindo ao amanhecer. O restaurante virou cinzas.", 0.06, DOS_BRANCO, jogo)
+
+        try:
+            from data import ARTE_FINAL_VERDADEIRO
+            ui.animar(f"{DOS_BRANCO}{ARTE_FINAL_VERDADEIRO}{RESET}", 0.005, jogo=jogo)
+        except ImportError: pass
 
         ui.exibir(f"\n{DOS_VERDE}[ FINAL VERDADEIRO: LIBERTAÇÃO ]{RESET}")
         liberou_deus = registrar_final("verdadeiro")
@@ -499,6 +512,6 @@ def rodar_final(tipo_final, jogo):
         ui.exibir(f"{DOS_AMARELO}=================================================={RESET}")
 
 
-    # Remove qualquer filtro visual da tela para o Game Over ser limpo
+    
     ui.buffer.append("@@NORMAL_POWER@@") 
     ui.animar("\n=== APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)

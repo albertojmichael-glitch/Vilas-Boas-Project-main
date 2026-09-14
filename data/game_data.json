@@ -55,11 +55,13 @@
                 "tesoura quebrada",
                 "pelucias",
                 "doce",
-                "disquete",
+                "disquete1",
                 "bolsa",
                 "bateria nova"
             ],
-            "inspecionaveis": {}
+            "inspecionaveis": {
+                "disquete1": "Parece ser um arquivo de texto. Está escrito 'Angela' na capa."
+            }
         },
         "quarto de refrigeração": {
             "descrição": "voce entra no quarto, está muito frio e os ventiladores fazem um barulho alto, tem um tubo de ventilação no centro da sala",
@@ -120,14 +122,15 @@
             "cadeira": "cadeira",
             "atrás": "corredor",
             "inspecionaveis": {
-                "papeis": "Tem muitos papeis encima da segunda mesa, emails e memorandos... algo chama atenção '1994..' são de 2007"
+                "papeis": "Tem muitos papeis encima da segunda mesa, emails e memorandos... algo chama atenção '1994..' são de 2007",
+                "disquete2": "Está jogado em cima de um teclado quebrado."
             },
             "esquerda": "nada",
             "direita": "nada",
             "cofre_important": "cofre",
             "itens": [
                 "recorte 3",
-                "disquete"
+                "disquete2"
             ]
         },
         "02": {
@@ -205,7 +208,7 @@
             "inspecionaveis": {}
         },
         "sala 2": {
-            "descrição": "voce da de cara com um animatronico enorme no escuro! O zumbido cresce. Você tem poucos segundos para recuar!",
+            "descrição": "voce da de cara com um animatronico enorme no escuro. O zumbido cresce. Você tem poucos segundos para recuar.",
             "esquerda": "sala 1",
             "atrás": "duas salas de festas",
             "frente": "morte",
@@ -265,9 +268,11 @@
             "atrás": "sala dos fundos",
             "itens": [
                 "bateria nova",
-                "disquete"
+                "disquete3"
             ],
-            "inspecionaveis": {}
+            "inspecionaveis": {
+                "disquete3": "Um disquete escondido entre algumas chaves de fenda enferrujadas."
+            }
         },
         "sala de animatronicos": {
             "descrição": "Várias carcaças de metal desmontadas. Uma delas vira a cabeça devagar para você! Você bate a porta.",
@@ -331,7 +336,9 @@
         "recorte 3": "A base do jornal: '...o proprietário Renato Fidelis.'",
         "jornal completo": "Os três recortes unidos. Conta a história das três vítimas de 1994, João.. Ângela... e Renato.",
         "lanterna": "Sua lanterna velha de plástico vermelha, você esqueceu de trocar a bateria antes de vir aqui.",
-        "disquete": "Um disquete de 5¼ polegadas. Serve para salvar os dados do sistema no terminal.",
+        "disquete1": "Um disquete velho e arranhado. O rótulo está borrado e diz apenas 'ANGELA'.",
+        "disquete2": "Um disquete de 5¼ polegadas, com a borda de plástico um pouco derretida. Rótulo: 'MICHEL'.",
+        "disquete3": "Um disquete muito bem conservado comparado aos outros. Tem uma fita crepe colada onde se lê 'RENATO'.",
         "bolsa": "Uma bolsa escolar antiga, desgastadas e um pouco rasgado, deve servir para guardar alguma coisa ainda..",
         "fita isolante": "Um rolo de fita preta grossa. A cola ainda deve servir.",
         "fios cortados": "Um punhado de fios elétricos grossos e coloridos. Estão sujos com o óleo preto e está fervendo.",
@@ -342,7 +349,7 @@
     "eventos_aleatorios": [
         {
             "mensagem": "Você ouve um estalo alto vindo do teto. Algo pesado se moveu lá em cima...",
-            "item_drop": "bateria nova"
+            "item_drop": "pedra"
         },
         {
             "mensagem": "Você tropeça em algo no escuro que faz um som metálico...",

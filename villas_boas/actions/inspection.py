@@ -33,6 +33,16 @@ def cmd_examinar(comando, jogo, mapa):
         
     elif match_inv or match_chao:
         item_real = match_inv if match_inv else match_chao
+        
+        
+        if item_real == "pelucias":
+            try:
+                from data import ARTE_PELUCIA
+                ui.animar(f"{DOS_AMARELO}{ARTE_PELUCIA}{RESET}", 0.015, jogo=jogo)
+            except ImportError as e:
+                logger.debug(f"ARTE_PELUCIA indisponível no arquivo de dados: {e}")
+       
+                
         desc = descricoes_itens.get(item_real, "Não há nada de especial nisso.")
         ui.exibir(f"\n{DOS_AMARELO} ☞ {desc}{RESET}")
         return True

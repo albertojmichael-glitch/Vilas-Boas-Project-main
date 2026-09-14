@@ -14,6 +14,9 @@ CONQUISTAS_DB = {
     "acumulador": {"id": "acumulador", "nome": "Acumulador", "desc": "Encha todos os 9 espaços do inventário.", "icone": "☑"},
     "glicose": {"id": "glicose", "nome": "Glicose Duvidosa", "desc": "Coma o doce velho encontrado no chão.", "icone": "✴"},
     "trapaceiro": {"id": "trapaceiro", "nome": "Hacker", "desc": "Ative o God Mode.", "icone": "☣"},
+    "speedrun": {"id": "speedrun", "nome": "Corredor Noturno", "desc": "Zere o jogo no Modo Desafio: Speedrun (Menos de 5 minutos reais).", "icone": "⏱"},
+    "fantasma": {"id": "fantasma", "nome": "Fantasma", "desc": "Zere no Modo Desafio: Fantasma (Sem deixar o barulho passar de 50%).", "icone": "☹"},
+    "breu_total": {"id": "breu_total", "nome": "Breu Total", "desc": "Zere no Modo Desafio: Breu Total (Sem luz desde o início).", "icone": "👁"},
     
     
     "normal_zerado": {"id": "normal_zerado", "nome": "Fim do Expediente", "desc": "Sobreviva à noite na dificuldade Normal.", "icone": "♨"},

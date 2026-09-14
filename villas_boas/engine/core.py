@@ -253,6 +253,13 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
 
     if not comando_correu:
         processar_ia_inimigo(jogo)
+    
+    if getattr(jogo, "dificuldade_escolhida", "") == "DESAFIO_FANTASMA" and jogo.nivel_barulho > 50:
+        ui.buffer.append("@@JUMPSCARE@@")
+        ui.exibir(f"\n{DOS_VERMELHO}Você quebrou o silêncio. Eles ouviram.{RESET}")
+        ui.pausar(1.5)
+        jogo.sala_atual = "morte"
+        jogo.estado_atual = "FIM"
 
 
 
@@ -303,17 +310,32 @@ def verificar_final_de_jogo(jogo):
                 desbloquear_conquista(jogo, "pesadelo_verdadeiro")
             elif jogo.dificuldade_escolhida == "NORMAL":
                 desbloquear_conquista(jogo, "normal_zerado")
+            if jogo.dificuldade_escolhida == "DESAFIO_SPEEDRUN":
+                if jogo.tempo_total_segundos < 360.0: # 6 min
+                    desbloquear_conquista(jogo, "speedrun")
+            elif jogo.dificuldade_escolhida == "DESAFIO_FANTASMA":
+                desbloquear_conquista(jogo, "fantasma")
+            elif jogo.dificuldade_escolhida == "DESAFIO_BREU":
+                desbloquear_conquista(jogo, "breu_total")
                 
         else:
             registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Neutro", jogo)
             rodar_final("final_bom", jogo)
             
-            # --- Gatilhos: Final Neutro ---
+            # --- Final Neutro ---
             desbloquear_conquista(jogo, "final_bom")
             if jogo.dificuldade_escolhida == "PESADELO":
                 desbloquear_conquista(jogo, "pesadelo_neutro")
             elif jogo.dificuldade_escolhida == "NORMAL":
                 desbloquear_conquista(jogo, "normal_zerado")
+            
+            if jogo.dificuldade_escolhida == "DESAFIO_SPEEDRUN":
+                if jogo.tempo_total_segundos < 300.0:  # 5 min
+                    desbloquear_conquista(jogo, "speedrun")
+            elif jogo.dificuldade_escolhida == "DESAFIO_FANTASMA":
+                desbloquear_conquista(jogo, "fantasma")
+            elif jogo.dificuldade_escolhida == "DESAFIO_BREU":
+                desbloquear_conquista(jogo, "breu_total")
                 
         return True
 
@@ -475,7 +497,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
             imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
-        elif comando == "5" and tem_save:
+        elif comando == "7" and tem_save:
             ui.limpar()
             if callback_load_save and callback_load_save(jogo):
                 ui.animar(f"{DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO SEU AUTOSAVE.{RESET}\n", 0.04, jogo=jogo)
@@ -505,6 +527,22 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 jogo.fast_mode = True
                 jogo.hp = VIDA_PESADELO; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
                 ui.animar(f"{DOS_VERMELHO}MODO PESADELO COM TEXTO RÁPIDO SELECIONADO. BOA SORTE.{RESET}\n", 0.04, jogo=jogo)
+            
+            elif comando == "5":
+                jogo.estado_atual = "MENU_DESAFIOS"
+                ui.limpar()
+                ui.exibir(f"{DOS_AMARELO}=== MODOS DE DESAFIO ==={RESET}")
+                ui.exibir("1 - SPEEDRUN: Zere em menos de 5 minutos reais. (Texto Rápido forçado)")
+                ui.exibir("2 - FANTASMA: Se o barulho passar de 50%, você morre instantaneamente.")
+                ui.exibir("3 - BREU TOTAL: Você começa com a bateria da lanterna totalmente zerada.")
+                ui.exibir("\nDigite o número do desafio ou 'voltar':")
+            
+            elif comando == "6":
+                jogo.estado_atual = "MENU_CUSTOM_BAT"
+                ui.limpar()
+                ui.exibir(f"{DOS_AMARELO}=== MODO PERSONALIZADO ==={RESET}")
+                ui.exibir("Defina os parâmetros para a sua partida.")
+                ui.exibir("\n1. Bateria Inicial (Digite um número de turnos, ex: 12, 50, 0):")
 
             jogo.estado_atual = "JOGO"
             imprimir_tutorial(ui, jogo=jogo)
@@ -643,6 +681,65 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             
             if not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
                 imprimir_contexto_sala(jogo)
+        
+    # ==========================================
+    # FLUXO DE MODOS DE DESAFIO E PERSONALIZADO
+    # ==========================================
+    elif jogo.estado_atual == "MENU_DESAFIOS":
+        if comando == "voltar":
+            jogo.estado_atual = "MENU"
+            imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
+            return
+            
+        jogo.fast_mode = False
+        jogo.hp = VIDA_NORMAL; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
+        
+        if comando == "1":
+            jogo.dificuldade_escolhida = "DESAFIO_SPEEDRUN"
+            jogo.fast_mode = True # Força texto rápido para speedrun
+            ui.animar(f"{DOS_AMARELO}MODO SPEEDRUN ATIVADO. O CRONÔMETRO ESTÁ RODANDO.{RESET}\n", 0.04, jogo=jogo)
+        elif comando == "2":
+            jogo.dificuldade_escolhida = "DESAFIO_FANTASMA"
+            ui.animar(f"{DOS_AMARELO}MODO FANTASMA ATIVADO. FAÇA SILÊNCIO ABSOLUTO.{RESET}\n", 0.04, jogo=jogo)
+        elif comando == "3":
+            jogo.dificuldade_escolhida = "DESAFIO_BREU"
+            jogo.turnos_luz = 0
+            ui.animar(f"{DOS_AMARELO}MODO BREU TOTAL ATIVADO. VOCÊ ESTÁ NO ESCURO.{RESET}\n", 0.04, jogo=jogo)
+        else:
+            ui.exibir(f"{DOS_VERMELHO}Opção inválida.{RESET}")
+            return
+            
+        jogo.estado_atual = "JOGO"
+        imprimir_tutorial(ui, jogo=jogo)
+        imprimir_contexto_sala(jogo)
+
+    elif jogo.estado_atual == "MENU_CUSTOM_BAT":
+        try:
+            jogo.turnos_luz = int(comando)
+            jogo.estado_atual = "MENU_CUSTOM_INV"
+            ui.exibir("\n2. Bônus de Espaço na Mochila Inicial (Digite um número, ex: 0, 3, 6):")
+        except ValueError:
+            ui.exibir(f"{DOS_VERMELHO}Por favor, digite apenas números inteiros.{RESET}")
+
+    elif jogo.estado_atual == "MENU_CUSTOM_INV":
+        try:
+            jogo.bolsas_coletadas = int(comando) // 3
+            jogo.estado_atual = "MENU_CUSTOM_HP"
+            ui.exibir("\n3. Pontos de Vida (HP) Iniciais (ex: 1, 3, 10):")
+        except ValueError:
+            ui.exibir(f"{DOS_VERMELHO}Por favor, digite apenas números inteiros.{RESET}")
+
+    elif jogo.estado_atual == "MENU_CUSTOM_HP":
+        try:
+            jogo.hp = int(comando)
+            jogo.dificuldade_escolhida = "CUSTOM"
+            jogo.estado_atual = "JOGO"
+            ui.limpar()
+            ui.animar(f"{DOS_VERDE}PARÂMETROS ACEITOS. INICIANDO SIMULAÇÃO PERSONALIZADA.{RESET}\n", 0.04, jogo=jogo)
+            imprimir_tutorial(ui, jogo=jogo)
+            imprimir_contexto_sala(jogo)
+        except ValueError:
+            ui.exibir(f"{DOS_VERMELHO}Por favor, digite apenas números inteiros.{RESET}")
 
     # minigame do cofre
     elif jogo.estado_atual == "MINIGAME_COFRE":

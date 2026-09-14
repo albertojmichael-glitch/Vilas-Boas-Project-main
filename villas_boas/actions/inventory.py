@@ -82,6 +82,35 @@ def _usar_lanterna(jogo, mapa, item):
     return True
 
 
+def _usar_isqueiro(jogo, mapa, item):
+    ui = jogo.ui_handler
+    
+    
+    try:
+        from data import ARTE_ISQUEIRO
+        ui.animar(f"{DOS_AMARELO}{ARTE_ISQUEIRO}{RESET}", 0.015, jogo=jogo)
+    except ImportError: 
+        pass
+        
+    
+    if getattr(jogo, "turnos_luz", 0) > 2:
+        ui.exibir(f"{DOS_AMARELO}Você acende o isqueiro, mas a sua lanterna já ilumina o local muito bem.{RESET}")
+        return False 
+        
+    
+    ui.exibir(f"{DOS_AMARELO}Você risca a pedra do isqueiro. Uma chama tremeluzente ilumina as sombras.{RESET}")
+    ui.exibir(f"{DOS_VERDE}A luz fraca permite enxergar o chão, mas o gás parece que vai durar pouco (2 turnos).{RESET}")
+    
+    
+    jogo.turnos_luz += 2 
+    
+    
+    jogo.nivel_barulho = min(100, getattr(jogo, "nivel_barulho", 0) + 10)
+    
+    
+    return True
+
+
 def _usar_chave_dos_fundos(jogo, mapa, item):
     ui = jogo.ui_handler
     if jogo.sala_atual == "porta dos fundos":
@@ -112,86 +141,69 @@ def _usar_bateria_nova(jogo, mapa, item):
     return True
 
 
-def _usar_isqueiro(jogo, mapa, item):
-    ui = jogo.ui_handler
-    if getattr(jogo, "noite_vencida", False):
-        if getattr(jogo, "fios_cortados_inventario", False):
-            ui.exibir(
-                f"{DOS_VERMELHO}Você aproxima a chama do isqueiro das cortinas e da madeira podre. Em segundos, o fogo se espalha.{RESET}"
-            )
-            ui.exibir(
-                f"{DOS_AMARELO}O restaruante está em chamas, você sabe o que deve fazer. Vá para o Hall de entrada.{RESET}"
-            )
-            jogo.incendio = True
-        else:
-            ui.exibir(
-                f"{DOS_BRANCO}Você pensa em incendiar o lugar agora mesmo, mas precisa de algo a mais para... ela...{RESET}"
-            )
-    else:
-        ui.exibir(
-            f"{DOS_AMARELO}Você acende o isqueiro. Uma pequena chama ilumina as sombras, mas você logo a apaga para não chamar atenção.{RESET}"
-        )
-    return True
-
-
 def _usar_disquete(jogo, mapa, item):
     ui = jogo.ui_handler
     if jogo.sala_atual == "01":
         ui.exibir(
-            f"{DOS_VERDE}Você insere o disquete sujo no drive do terminal de segurança...{RESET}"
+            f"{DOS_VERDE}Você insere o {item} sujo no drive do terminal de segurança...{RESET}"
         )
         ui.pausar(1.5)
         ui.exibir(f"{DOS_BRANCO}LENDO A:\\ ...{RESET}")
         ui.pausar(1)
+        
         try:
             from data import ARTE_DISQUETE
             ui.animar(f"{DOS_BRANCO}{ARTE_DISQUETE}{RESET}", 0.015, jogo=jogo)
             ui.pausar(1)
         except ImportError as e:
+            import logging
+            logger = logging.getLogger(__name__)
             logger.debug(f"ARTE_DISQUETE indisponível no arquivo de dados: {e}")
             pass
-        ui.animar(
-            f"{DOS_AMARELO}ARQUIVO RECUPERADO: ANGELA.TXT{RESET}",
-            0.05,
-            DOS_AMARELO,
-            jogo,
-        )
-        ui.animar(
-            f"{DOS_BRANCO}'Hoje vim mostrar para meu esposo João, meu local de trabalho, o Vilas Boas. Talvez não tenha sido uma boa ideia.'{RESET}",
-            0.06,
-            DOS_BRANCO,
-            jogo,
-        )
-        ui.animar(
-            f"{DOS_BRANCO}'A gente brigou feio no meio do salão, pois aparentemente ele achava que tinha alguém me observando atrás das cortinas, sendo que não... Não tinha nada lá além de poeira e peças enferrujadas. Ele está perdendo a cabeça.'{RESET}",
-            0.05,
-            DOS_BRANCO,
-            jogo=jogo,
-        )
-        ui.animar(
-            f"{DOS_BRANCO}'Ele foi falar com meu chefe, o Sr. Renato, lá na salas dos fundos, enquanto eu escrevo isso.'{RESET}",
-            0.08,
-            DOS_BRANCO,
-            jogo,
-        )
-        ui.animar(
-            f"{DOS_VERMELHO}'Talvez... Seja loucura minha, mas eu vi alguem me chamando para a cozinha privada pela janela do escritório, vou ir lá ver.'{RESET}",
-            0.05,
-            DOS_VERMELHO,
-            jogo,
-        )
-        ui.animar(
-            f"{DOS_VERMELHO}'Ela foi libertada.'{RESET}", 0.10, DOS_VERMELHO, jogo
-        )
+
+        # --- LORE: DISQUETE 1 ---
+        if item == "disquete1":
+            ui.animar(f"{DOS_AMARELO}ARQUIVO RECUPERADO: ANGELA.TXT{RESET}", 0.05, DOS_AMARELO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Hoje vim mostrar para meu esposo João, meu local de trabalho, o Vilas Boas. Talvez não tenha sido uma boa ideia.'{RESET}", 0.06, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'A gente brigou feio no meio do salão, pois aparentemente ele achava que tinha alguém me observando atrás das cortinas, sendo que não... Não tinha nada lá além de poeira e peças enferrujadas. Ele está perdendo a cabeça.'{RESET}", 0.05, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Ele foi falar com meu chefe, o Sr. Renato, lá na salas dos fundos, enquanto eu escrevo isso.'{RESET}", 0.08, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_VERMELHO}'Talvez... Seja loucura minha, mas eu vi alguem me chamando para a cozinha privada pela janela do escritório, vou ir lá ver.'{RESET}", 0.05, DOS_VERMELHO, jogo)
+            ui.animar(f"{DOS_VERMELHO}'Ela foi libertada.'{RESET}", 0.10, DOS_VERMELHO, jogo)
+        
+        # --- LORE: DISQUETE 2 ---
+        elif item == "disquete2":
+            ui.animar(f"{DOS_AMARELO}ARQUIVO RECUPERADO: MICHEL.TXT{RESET}", 0.05, DOS_AMARELO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Depois que a Caroline partiu, não encontramos ninguém para alavancar esse projeto.'{RESET}", 0.06, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Acreditamos que não há salvação mais, vamos abandonar tudo e deixar as traças. Tudo o que a gente já devia ter feito.'{RESET}", 0.05, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Perdemos tudo, e agora tem coisas no restaurante, que mesmo a gente causando isso... Nós nos arrependemos, e vimos que tudo isso não passa de uma vergonha.'{RESET}", 0.06, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Sinto culpa por tudo que fiz. Não sei como me defender, sei que sou culpado, e se isso tudo vier à tona, irei pegar prisão perpétua sem dúvidas.'{RESET}", 0.06, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Sou um covarde que levou todas essas pessoas à morte. Não vou mais deixar que isso me consuma, vou ir embora enquanto há tempo.'{RESET}", 0.06, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_VERMELHO}Ele fugiu.{RESET}", 0.10, DOS_VERMELHO, jogo)
+        
+        # --- LORE: DISQUETE 3 ---
+        elif item == "disquete3":
+            ui.animar(f"{DOS_AMARELO}ARQUIVO RECUPERADO: RENATO.TXT{RESET}", 0.05, DOS_AMARELO, jogo)
+            ui.animar(f"{DOS_BRANCO}'1994, 3 de setembro. O restaurante está indo bem, mantendo uma clientela fiel. Escrevo isso como relatório.'{RESET}", 0.05, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Sou Renato Fidelis Gomes, fundador deste local. Eu mesmo fiz esses animatrônicos, juntei placas e peças. Minhas obras-primas.'{RESET}", 0.05, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Derramei muito sangue e suor. Tenho fantasias antigas no estoque: uma de lebre rosa sem nome, a do Senhor Raposa, e a de jacaré, que guardo bem.'{RESET}", 0.05, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Sou um inventor fadado a cuidar da administração sozinho. Tenho orgulho da minha primeira criação, um animatrônico de touro com 3 rostos.'{RESET}", 0.05, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Deixo ele na sala de energia. Fiz um mini programa de sonar que lança ondas nas paredes. Se algo estiver no radar, ele vai atrás.'{RESET}", 0.05, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'O porco Jon mapeia o local inteiro e procura as entradas. Se o caminho mais curto for pela tubulação, ele vai pela tubulação.'{RESET}", 0.05, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'O mosqueteiro Rick é mais direto, mas precisa de manutenção. O índio Jones segue vozes e induz pensamentos nos clientes. Não sei qual o limite.'{RESET}", 0.05, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_VERMELHO}'E o cozinheiro Alberto tem acesso ao sistema inteiro do restaurante, acho isso preocupante.'{RESET}", 0.06, DOS_VERMELHO, jogo)
+            ui.animar(f"{DOS_BRANCO}'A ideia surgiu quando visitei Hurricane, em Utah. Descobri a Chuck E. Cheese e a Fazbear Pizza. Fiquei encantado com as atrações.'{RESET}", 0.05, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Penso que se esse lugar crescer, farei parcerias com eles para trazer ao Brasil. Escrevi muito, hora de dar Adeus. (FIM)'{RESET}", 0.06, DOS_BRANCO, jogo)
+        
         ui.pausar(2)
         ui.exibir(
-            f"{DOS_VERMELHO}O drive faz um ruído horrível e ejeta o disquete arranhado. Ele está arruinado.{RESET}"
+            f"{DOS_VERMELHO}O drive faz um ruído horrível e ejeta o {item} arranhado. Ele está arruinado.{RESET}"
         )
-        jogo.inventario.remove("disquete")
+        if item in jogo.inventario:
+            jogo.inventario.remove(item)
         ui.pausar(2)
     else:
         ui.exibir(
-            f"{DOS_BRANCO}Você segura o velho disquete, mas não há nenhum computador neste cômodo para lê-lo. Talvez na sala de segurança?{RESET}"
+            f"{DOS_BRANCO}Você segura o velho {item}, mas não há nenhum computador neste cômodo para lê-lo. Talvez na sala de segurança?{RESET}"
         )
     return True
 
@@ -245,8 +257,10 @@ _USAR_HANDLERS = {
     "lanterna": _usar_lanterna,
     "chave dos fundos": _usar_chave_dos_fundos,
     "bateria nova": _usar_bateria_nova,
-    "isqueiro": _usar_isqueiro,
-    "disquete": _usar_disquete,
+    "isqueiro": _usar_isqueiro, 
+    "disquete1": _usar_disquete,
+    "disquete2": _usar_disquete,
+    "disquete3": _usar_disquete,
     "tábua pequena de madeira": _usar_tabua_pequena_de_madeira,
     "tabua pequena de madeira": _usar_tabua_pequena_de_madeira,
     "remedio": _usar_cura,  
