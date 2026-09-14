@@ -261,15 +261,27 @@ def imprimir_contexto_sala(jogo):
 
     descricao_colorida = sala.get("descrição", "")
 
+    intensidade_glitch = 0.0
+    
+    
     if jogo.hp <= 1 and not getattr(jogo, "god_mode", False):
-        descricao_colorida = corromper_texto(descricao_colorida, intensidade=0.4)
-        ui.animar(
-            f"{DOS_VERMELHO}[SISTEMA NEUROLÓGICO COMPROMETIDO]{RESET}",
-            0.01,
-            DOS_VERMELHO,
-            jogo,
-        )
+        intensidade_glitch += 0.3
+        ui.animar(f"{DOS_VERMELHO}[SISTEMA NEUROLÓGICO COMPROMETIDO]{RESET}", 0.01, DOS_VERMELHO, jogo)
+        
+    
+    barulho = getattr(jogo, "nivel_barulho", 0)
+    if barulho > 50:
+        
+        intensidade_glitch += (barulho - 50) / 125.0 
 
+    
+    if jogo.turnos_luz <= 0 and not getattr(jogo, "amanheceu", False):
+        intensidade_glitch += 0.5
+        ui.animar(f"{DOS_VERMELHO}Sua visão falha na escuridão absoluta...{RESET}", 0.01, DOS_BRANCO, jogo)
+
+   
+    if intensidade_glitch > 0 and not getattr(jogo, "god_mode", False):
+        descricao_colorida = corromper_texto(descricao_colorida, intensidade=min(0.9, intensidade_glitch))
     for inspecionavel in sala.get("inspecionaveis", {}):
         descricao_colorida = descricao_colorida.replace(
             inspecionavel, f"{DOS_AMARELO}{inspecionavel}{RESET}"
@@ -339,6 +351,17 @@ def dar_tela_de_morte(jogo):
     ui.animar(
         "=== SISTEMA CORROMPIDO. APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo
     )
+
+
+def animar_frames_ascii(ui, frames, delay=0.4, jogo=None):
+    """
+    Renderiza uma verdadeira animação ASCII quadro a quadro limpando a tela.
+    'frames' deve ser uma lista de strings cruas (raw strings).
+    """
+    for frame in frames:
+        ui.limpar()
+        ui.exibir(f"{DOS_BRANCO}{frame}{RESET}")
+        ui.pausar(delay)
 
 
 def rodar_final(tipo_final, jogo):

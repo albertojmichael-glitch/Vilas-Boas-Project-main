@@ -180,3 +180,23 @@ def corromper_texto(texto, intensidade=0.5):
                 resultado.append(random.choice(zalgo_chars))
 
     return "".join(resultado)
+
+def texto_cintilante(texto, paleta="perigo"):
+    """
+    Alterna cores a cada caractere para simular luzes piscando ou alertas críticos.
+    Paletas: 'perigo' (Vermelho/Amarelo), 'sistema' (Verde/Branco), 'fantasma' (Branco/Cinza)
+    """
+    if paleta == "perigo":
+        cores = [DOS_VERMELHO, DOS_AMARELO]
+    elif paleta == "sistema":
+        cores = [DOS_VERDE, DOS_BRANCO]
+    else:
+        cores = [DOS_BRANCO, RESET]
+        
+    resultado = ""
+    for i, char in enumerate(texto):
+        if char.strip():
+            resultado += f"{cores[i % len(cores)]}{char}"
+        else:
+            resultado += char
+    return resultado + RESET
