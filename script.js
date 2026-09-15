@@ -722,28 +722,26 @@ async function processarLinhas(linhas, estado) {
 
 function novaLinha(linha, terminalEl) {
     return new Promise((resolve) => {
+        
         if (typeof linha === 'string') {
+            
+            // Jumpscare
             if (linha.includes("@@JUMPSCARE@@")) {
                 linha = linha.replace("@@JUMPSCARE@@", ""); 
-                triggerJumpscare(); 
+                ativarJumpscare(); 
             }
+            
+            
             if (linha.includes("@@PASSO@@")) {
                 linha = linha.replace("@@PASSO@@", "");
                 tocarPassoMetalico();
             }
-        }
-
-        if (resposta.includes("@@JUMPSCARE@@")) {
             
-            resposta = resposta.replace("@@JUMPSCARE@@", "");
             
-            ativarJumpscare();
-        }
-
-        
-        if (linha.includes("@@PORTA@@")) {
-            linha = linha.replace("@@PORTA@@", "");
-            tocarPorta();
+            if (linha.includes("@@PORTA@@")) {
+                linha = linha.replace("@@PORTA@@", "");
+                tocarPorta();
+            }
         }
 
         if (linha.startsWith("@@CLEAR@@")) {
