@@ -1034,28 +1034,7 @@ function executarAtalho(cmd) {
     if (typeof enviarComando === "function") enviarComando(cmd);
 }
 
-function triggerJumpscare() {
-    const overlay = document.getElementById('jumpscare-overlay');
-    if (overlay) overlay.classList.remove('hidden');
 
-    document.body.classList.add('glitch-active');
-    setTimeout(() => document.body.classList.remove('glitch-active'), 300);
-    
-    const ctx = obterAudioContext();
-    if (ctx) {
-        const scareOsc = ctx.createOscillator();
-        const scareGain = ctx.createGain();
-        scareOsc.type = 'sawtooth';
-        scareOsc.frequency.value = 130;
-        scareGain.gain.value = 0.6; 
-        scareOsc.connect(scareGain);
-        scareGain.connect(masterGainNode);
-        scareOsc.start();
-        scareOsc.stop(ctx.currentTime + 0.15); 
-    }
-    
-    if (overlay) setTimeout(() => overlay.classList.add('hidden'), 150); 
-}
 
 function mostrarSalvando() {
     const ind = document.getElementById('save-indicator');
