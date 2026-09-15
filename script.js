@@ -758,6 +758,12 @@ function novaLinha(linha, terminalEl) {
                 linha = linha.replace("@@JUMPSCARE@@", ""); 
                 ativarJumpscare(); 
             }
+
+            // Falsa Tela Azul
+            if (linha.includes("@@BSOD@@")) {
+                linha = linha.replace("@@BSOD@@", "");
+                ativarBSOD();
+            }
             
             
             if (linha.includes("@@PASSO@@")) {
@@ -1332,4 +1338,32 @@ function ativarJumpscare() {
     setTimeout(() => {
         tela.style.display = 'none';
     }, 1200);
+}
+
+function ativarBSOD() {
+    const tela = document.getElementById('tela-bsod');
+    const imgCreepy = document.getElementById('img-bsod-creepy');
+    
+    
+    const imagens = [
+        '/static/images/JAPONESMEDO.jpg',
+        '/static/images/SHEISHERE1.jpg',
+        '/static/images/SHEISHERE2.jpg'
+    ];
+    imgCreepy.src = imagens[Math.floor(Math.random() * imagens.length)];
+    
+    
+    tela.style.display = 'flex';
+    reproduzirBeep('erro');
+    
+    
+    setTimeout(() => { imgCreepy.style.opacity = '0.6'; }, 300);
+    setTimeout(() => { imgCreepy.style.opacity = '0'; }, 400);
+    setTimeout(() => { imgCreepy.style.opacity = '0.9'; }, 700);
+    setTimeout(() => { imgCreepy.style.opacity = '0'; }, 800);
+    
+    
+    setTimeout(() => {
+        tela.style.display = 'none';
+    }, 1500);
 }

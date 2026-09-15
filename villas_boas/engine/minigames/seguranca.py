@@ -398,6 +398,8 @@ class MinigameSeguranca(BaseMinigame):
                 ui.exibir(f"{DOS_AMARELO}Diagnóstico: O sistema de câmeras já está operacional e transmitindo.{RESET}")
                 return "continuar"
             else:
+                ui.exibir("@@BSOD@@") 
+                ui.pausar(1.5)
                 self._gerar_captcha()
                 self.captcha_ativo = True
                 self.captcha_alvo = "camera"
@@ -408,6 +410,8 @@ class MinigameSeguranca(BaseMinigame):
                 ui.exibir(f"{DOS_AMARELO}Diagnóstico: O sistema de detecção (radar) já está operando normalmente.{RESET}")
                 return "continuar"
             else:
+                ui.exibir("@@BSOD@@") 
+                ui.pausar(1.5)
                 self._gerar_captcha()
                 self.captcha_ativo = True
                 self.captcha_alvo = "deteccao"
@@ -418,6 +422,8 @@ class MinigameSeguranca(BaseMinigame):
                 ui.exibir(f"{DOS_AMARELO}Diagnóstico: O relógio já está sincronizado corretamente.{RESET}")
                 return "continuar"
             else:
+                ui.exibir("@@BSOD@@") 
+                ui.pausar(1.5)
                 self._gerar_captcha()
                 self.captcha_ativo = True
                 self.captcha_alvo = "relogio"
