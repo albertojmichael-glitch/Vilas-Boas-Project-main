@@ -309,24 +309,18 @@ class MinigameSeguranca(BaseMinigame):
         e a progressão da ameaça animatrônica.
         """
         ui = self.ui
-        # Normalização robusta: garante que o input seja tratado em minúsculas e sem espaços inúteis,
-        # resolvendo bugs de digitação acidental do jogador em momentos de pânico.
+        
         acao_norm = acao.lower().strip()
         god_mode = getattr(jogo, "god_mode", False)
 
-        # =====================================================================
-        # 1. INTERCEPTAÇÃO DE SEGURANÇA (MODO CAPTCHA)
-        # =====================================================================
-        # Se um sistema crítico falhou e o jogador tentou consertar no turno anterior,
-        # o terminal trava completamente. Qualquer ação digitada agora é tratada 
-        # exclusivamente como a tentativa de resolver o Override Manual.
+       
         if getattr(self, "captcha_ativo", False):
-            # Correção do bug: a variável correta de checagem é acao_norm, não acao_normalizada
+            
             if acao_norm == getattr(self, "captcha_resposta", ""):
                 ui.exibir(f"\n{DOS_VERDE}OVERRIDE ACEITO. Protocolos de segurança validados.{RESET}")
                 ui.exibir(f"{DOS_VERDE}Sistema {self.captcha_alvo.upper()} reiniciado e operacional.{RESET}")
 
-                # Restaura o sistema específico que o jogador escolheu consertar
+                
                 if self.captcha_alvo == "camera":
                     self.erro_camera = False
                 elif self.captcha_alvo == "deteccao":
@@ -335,46 +329,37 @@ class MinigameSeguranca(BaseMinigame):
                     self.erro_relogio = False
                 ui.pausar(1.5)
             else:
-                # Punição severa: Além de perder o turno, a tela sofre glitch, 
-                # a energia é drenada pelo curto-circuito e o monstro ganha tempo.
+               
                 ui.buffer.append("@@GLITCH_LUZ@@")
                 ui.exibir(f"\n{DOS_VERMELHO}ACESSO NEGADO. Assinatura de erro detectada no input.{RESET}")
                 ui.exibir(f"{DOS_VERMELHO}Reboot abortado. A falha de firewall drenou energia do sistema.{RESET}")
                 ui.pausar(1.5)
-                # Dano direto aos recursos do jogador, garantindo que não caia abaixo de 0
+                
                 self.energia = max(0, self.energia - 1)
                 
-            # Limpa o estado do captcha para liberar o terminal no próximo turno
+            
             self.captcha_ativo = False
             self.captcha_alvo = None
             
-            # O terror da mecânica: independentemente de o jogador ter acertado ou errado
-            # o puzzle numérico, o tempo passou. A criatura avança pelas sombras.
+            
             return self._processar_avanco_monstro(jogo)
 
-        # =====================================================================
-        # 2. MANIPULAÇÃO DE TEMPO (CHEAT CODES / GOD MODE)
-        # =====================================================================
+        
         if acao_norm in ("pular noite", "pular", "set time 06:00") and god_mode:
             ui.exibir(f"\n{DOS_AMARELO}[GOD MODE ATIVADO]{RESET}")
             ui.exibir(f"{DOS_AMARELO}As leis da física se contorcem. O tempo acelera artificialmente.{RESET}")
             ui.exibir(f"{DOS_AMARELO}Os ponteiros do relógio digital giram freneticamente até parar às 06:00.{RESET}")
             
-            # Utiliza getattr preventivo para evitar quebra caso TURNO_FINAL seja importado dinamicamente
+            
             turno_final_val = getattr(self, 'TURNO_FINAL', 36)
             self.turno = turno_final_val
             return self._checar_fim_de_noite(jogo)
 
-        # =====================================================================
-        # 3. RESOLUÇÃO DE COMANDOS DO TERMINAL
-        # =====================================================================
-        turno_passou = False
+        
         acao_valida = True
         custos = self._custos_turno()
 
-        # Correção Estrutural: A cadeia de if/elif foi unificada para evitar 
-        # avaliações duplicadas e falhas de escopo. Todos os comandos agora
-        # fazem parte de um único bloco lógico de roteamento.
+        
         
         if acao_norm == "fechar porta":
             self._acao_fechar_porta(ui, custos)
@@ -391,15 +376,14 @@ class MinigameSeguranca(BaseMinigame):
         elif acao_norm == "ligar gerador":
             turno_passou, self.turno = self._acao_ligar_gerador(ui, self.turno)
 
-        # Correção do Typo: 'acao_norma' corrigido para 'acao_norm'.
-        # O comando consertar foi totalmente blindado contra tentativas redundantes.
+       
         elif acao_norm in ("consertar camera", "consertar câmera"):
             if not self.erro_camera:
                 ui.exibir(f"{DOS_AMARELO}Diagnóstico: O sistema de câmeras já está operacional e transmitindo.{RESET}")
                 return "continuar"
             else:
                 ui.exibir("@@BSOD@@") 
-                ui.pausar(1.5)
+                ui.pausar(2.5)
                 self._gerar_captcha()
                 self.captcha_ativo = True
                 self.captcha_alvo = "camera"
@@ -411,7 +395,7 @@ class MinigameSeguranca(BaseMinigame):
                 return "continuar"
             else:
                 ui.exibir("@@BSOD@@") 
-                ui.pausar(1.5)
+                ui.pausar(2.5)
                 self._gerar_captcha()
                 self.captcha_ativo = True
                 self.captcha_alvo = "deteccao"
@@ -423,7 +407,7 @@ class MinigameSeguranca(BaseMinigame):
                 return "continuar"
             else:
                 ui.exibir("@@BSOD@@") 
-                ui.pausar(1.5)
+                ui.pausar(2.5)
                 self._gerar_captcha()
                 self.captcha_ativo = True
                 self.captcha_alvo = "relogio"
@@ -442,28 +426,23 @@ class MinigameSeguranca(BaseMinigame):
             ui.exibir(f"{DOS_BRANCO}Você prende a respiração, recua da mesa e deixa os minutos se arrastarem no escuro...{RESET}")
             turno_passou = True
             self.turno += 1
-            # Reseta mecânicas específicas de IA baseadas em paciência do jogador
+            
             self.alberto_troll = False
 
         else:
             ui.exibir(f"{DOS_VERMELHO}Erro de Sintaxe: Comando inválido ou periférico não reconhecido pelo terminal.{RESET}")
             acao_valida = False
 
-        # =====================================================================
-        # 4. CONSEQUÊNCIAS AMBIENTAIS E RESOLUÇÃO DE TURNO
-        # =====================================================================
+       
         if acao_valida and acao_norm not in ("esperar", "aguardar"):
-            # Qualquer interação física com a mesa (teclar, bater botões) gera
-            # uma leve perturbação sonora, atraindo atenção indesejada.
+            
             self._chance_interferencia(ui)
 
-            # Mecânica de recuo: se a porta foi fechada a tempo, ouvir o baque 
-            # do monstro contra o metal serve como feedback de sobrevivência.
+            
             if getattr(self, "porta_fechada", False):
                 self._checar_recuo_na_porta(ui)
 
-        # Ritmo do terror: pausas assíncronas forçam o jogador a esperar
-        # o output do sistema, simulando o processamento lento de um computador de 1982.
+        
         ui.pausar(1.5)
 
         if acao_valida:
@@ -471,12 +450,11 @@ class MinigameSeguranca(BaseMinigame):
 
         ui.pausar(2.0)
 
-        # Se o comando executado consumiu tempo (ex: reiniciar gerador, esperar na sala),
-        # a máquina de estados avalia se os animatrônicos invadiram a sala ou drenaram recursos.
+        
         if turno_passou:
             resultado = self._resolver_fim_de_turno(ui, jogo, god_mode)
             if resultado is not None:
-                # Retorna 'morte', 'vitoria_seguranca', etc., rompendo o loop imediatamente.
+              
                 return resultado
 
         turno_final_val = getattr(self, 'TURNO_FINAL', 24)
