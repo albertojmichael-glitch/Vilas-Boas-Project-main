@@ -26,6 +26,7 @@ let masterGainNode = null; // Controlador global
 let ambientOsc = null;
 let crtOsc = null;
 let pref_volume = 1.0; // Volume padrão
+let pref_volume_jumpscare = 1.0;
 
 function obterAudioContext() {
     if (!audioCtx) {
@@ -445,6 +446,33 @@ function carregarPreferencias() {
             if (audioAmbienteLoop) {
                 audioAmbienteLoop.volume = pref_volume * 0.6;
             }
+        });
+    }
+
+    // --- NOVO: Preferências do Jumpscare ---
+    const savedVolumeJump = localStorage.getItem('vilasBoasVolumeJump');
+    
+    if (savedVolumeJump !== null) {
+        pref_volume_jumpscare = parseFloat(savedVolumeJump);
+        const sliderJump = document.getElementById('volume-jump-slider');
+        if (sliderJump) sliderJump.value = pref_volume_jumpscare;
+        
+        const displayJump = document.getElementById('volume-jump-val-display');
+        if (displayJump) displayJump.innerText = `${Math.round(pref_volume_jumpscare * 100)}%`;
+    }
+
+    const volJumpSlider = document.getElementById('volume-jump-slider');
+    if (volJumpSlider) {
+        volJumpSlider.addEventListener('input', (e) => {
+            pref_volume_jumpscare = parseFloat(e.target.value);
+            localStorage.setItem('vilasBoasVolumeJump', pref_volume_jumpscare);
+            document.getElementById('volume-jump-val-display').innerText = `${Math.round(pref_volume_jumpscare * 100)}%`;
+            
+            // Opcional: Tocar um pedacinho do grito baixinho para o jogador testar a altura
+            const testeSusto = new Audio('/static/audio/grito.mp3');
+            testeSusto.volume = pref_volume * pref_volume_jumpscare;
+            testeSusto.play();
+            setTimeout(() => testeSusto.pause(), 300);
         });
     }
 }
@@ -1291,8 +1319,12 @@ function ativarJumpscare() {
     
     
     audioSusto.play().catch(err => console.log("Erro de áudio do jumpscare:", err));
+
     
+    const volPrincipal = typeof pref_volume !== 'undefined' ? pref_volume : 1.0;
+    const volJumpscare = typeof pref_volume_jumpscare !== 'undefined' ? pref_volume_jumpscare : 1.0;
     
+    audioSusto.volume = volPrincipal * volJumpscare;
     
     tela.style.display = 'flex';
     
