@@ -256,6 +256,14 @@ class MinigameSeguranca(BaseMinigame):
 
         texto_energia = "∞" if getattr(self.jogo, 'god_mode', False) else f"{self.energia}%"
 
+        if self.energia < 15 and not getattr(self.jogo, 'god_mode', False):
+            try:
+                from villas_boas.utils import corromper_texto
+                texto_energia = corromper_texto(texto_energia, intensidade=0.6)
+                hora_disp = corromper_texto(hora_disp, intensidade=0.4)
+            except ImportError:
+                pass
+
         self.ui.exibir(bug(f"RELOGIO: {hora_disp}", chance_bug))
         self.ui.exibir(bug(f"ENERGIA: {texto_energia}", chance_bug))
         self.ui.exibir(bug(f"PORTA CENTRAL: {'Fechada' if self.porta_fechada else 'Aberta'}", chance_bug))
@@ -485,7 +493,8 @@ class MinigameSeguranca(BaseMinigame):
         else:
             self.porta_fechada = True
             self.energia -= custo
-            ui.exibir(f"A pesada porta de metal desce com um estrondo. (-{custo}% Energia)")
+            ui.exibir(f"@@PORTA@@A pesada porta de metal desce com um estrondo. (-{custo}% Energia)")
+
             if self.alberto_troll:
                 ui.exibir("\n Como você é tão tolo? Hahahaha")
                 self.erro_camera = True
@@ -501,7 +510,7 @@ class MinigameSeguranca(BaseMinigame):
         else:
             self.porta_fechada = False
             self.energia -= custo
-            ui.exibir(f"A porta de metal se ergue lentamente. (-{custo}% Energia)")
+            ui.exibir(f"@@PORTA@@A porta de metal se ergue lentamente. (-{custo}% Energia)")
 
     def _acao_iluminar_tubulacao(self, ui, custos):
         custo = custos["info_pesado"]
@@ -520,6 +529,24 @@ class MinigameSeguranca(BaseMinigame):
                 self.caroline_pos = 0
                 self.caroline_caminho = random.choice(["porta", "tubulacao"])
                 ui.exibir("A Caroline fugiu do duto")
+
+    def _chance_interferencia(self, ui):
+        if random.random() > CHANCE_INTERFERENCIA_MOV:
+            return
+            
+        quem = random.choice(["rick", "jon", "caroline"])
+        if quem == "rick":
+            self.rick_pos += 1
+        elif quem == "jon":
+            self.jon_pos += 1
+        else:
+            self.caroline_pos += 1
+            
+        ui.exibir(f"\n@@PASSO@@{DOS_VERMELHO}Você ouve um ruído metálico se aproximando enquanto mexe no sistema.{RESET}")
+        
+        
+        if self.turno >= TURNO_CRITICO and random.random() < 0.3:
+            ui.exibir(f"{DOS_VERMELHO}O som de uma respiração ofegante ecoa através das saídas de ar da sua sala...{RESET}")
 
     def _acao_olhar_vidro(self, ui):
         if self.indio_janela:
@@ -729,7 +756,7 @@ class MinigameSeguranca(BaseMinigame):
             ui.exibir(f" A pesada porta de metal consome energia contínua... (-{CUSTO_PORTA}% Energia)")
 
         if self.energia <= 0 and self.apagao == 0 and not god_mode:
-            ui.exibir("\n [ ENERGIA ESGOTADA ] Tudo fica escuro. A porta abre sozinha...")
+            ui.exibir("\n [ ENERGIA ESGOTADA ] Tudo fica escuro. @@PORTA@@A porta abre sozinha...")
             self.porta_fechada = False
             self.apagao = 1
             ui.pausar(2)

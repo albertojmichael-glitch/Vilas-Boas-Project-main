@@ -19,6 +19,8 @@ const salaEl = document.getElementById('hud-sala');
 const saidasEl = document.getElementById('hud-saidas');
 
 
+let audioAmbienteLoop = null;
+let sonsRandomicosAtivos = false;
 let audioCtx = null;
 let masterGainNode = null; // Controlador global
 let ambientOsc = null;
@@ -57,32 +59,8 @@ function mostrarLegendaDeAudio(texto) {
         }, 2000); // Some após 2 segundos
     }
 }
-function iniciarSomAmbiente() {
-    const ctx = obterAudioContext();
-    if (!ctx || ambientOsc) return;
 
-    
-    ambientOsc = ctx.createOscillator();
-    const ambientGain = ctx.createGain();
-    ambientOsc.type = 'triangle';
-    ambientOsc.frequency.value = 55; 
-    ambientGain.gain.value = 0.025; 
 
-    ambientOsc.connect(ambientGain);
-    ambientGain.connect(masterGainNode);
-    ambientOsc.start();
-
-    
-    crtOsc = ctx.createOscillator();
-    const crtGain = ctx.createGain();
-    crtOsc.type = 'sawtooth';
-    crtOsc.frequency.value = 60; 
-    crtGain.gain.value = 0.005; 
-
-    crtOsc.connect(crtGain);
-    crtGain.connect(masterGainNode);
-    crtOsc.start();
-}
 
 document.body.addEventListener('click', iniciarSomAmbiente, { once: true });
 document.body.addEventListener('keydown', iniciarSomAmbiente, { once: true });
@@ -108,6 +86,55 @@ function tocarSomDigito() {
     osc.stop(ctx.currentTime + 0.05);
 }
 
+function iniciarSomAmbiente() {
+    const ctx = obterAudioContext();
+    if (!ctx) return;
+
+    // Toca o zumbido CRT antigo baixinho (opcional, ajuda na imersão)
+    if (!crtOsc) {
+        crtOsc = ctx.createOscillator();
+        const crtGain = ctx.createGain();
+        crtOsc.type = 'sawtooth';
+        crtOsc.frequency.value = 60; 
+        crtGain.gain.value = 0.005; 
+        crtOsc.connect(crtGain);
+        crtGain.connect(masterGainNode);
+        crtOsc.start();
+    }
+
+    // --- NOVO: LOOP DO AMBIENTE MP3 ---
+    if (!audioAmbienteLoop) {
+        audioAmbienteLoop = new Audio('/static/audio/ambiente.mp3');
+        audioAmbienteLoop.loop = true; // Faz rodar para sempre
+        audioAmbienteLoop.volume = (typeof pref_volume !== 'undefined' ? pref_volume : 1.0) * 0.6; 
+        audioAmbienteLoop.play().catch(err => console.log("Autoplay bloqueado:", err));
+    }
+
+    // --- NOVO: INICIA O MOTOR DE SONS RANDÔMICOS ---
+    if (!sonsRandomicosAtivos) {
+        sonsRandomicosAtivos = true;
+        tocarSonsAssustadoresAleatorios();
+    }
+}
+
+// Função que sorteia um som e um tempo aleatório
+function tocarSonsAssustadoresAleatorios() {
+    // Sorteia um tempo de espera entre 30 e 80 segundos
+    const tempoAleatorio = Math.floor(Math.random() * (80000 - 30000 + 1)) + 30000;
+    
+    setTimeout(() => {
+        
+        const audios = ['/static/audio/sonsrandomicos.mp3', '/static/audio/sonsrandomicos2.mp3'];
+        const escolhido = audios[Math.floor(Math.random() * audios.length)];
+        
+        const audioSusto = new Audio(escolhido);
+        audioSusto.volume = (typeof pref_volume !== 'undefined' ? pref_volume : 1.0) * 0.8;
+        audioSusto.play().catch(e => console.log("Erro som randomico:", e));
+        
+        // Chama a si mesma novamente para criar um loop eterno e imprevisível
+        tocarSonsAssustadoresAleatorios();
+    }, tempoAleatorio);
+}
 
 function tocarBipEntrada() {
     const ctx = obterAudioContext();
@@ -198,40 +225,15 @@ window.addEventListener('click', (e) => {
 
 
 function tocarPassoMetalico() {
-    const ctx = obterAudioContext();
-    if (!ctx) return;
+    const passoAudio = new Audio('/static/audio/metalrangendo.mp3');
+    passoAudio.volume = (typeof pref_volume !== 'undefined' ? pref_volume : 1.0);
+    passoAudio.play().catch(e => console.log("Erro ao tocar passo:", e));
+}
 
-    const t = ctx.currentTime;
-
-    
-    const subOsc = ctx.createOscillator();
-    const subGain = ctx.createGain();
-    subOsc.type = 'sine';
-    subOsc.frequency.setValueAtTime(110, t);
-    subOsc.frequency.exponentialRampToValueAtTime(30, t + 0.25);
-
-    subGain.gain.setValueAtTime(0.12, t);
-    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-
-    subOsc.connect(subGain);
-    subGain.connect(masterGainNode);
-    subOsc.start(t);
-    subOsc.stop(t + 0.25);
-
-    
-    const metalOsc = ctx.createOscillator();
-    const metalGain = ctx.createGain();
-    metalOsc.type = 'sawtooth';
-    metalOsc.frequency.setValueAtTime(420 + Math.random() * 80, t);
-    metalOsc.frequency.exponentialRampToValueAtTime(160, t + 0.18);
-
-    metalGain.gain.setValueAtTime(0.045, t);
-    metalGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
-
-    metalOsc.connect(metalGain);
-    metalGain.connect(masterGainNode);
-    metalOsc.start(t);
-    metalOsc.stop(t + 0.18);
+function tocarPorta() {
+    const portaAudio = new Audio('/static/audio/portafechandoabrindo.mp3');
+    portaAudio.volume = (typeof pref_volume !== 'undefined' ? pref_volume : 1.0);
+    portaAudio.play().catch(e => console.log(e));
 }
 
 
@@ -435,9 +437,13 @@ function carregarPreferencias() {
             localStorage.setItem('vilasBoasVolume', pref_volume);
             document.getElementById('volume-val-display').innerText = `${Math.round(pref_volume * 100)}%`;
             
-            
             if (masterGainNode) {
                 masterGainNode.gain.value = pref_volume;
+            }
+            
+            
+            if (audioAmbienteLoop) {
+                audioAmbienteLoop.volume = pref_volume * 0.6;
             }
         });
     }
@@ -725,6 +731,19 @@ function novaLinha(linha, terminalEl) {
                 linha = linha.replace("@@PASSO@@", "");
                 tocarPassoMetalico();
             }
+        }
+
+        if (resposta.includes("@@JUMPSCARE@@")) {
+            
+            resposta = resposta.replace("@@JUMPSCARE@@", "");
+            
+            ativarJumpscare();
+        }
+
+        
+        if (linha.includes("@@PORTA@@")) {
+            linha = linha.replace("@@PORTA@@", "");
+            tocarPorta();
         }
 
         if (linha.startsWith("@@CLEAR@@")) {
@@ -1258,25 +1277,50 @@ function iniciarLoginESalvar() {
         return;
     }
     
-    // Trava o botão para evitar duplos cliques
+
     const btn = document.getElementById('btn-login-submit');
     btn.innerText = "CONECTANDO...";
     btn.disabled = true;
 
-    // Redireciona o navegador para o Google, levando as 3 letras na mochila (URL)
+    
     window.location.href = `/login/google?iniciais=${iniciais}`;
 }
 
-// NOVO: Lê a URL quando o jogador volta do Google
+
 const originalOnload = window.onload;
 window.onload = function() {
-    if (originalOnload) originalOnload(); // Roda o seu onload existente (TV, replay, etc)
+    if (originalOnload) originalOnload(); 
     
     const params = new URLSearchParams(window.location.search);
     if (params.get("leaderboard") === "sucesso") {
         reproduzirBeep('sucesso');
         alert("Sua pontuação foi registrada no Quadro de Líderes Global!");
-        // Limpa a URL para não ficar repetindo o alerta se ele der F5
+
         window.history.replaceState({}, document.title, "/"); 
     }
 };
+
+function ativarJumpscare() {
+    const tela = document.getElementById('tela-jumpscare');
+    const img = document.getElementById('img-jumpscare');
+    
+    
+    const imagens = ['/static/images/JUMPSCARE1.jpg', '/static/images/JUMPSCARE2.jpg'];
+    img.src = imagens[Math.floor(Math.random() * imagens.length)];
+    
+    
+    const audioSusto = new Audio('/static/audio/grito.mp3'); 
+    audioSusto.volume = typeof pref_volume !== 'undefined' ? pref_volume : 1.0; 
+    
+    
+    audioSusto.play().catch(err => console.log("Erro de áudio do jumpscare:", err));
+    
+    
+    
+    tela.style.display = 'flex';
+    
+    
+    setTimeout(() => {
+        tela.style.display = 'none';
+    }, 1200);
+}
