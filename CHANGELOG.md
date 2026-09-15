@@ -3,6 +3,42 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## Atualização de Imersão, Áudio e Sistemas 15/09/26
+
+* **Adicionado:** 
+
+Mecânica de Disquetes: Implementada a distribuição física e descrições individuais para os disquetes de lore (1, 2 e 3) em salas específicas do mapa (Balcão, 01 e Sala de Equipamento).
+
+Novos Modos de Jogo: Adicionado o "Modo Personalizado" (permite alterar parâmetros de vida, inventário e bateria inicial) e os "Modos de Desafio" (Speedrun, Fantasma e Breu Total), incluindo conquistas exclusivas para o sistema.
+
+Artes ASCII: Integradas novas renderizações visuais para os três Finais (Verdadeiro, Neutro, Medíocre), fachada de Entrada, Pelúcias e Isqueiro.
+
+Sistema do Isqueiro: Criada a funcionalidade de uso do isqueiro como luz de emergência (+2 turnos de visão), gerando leve penalidade de barulho ao ser aceso.
+
+Motor de Imersão Visual: Adicionado sistema de degradação da interface (Fog of War) para ausência de luz, glitches progressivos proporcionais ao nível de ruído/baixa vida, e funções de animação de texto quadro-a-quadro e cintilação.
+
+Motor de Áudio Dinâmico (JS): Construída a infraestrutura de áudio no frontend suportando loop de som ambiente, disparo de sons randômicos de tensão, e efeitos sonoros atrelados a ações de backend (passos de metal e movimento das portas pesadas).
+
+Jumpscares Gráficos: Implementado sistema visual em JavaScript para exibir imagens assustadoras em tela cheia sincronizadas com áudio de grito, disparadas através de tags ocultas do backend.
+
+Configuração de Volume Independente: Adicionado um slider no menu de configurações do HTML para controle de volume exclusivo dos Jumpscares.
+
+Tela Azul da Morte (BSOD): Criado um falso erro de sistema que sequestra a tela do navegador com imagens macabras antes de exibir os puzzles de Captcha no minigame de segurança.
+
+* **Modificado**
+Menu Principal: A interface foi reestruturada para exibir as novas dificuldades e modos, ajustando o índice numérico do botão de carregamento do Autosave.
+
+Exibição de Cenas: A arte ASCII da entrada do restaurante foi movida para aparecer exclusivamente no carregamento inicial (Tutorial), otimizando a navegação do jogador pela planta do local.
+
+Gerenciamento de Tags HTML: O script de recepção de comandos via JavaScript foi refatorado para processar, silenciar e executar múltiplas tags dinâmicas (@@JUMPSCARE@@, @@PASSO@@, @@PORTA@@, @@BSOD@@).
+
+* **Corrigido**
+Reconhecimento de Itens: Consertado o dicionário de handlers do inventário que não reconhecia as nomenclaturas individualizadas dos disquetes durante o comando de uso.
+
+Painel do Minigame de Segurança: Solucionado o bug de vazamento de interface (scroll infinito) forçando a limpeza de tela e a reimpressão forçada do HUD ao término da resolução de cada turno.
+
+Conflitos de Interface: Removido o código legado da div do jumpscare ASCII no HTML e funções obsoletas no JavaScript para evitar conflitos de renderização com as novas imagens.
+
 ## Atualização de Infraestrutura, Nuvem e Balanceamento
 
 * **Novos Recursos e Mecânicas**

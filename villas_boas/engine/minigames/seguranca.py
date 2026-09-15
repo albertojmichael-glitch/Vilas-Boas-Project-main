@@ -355,10 +355,10 @@ class MinigameSeguranca(BaseMinigame):
             self.turno = turno_final_val
             return self._checar_fim_de_noite(jogo)
 
+        turno_passou = False 
         
         acao_valida = True
         custos = self._custos_turno()
-
         
         
         if acao_norm == "fechar porta":
