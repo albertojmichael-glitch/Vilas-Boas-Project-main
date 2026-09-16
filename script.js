@@ -975,9 +975,10 @@ async function fetchSeguro(url, options) {
 
         
         if (data.estado) {
+            
             if (data.estado.estado_jogo === "FIM" && data.estado.tempo_final > 0) {
                 setTimeout(() => {
-                    mostrarTelaDePontuacao(data.estado.tempo_final);
+                    mostrarTelaDePontuacao(data.estado.tempo_final, data.estado.final_alcancado);
                 }, 5000); 
             }
         }

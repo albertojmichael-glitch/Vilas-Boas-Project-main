@@ -8,6 +8,7 @@ import secrets
 import uuid
 import base64
 import hashlib
+import hmac
 from cryptography.fernet import Fernet, InvalidToken
 from datetime import timedelta
 from logging.handlers import RotatingFileHandler
