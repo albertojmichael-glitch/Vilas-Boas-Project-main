@@ -1252,10 +1252,10 @@ async function iniciarReplay(idReplay) {
 
 
 
-function mostrarTelaDePontuacao(segundosTotais) {
+function mostrarTelaDePontuacao(segundosTotais, nomeDoFinal) {
     const modal = document.getElementById('arcade-score-modal');
     const display = document.getElementById('score-time-display');
-    
+    const textoFinal = document.getElementById('score-ending-text'); 
     
     const mins = Math.floor(segundosTotais / 60);
     const secs = Math.floor(segundosTotais % 60);
@@ -1266,6 +1266,13 @@ function mostrarTelaDePontuacao(segundosTotais) {
         String(secs).padStart(2, '0') + ':' + 
         String(ms).padStart(2, '0');
 
+   
+    if (textoFinal && nomeDoFinal) {
+       
+        let textoFormatado = nomeDoFinal.replace(/_/g, ' ').toUpperCase();
+        textoFinal.innerText = textoFormatado;
+    }
+
     if (modal) {
         modal.classList.remove('hidden');
         document.getElementById('arcade-initials').focus();
@@ -1275,6 +1282,9 @@ function mostrarTelaDePontuacao(segundosTotais) {
 function fecharArcadeModal() {
     const modal = document.getElementById('arcade-score-modal');
     if (modal) modal.classList.add('hidden');
+    
+   
+    window.location.reload();
 }
 
 function iniciarLoginESalvar() {

@@ -438,10 +438,12 @@ def gerar_resposta_json(jogo):
             "estado_jogo": estado_jogo,
             "tempo_final": getattr(jogo, "tempo_total_segundos", 0.0),
             "som": getattr(jogo, "nivel_barulho", 0),
-            "sala": sala_exibicao 
+            "sala": sala_exibicao,
+            "final_alcancado": getattr(jogo, "sala_atual", "Desconhecido") 
         },
         "novas_conquistas": conquistas_enviadas
     }
+
     return jsonify(resposta)
 
 
@@ -477,7 +479,12 @@ def page_not_found(e):
 
 @app.route("/iniciar", methods=["GET"])
 def iniciar_jogo():
+    sid_antigo = session.get("sid")
+    if sid_antigo and sid_antigo in MEMORIA_SESSOES:
+        del MEMORIA_SESSOES[sid_antigo]
+
     session.clear()
+    
     sid = str(uuid.uuid4())
     session["sid"] = sid
     session.permanent = True
@@ -523,18 +530,18 @@ def receber_comando():
         comando = requisicao.comando
         session["permite_telemetria"] = requisicao.telemetria
     except ValidationError:
-        # Se falhar na segurança, avisa a UI e aborta o turno
+     
         jogo.ui_handler.buffer.append("@@TYPE@@vermelho@@0@@[ ERRO DE SEGURANÇA ]: Payload inválido.")
         return gerar_resposta_json(jogo), 400
 
     tem_save = obter_caminho_autosave(sid).exists()
 
-    # Grava a fita de replay
+    
     if comando:
         jogo.log_comandos.append(comando)
 
     try:
-        # O processar_fluxo_jogo é o verdadeiro Maestro. Ele cuida de tudo!
+       
         processar_fluxo_jogo(
             comando, jogo, tem_save=tem_save, callback_load_save=carregar_save_web
         )
@@ -554,7 +561,7 @@ def receber_comando():
                 f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {e!s}"
             )
 
-    # Devolvemos a resposta finalizada para o frontend
+   
     return gerar_resposta_json(jogo)
 
 
@@ -562,18 +569,23 @@ def receber_comando():
 @app.route('/save/export', methods=['GET'])
 @limiter.limit("5 per minute")
 def exportar_save():
-    dados_do_save = jogo.pegar_estado_atual() 
     
-    
+    sid = obter_sid_seguro()
+    if not sid or sid not in MEMORIA_SESSOES:
+        return jsonify({"erro": "Nenhum jogo ativo encontrado."}), 404
+      
+    jogo = MEMORIA_SESSOES[sid]
+
+    dados_do_save = jogo.to_dict() 
+
     assinatura = assinar_dados(dados_do_save)
     
-  
     pacote_seguro = {
         "dados": dados_do_save,
         "hash_seguranca": assinatura
     }
-    return jsonify(pacote_seguro)
 
+    return jsonify(pacote_seguro)
 
 @app.route("/save/import", methods=["POST"])
 @limiter.limit("10 per minute")
