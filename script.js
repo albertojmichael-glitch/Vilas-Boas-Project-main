@@ -566,9 +566,23 @@ inputField.addEventListener("keydown", async function(event) {
             inputField.value = "";
             terminal.scrollTop = terminal.scrollHeight;
             
-            await enviarComando(comando);
+            
+            if (comando.toLowerCase() === "ajuda") {
+                openHelp(); 
+                
+                
+                let pResp = document.createElement("p");
+                pResp.className = "verde";
+                pResp.innerHTML = "[SISTEMA] Abrindo o Manual de Sobrevivência...";
+                outputDiv.appendChild(pResp);
+                terminal.scrollTop = terminal.scrollHeight;
+            } else {
+                
+                await enviarComando(comando);
+            }
+            
         }
-    } 
+    }
     else if (event.key === "ArrowUp") {
         event.preventDefault(); 
         if (posicaoHistorico === historicoComandos.length) {

@@ -147,7 +147,7 @@ def imprimir_tutorial(ui, jogo=None):
     )
     
     ui.animar(
-        f"\n{DOS_AMARELO}Em caso de pânico absoluto, digite {DOS_VERDE}ajuda{DOS_AMARELO} para o guia completo.{RESET}", 
+        f"\n{DOS_AMARELO}Caso precise, digite {DOS_VERDE}ajuda{DOS_AMARELO} para o guia completo novamente.{RESET}", 
         0.01, DOS_BRANCO, jogo
     )
     ui.animar(
