@@ -734,7 +734,7 @@ body.blackout-mode .prompt {
     text-shadow: none !important;
 }
 
- /* slot do inventario */
+
  
 .inv-slots-container {
     display: flex;
@@ -746,13 +746,13 @@ body.blackout-mode .prompt {
 .inv-slot {
     width: 28px;
     height: 28px;
-    border: 2px solid #33ff00; /* Borda da caixa vazia */
+    border: 2px solid #33ff00; 
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-/* Quando o Slot estiver ocupado, desenhamos um círculo dentro */
+
 .inv-slot.cheio::after {
     content: "";
     width: 16px;
@@ -761,9 +761,7 @@ body.blackout-mode .prompt {
     border-radius: 50%;
 }
 
-/* =========================================
-   LEGENDAS DE ÁUDIO (ACESSIBILIDADE)
-   ========================================= */
+
 #audio-captions {
     position: absolute;
     bottom: 40px;
@@ -781,7 +779,7 @@ body.blackout-mode .prompt {
     transition: opacity 0.3s;
 }
 
-/* SISTEMA DE CONQUISTAS (TOAST)*/
+
 #achievement-toast {
     position: fixed;
     top: -100px; 
@@ -818,9 +816,7 @@ body.blackout-mode .prompt {
     font-weight: bold;
 }
 
-/* =========================================
-   MENU DE CONQUISTAS (MODAL)
-   ========================================= */
+
 .achievements-float {
     position: fixed;
     bottom: 80px;
@@ -828,7 +824,7 @@ body.blackout-mode .prompt {
     background: #111;
     color: #ffda33;
     border: 1px solid #ffda33;
-    border-radius: 0; /* Removido o arredondamento para ficar quadrado/retro */
+    border-radius: 0; 
     width: 45px;
     height: 45px;
     cursor: pointer;
@@ -847,7 +843,7 @@ body.blackout-mode .prompt {
 }
 
 .achievements-content {
-    max-width: 850px; /* Janela mais larga para caberem 2 colunas confortáveis */
+    max-width: 850px; 
     max-height: 85vh;
     overflow-y: auto;
     background: #0a0a0a;
@@ -863,7 +859,7 @@ body.blackout-mode .prompt {
     gap: 20px;
 }
 
-/* O Card Individual - Visual Terminal */
+
 .achievement-card {
     border: 1px dashed #444;
     background: transparent;
@@ -874,14 +870,14 @@ body.blackout-mode .prompt {
     transition: all 0.3s ease;
 }
 
-/* Estado: Bloqueada */
+
 .achievement-card.locked {
     opacity: 0.5;
     filter: grayscale(100%);
     border-color: #333;
 }
 
-/* Estado: Desbloqueada */
+
 .achievement-card.unlocked {
     border: 1px solid #55ff55;
     background: rgba(85, 255, 85, 0.05);

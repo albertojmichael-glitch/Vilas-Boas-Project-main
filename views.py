@@ -72,8 +72,6 @@ def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
     ui.animar(
         f"{DOS_AMARELO}[4] INICIAR: MODO PESADELO (Texto Rápido — Sem Delays){RESET}", 0.01, DOS_BRANCO, jogo
     )
-    
-    # --- NOVAS OPÇÕES DE DIFICULDADE ---
     ui.animar(
         f"{DOS_AMARELO}[5] INICIAR: MODOS DE DESAFIO{RESET}", 0.01, DOS_BRANCO, jogo
     )
@@ -378,7 +376,7 @@ def rodar_final(tipo_final, jogo):
         ui.animar("Você quer esquecer dela... Mesmo ela suplicando por ajuda no escuro.", 0.08, DOS_VERMELHO, jogo)
         ui.pausar(2)
         
-        # O terror ataca no retrovisor
+        
         ui.buffer.append("@@GLITCH_LUZ@@")
         ui.animar("Você olha pelo retrovisor. Algo se mexe no banco de trás.", 0.05, DOS_VERMELHO, jogo)
         ui.pausar(1)
@@ -425,12 +423,10 @@ def rodar_final(tipo_final, jogo):
         ui.animar("- 'Me ajUde, EU SINTO FALTA DE CASA.'", 0.1, DOS_VERMELHO, jogo)
         ui.animar("- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas, eu não posso fazer mais nada.", 0.05, DOS_AMARELO, jogo)
         ui.pausar(2)
-
         ui.animar("- ... *Caroline abraça Rogério*", 0.09, DOS_VERMELHO, jogo)
         ui.animar("- 'Eu esperO tE eNContrar Lá, meu bem.'", 0.09, DOS_VERMELHO, jogo)
         ui.pausar(1.5)
-
-        # O Golpe
+        
         ui.buffer.append("@@GLITCH_LUZ@@")
         ui.animar("Você começa a cuspir sangue. A mão metálica dela atravessou seu estômago.", 0.04, DOS_VERMELHO, jogo)
         ui.pausar(1)
@@ -460,8 +456,7 @@ def rodar_final(tipo_final, jogo):
         ui.animar(f"{DOS_VERMELHO}=================================================================={RESET}\n", 0.02, jogo=jogo)
 
         ui.animar("Você acende seu isqueiro...", 0.04, DOS_BRANCO, jogo)
-        
-        # O Fogo Começa (Muda o CSS do site inteiro para pulsar vermelho)
+    
         ui.buffer.append("@@LOW_POWER@@") 
         ui.animar("Com a chama ardente, você a joga nas cortinas do hall. O fogo sobe rapidamente.", 0.04, DOS_BRANCO, jogo)
         ui.animar("Você tosse um pouco com a fumaça. Ao retomar o olhar para o fim da sala, você a vê, esperando.", 0.04, DOS_BRANCO, jogo)

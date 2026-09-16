@@ -23,7 +23,7 @@ from flask import Flask, jsonify, redirect, request, send_from_directory, sessio
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, validator
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
@@ -38,6 +38,7 @@ from villas_boas.engine.core import processar_fluxo_jogo
 from state import GameState
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET, UIHandler
 from views import imprimir_tela_boot
+from security import assinar_dados
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -181,11 +182,16 @@ class ComandoRequest(BaseModel):
     comando: str = Field(
         default="", 
         max_length=256, 
-        
         pattern=r"^[a-zA-Z0-9\s\"\'\-\_áéíóúâêôãõçÁÉÍÓÚÂÊÔÃÕÇ\.\:]+$"
     )
     telemetria: bool = Field(default=True)
 
+    @validator('comando', pre=True)
+    def limpar_comando(cls, v):
+        if not isinstance(v, str):
+            return ""
+        v_limpo = v.replace('\x00', '').replace('\0', '')
+        return v_limpo
 
 def obter_sid_seguro():
     """Garante que o SID lido do cookie é um UUID válido e não um script de injeção"""
@@ -553,16 +559,20 @@ def receber_comando():
 
 
 
-@app.route("/save/export", methods=["GET"])
+@app.route('/save/export', methods=['GET'])
 @limiter.limit("5 per minute")
 def exportar_save():
-    sid = obter_sid_seguro()
-    if not sid or sid not in MEMORIA_SESSOES:
-        return jsonify({"erro": "Nenhuma sessão ativa."}), 404
-
-    jogo = MEMORIA_SESSOES[sid]
+    dados_do_save = jogo.pegar_estado_atual() 
     
-    return jsonify(jogo.to_dict())
+    
+    assinatura = assinar_dados(dados_do_save)
+    
+  
+    pacote_seguro = {
+        "dados": dados_do_save,
+        "hash_seguranca": assinatura
+    }
+    return jsonify(pacote_seguro)
 
 
 @app.route("/save/import", methods=["POST"])
@@ -570,18 +580,33 @@ def exportar_save():
 def importar_save():
     sid = obter_sid_seguro()
     if not sid:
-        
         sid = str(uuid.uuid4())
         session["sid"] = sid
         session.permanent = True
 
-    dados = request.json
-    if not dados:
+    payload = request.json
+    if not payload:
         return jsonify({"erro": "Nenhum dado recebido."}), 400
 
-    try:
+
+    dados_save = payload.get("dados")
+    hash_recebida = payload.get("hash_seguranca")
+
+    if not dados_save or not hash_recebida:
+        return jsonify({"erro": "Arquivo corrompido ou formato não suportado."}), 400
+
+ 
+    hash_esperada = assinar_dados(dados_save)
+
+    
+    if not hmac.compare_digest(hash_recebida, hash_esperada):
+        logger.warning(f"Tentativa de adulteração de save barrada. SID: {sid}")
         
-        novo_jogo = GameState.from_dict(dados)
+        return jsonify({"erro": "[ ERRO CRÍTICO ] ASSINATURA DIGITAL INVIÁLIDA. TENTATIVA DE TRAPAÇA DETECTADA."}), 403
+
+
+    try:
+        novo_jogo = GameState.from_dict(dados_save)
         novo_jogo.ui_handler = WebUIHandler()  
 
         MEMORIA_SESSOES[sid] = novo_jogo

@@ -22,10 +22,10 @@ const saidasEl = document.getElementById('hud-saidas');
 let audioAmbienteLoop = null;
 let sonsRandomicosAtivos = false;
 let audioCtx = null;
-let masterGainNode = null; // Controlador global
+let masterGainNode = null; 
 let ambientOsc = null;
 let crtOsc = null;
-let pref_volume = 1.0; // Volume padrão
+let pref_volume = 1.0; 
 let pref_volume_jumpscare = 1.0;
 
 function obterAudioContext() {
@@ -34,7 +34,7 @@ function obterAudioContext() {
         if (AudioContextClass) {
             audioCtx = new AudioContextClass();
             
-            // Cria o nó de volume mestre e o conecta na saída final (caixas de som)
+        
             masterGainNode = audioCtx.createGain();
             masterGainNode.gain.value = pref_volume;
             masterGainNode.connect(audioCtx.destination);
@@ -46,7 +46,7 @@ function obterAudioContext() {
     return audioCtx;
 }
 
-// NOVO: Sistema de Legendas de Áudio
+
 let legendaTimeout;
 function mostrarLegendaDeAudio(texto) {
     const legendaDiv = document.getElementById('audio-captions');
@@ -57,7 +57,7 @@ function mostrarLegendaDeAudio(texto) {
         clearTimeout(legendaTimeout);
         legendaTimeout = setTimeout(() => {
             legendaDiv.classList.add('hidden');
-        }, 2000); // Some após 2 segundos
+        }, 2000); 
     }
 }
 
@@ -91,7 +91,7 @@ function iniciarSomAmbiente() {
     const ctx = obterAudioContext();
     if (!ctx) return;
 
-    // Toca o zumbido CRT antigo baixinho (opcional, ajuda na imersão)
+
     if (!crtOsc) {
         crtOsc = ctx.createOscillator();
         const crtGain = ctx.createGain();
@@ -103,24 +103,24 @@ function iniciarSomAmbiente() {
         crtOsc.start();
     }
 
-    // --- NOVO: LOOP DO AMBIENTE MP3 ---
+  
     if (!audioAmbienteLoop) {
         audioAmbienteLoop = new Audio('/static/audio/ambiente.mp3');
-        audioAmbienteLoop.loop = true; // Faz rodar para sempre
+        audioAmbienteLoop.loop = true; 
         audioAmbienteLoop.volume = (typeof pref_volume !== 'undefined' ? pref_volume : 1.0) * 0.6; 
         audioAmbienteLoop.play().catch(err => console.log("Autoplay bloqueado:", err));
     }
 
-    // --- NOVO: INICIA O MOTOR DE SONS RANDÔMICOS ---
+
     if (!sonsRandomicosAtivos) {
         sonsRandomicosAtivos = true;
         tocarSonsAssustadoresAleatorios();
     }
 }
 
-// Função que sorteia um som e um tempo aleatório
+
 function tocarSonsAssustadoresAleatorios() {
-    // Sorteia um tempo de espera entre 30 e 80 segundos
+   
     const tempoAleatorio = Math.floor(Math.random() * (80000 - 30000 + 1)) + 30000;
     
     setTimeout(() => {
@@ -132,7 +132,7 @@ function tocarSonsAssustadoresAleatorios() {
         audioSusto.volume = (typeof pref_volume !== 'undefined' ? pref_volume : 1.0) * 0.8;
         audioSusto.play().catch(e => console.log("Erro som randomico:", e));
         
-        // Chama a si mesma novamente para criar um loop eterno e imprevisível
+      
         tocarSonsAssustadoresAleatorios();
     }, tempoAleatorio);
 }
@@ -158,7 +158,7 @@ function tocarBipEntrada() {
     osc.stop(ctx.currentTime + 0.06);
 }
 
-// O Catálogo Mestre Frontend (Deve espelhar o do backend)
+
 const CATALOGO_CONQUISTAS = [
     { id: "primeira_morte", nome: "Sangue no Carpete", desc: "Bem-vindo ao Vilas Boas.", icone: "☠" },
     { id: "mente_brilhante", nome: "Mente Brilhante", desc: "Abra o cofre na primeira tentativa.", icone: "★" },
@@ -216,7 +216,7 @@ function fecharModalConquistas() {
     document.getElementById('achievements-modal').classList.add('hidden');
 }
 
-// Fechar o modal se o jogador clicar no fundo escuro fora da janela
+
 window.addEventListener('click', (e) => {
     const modal = document.getElementById('achievements-modal');
     if (e.target === modal) {
@@ -449,7 +449,7 @@ function carregarPreferencias() {
         });
     }
 
-    // --- NOVO: Preferências do Jumpscare ---
+  
     const savedVolumeJump = localStorage.getItem('vilasBoasVolumeJump');
     
     if (savedVolumeJump !== null) {
@@ -468,7 +468,7 @@ function carregarPreferencias() {
             localStorage.setItem('vilasBoasVolumeJump', pref_volume_jumpscare);
             document.getElementById('volume-jump-val-display').innerText = `${Math.round(pref_volume_jumpscare * 100)}%`;
             
-            // Opcional: Tocar um pedacinho do grito baixinho para o jogador testar a altura
+          
             const testeSusto = new Audio('/static/audio/grito.mp3');
             testeSusto.volume = pref_volume * pref_volume_jumpscare;
             testeSusto.play();
@@ -627,7 +627,7 @@ function mostrarToastConquista(conquista) {
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => {
         toast.classList.remove('show');
-    }, 4000); // O balão some após 4 segundos
+    }, 4000); 
 }
 
 function atualizarSidebar(estado) {
@@ -752,25 +752,21 @@ function novaLinha(linha, terminalEl) {
     return new Promise((resolve) => {
         
         if (typeof linha === 'string') {
-            
-            // Jumpscare
+          
             if (linha.includes("@@JUMPSCARE@@")) {
                 linha = linha.replace("@@JUMPSCARE@@", ""); 
                 ativarJumpscare(); 
             }
-
-            // Falsa Tela Azul
+         
             if (linha.includes("@@BSOD@@")) {
                 linha = linha.replace("@@BSOD@@", "");
                 ativarBSOD();
             }
             
-            
             if (linha.includes("@@PASSO@@")) {
                 linha = linha.replace("@@PASSO@@", "");
                 tocarPassoMetalico();
             }
-            
             
             if (linha.includes("@@PORTA@@")) {
                 linha = linha.replace("@@PORTA@@", "");
@@ -1365,5 +1361,5 @@ function ativarBSOD() {
     
     setTimeout(() => {
         tela.style.display = 'none';
-    }, 1500);
+    }, 2500);
 }

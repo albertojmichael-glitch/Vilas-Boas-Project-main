@@ -1,0 +1,19 @@
+Rotas de Jogo (JS)
+GET /iniciar
+    descrição: Inicializa uma nova sessão de jogo e retorna o contexto inicial.
+    Resposta(200 OK): Retorna um objeto JSON contendo as listas de linhas (texto do terminal) e o estado (HP, luz, inventário).
+
+POST /comando
+    descrição: Processa a ação digitada pelo jogador
+    Corpo da requisição (JSON): { "comando": "string", "telemetria": boolean}
+    Resposta (200 OK): Retorna JSON com linhas, estado atualizado e, opcionalmente, novas_conquistas
+
+ROTAS DE SAVE E DADOS
+GET /save/export
+    descrição: Importa um arquivo de save para restaurar o progresso.
+    Corpo da requisição(JSON): Objeto JSON contendo a estrutura do save (exemplis: sala_atual, hp, inventario).
+    Resposta: Confirmação de sucesso ou erro (exempl: [ERRO DE BIOS])
+
+GET /api/replay/{idReplay}
+    descrição: Busca o log de comandos de uma fita de replay especifica.
+    Resposta (200 OK): Retorna JSON com jogador, sala_final e o array log_comandos.
