@@ -3,8 +3,7 @@ import hashlib
 import json
 import os
 
-def obter_secret_key():
-    """Tenta pegar a chave do ambiente, senão usa uma fixa."""
+def obter_secret_key():
     return os.environ.get("SECRET_KEY", "DEV_SECRET_DO_NOT_USE_IN_PROD_1982").encode()
 
 def assinar_dados(dados_dict):
