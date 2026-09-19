@@ -58,7 +58,7 @@ ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
 
 
 if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
-    print("➣ ERRO FATAL: SECRET_KEY e/ou ADMIN_TOKEN não encontrados no ambiente de produção! ")
+    print("➣ ERRO FATAL: SECRET_KEY e/ou ADMIN_TOKEN não encontrados no ambiente. ")
     sys.exit(1) 
 
 
@@ -118,7 +118,7 @@ os.makedirs(SAVES_DIR_ENV, exist_ok=True)
 
 if not ADMIN_TOKEN:
     ADMIN_TOKEN = secrets.token_urlsafe(32)
-    logger.warning("⚠ ADMIN_TOKEN não definido no ambiente! Uma senha aleatória segura foi gerada para esta sessão.")
+    logger.warning("⚠ ADMIN_TOKEN não definido no ambiente. Uma senha aleatória segura foi gerada para esta sessão.")
 
 
 MONGO_URI = os.environ.get("MONGO_URI")
@@ -847,7 +847,7 @@ def auth_google_callback():
         jogo = MEMORIA_SESSOES[sid]
         iniciais = session.get("arcade_initials", "UNK")
         
-        # Salva o recorde no Banco de Dados
+        
         if mongo_client and getattr(jogo, "tempo_total_segundos", 0) > 0:
             registro = {
                 "iniciais": iniciais,
@@ -859,7 +859,7 @@ def auth_google_callback():
             }
             leaderboard_collection.insert_one(registro)
             
-        # Redireciona de volta para o jogo com uma flag de sucesso
+        
         return redirect("/?leaderboard=sucesso")
         
     except Exception as e:  # noqa: BLE001
