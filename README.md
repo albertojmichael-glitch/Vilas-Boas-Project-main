@@ -1,3 +1,3 @@
-# 🔦 Sistema de Segurança Villas-Boas (1982)
+#  Sistema de Segurança Villas-Boas (1982)
 
 # Em construção...
