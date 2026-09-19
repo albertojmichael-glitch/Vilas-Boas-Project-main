@@ -90,14 +90,14 @@ if IS_PRODUCTION:
         SESSION_COOKIE_HTTPONLY=True,   
         SESSION_COOKIE_SAMESITE='Lax',  
     )
-    print("🔒 Segurança de Cookies: Modo Produção ativado (Secure=True).")
+    print(" Segurança de Cookies: Modo Produção ativado (Secure=True).")
 else:
     app.config.update(
         SESSION_COOKIE_SECURE=False,
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE='Lax',
     )
-    print("🔓 Segurança de Cookies: Modo Desenvolvimento (Secure=False).")
+    print(" Segurança de Cookies: Modo Desenvolvimento (Secure=False).")
 
 
 logging.basicConfig(
@@ -129,7 +129,7 @@ if MONGO_URI:
     saves_collection = db["saves"]
     telemetry_collection = db["telemetry"]
     shares_collection = db["shares"]
-    logger.info("✅ Conectado ao MongoDB com sucesso...")
+    logger.info("-/ Conectado ao MongoDB com sucesso...")
 else:
     mongo_client = None
     logger.warning("⚠ Rodando sem Banco de Dados MongoDB. Usando arquivos locais.")
