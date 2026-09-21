@@ -480,23 +480,27 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             else:
                 ui.animar(f"{DOS_VERMELHO}Falha ao ler o seu Autosave.{RESET}", 0.04, jogo=jogo)
                 imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
-        elif comando in ["1", "2", "3", "4"]:
+
+        elif comando in ["1", "2", "3", "4","5","6"]:
             ui.limpar()
             if comando == "1":
                 jogo.dificuldade_escolhida = "NORMAL"
                 jogo.fast_mode = False
                 jogo.hp = VIDA_NORMAL; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
                 ui.animar(f"{DOS_VERDE}MODO NORMAL SELECIONADO. VELOCIDADE RETRÔ ATIVADA.{RESET}\n", 0.04, jogo=jogo)
+
             elif comando == "2":
                 jogo.dificuldade_escolhida = "NORMAL"
                 jogo.fast_mode = True
                 jogo.hp = VIDA_NORMAL; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
                 ui.animar(f"{DOS_AMARELO}MODO NORMAL COM TEXTO RÁPIDO SELECIONADO.{RESET}\n", 0.04, jogo=jogo)
+
             elif comando == "3":
                 jogo.dificuldade_escolhida = "PESADELO"
                 jogo.fast_mode = False
                 jogo.hp = VIDA_PESADELO; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
                 ui.animar(f"{DOS_VERMELHO}MODO PESADELO SELECIONADO. VELOCIDADE RETRÔ ATIVADA. BOA SORTE.{RESET}\n", 0.04, jogo=jogo)
+
             elif comando == "4":
                 jogo.dificuldade_escolhida = "PESADELO"
                 jogo.fast_mode = True
@@ -511,6 +515,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 ui.exibir("2 - FANTASMA: Se o barulho passar de 50%, você morre instantaneamente.")
                 ui.exibir("3 - BREU TOTAL: Você começa com a bateria da lanterna totalmente zerada.")
                 ui.exibir("\nDigite o número do desafio ou 'voltar':")
+                return
             
             elif comando == "6":
                 jogo.estado_atual = "MENU_CUSTOM_BAT"
@@ -518,6 +523,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 ui.exibir(f"{DOS_AMARELO}=== MODO PERSONALIZADO ==={RESET}")
                 ui.exibir("Defina os parâmetros para a sua partida.")
                 ui.exibir("\n1. Bateria Inicial (Digite um número de turnos, ex: 12, 50, 0):")
+                return
 
             jogo.estado_atual = "JOGO"
             imprimir_tutorial(ui, jogo=jogo)

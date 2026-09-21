@@ -123,7 +123,8 @@
             "atrás": "corredor",
             "inspecionaveis": {
                 "papeis": "Tem muitos papeis encima da segunda mesa, emails e memorandos... algo chama atenção '1994..' são de 2007",
-                "disquete2": "Está jogado em cima de um teclado quebrado."
+                "disquete2": "Está jogado em cima de um teclado quebrado.",
+                "cofre": "O cofre está trancado. O visor digital exibe: 'INSIRA A SENHA DE 4 DÍGITOS'"
             },
             "esquerda": "nada",
             "direita": "nada",
