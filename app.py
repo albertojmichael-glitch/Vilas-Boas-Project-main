@@ -824,11 +824,11 @@ def listar_saves_paginados():
 
 @app.route("/login/google")
 def login_google():
-    # Pega as iniciais que o jogador digitou no fliperama e salva temporariamente na sessão
+    
     iniciais = request.args.get("iniciais", "???").upper()[:3]
     session["arcade_initials"] = iniciais
     
-    # Gera a URL de volta para o seu site
+   
     redirect_uri = url_for("auth_google_callback", _external=True)
     return google.authorize_redirect(redirect_uri)
 
@@ -839,7 +839,7 @@ def auth_google_callback():
         return "Sessão de jogo não encontrada. Jogue novamente para registrar.", 400
 
     try:
-        # Pega as informações do jogador no Google
+        
         token = google.authorize_access_token()
         user_info = token.get("userinfo")
         email_jogador = user_info.get("email")

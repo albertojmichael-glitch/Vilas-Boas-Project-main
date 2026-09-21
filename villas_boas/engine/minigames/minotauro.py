@@ -112,7 +112,7 @@ def desenhar_radar_ascii(px, py, mx, my, fios_cortados, armadilhas, glitch=False
     borda = DOS_VERDE
     reset = RESET
     
-    # Calcula a largura do grid dinamicamente
+    
     largura_grid = (GRID_MAX_X - GRID_MIN_X) + 1
     linha_borda = f"{borda}  +" + "=======+" * largura_grid + f"{reset}"
     
@@ -125,14 +125,14 @@ def desenhar_radar_ascii(px, py, mx, my, fios_cortados, armadilhas, glitch=False
         for x in range(GRID_MIN_X, GRID_MAX_X + 1):
             char = " "
             if x == px and y == py:
-                char = f"{DOS_BRANCO}@{reset}"         # Jogador (Símbolo clássico @)
+                char = f"{DOS_BRANCO}@{reset}"        
             elif glitch and (abs(x - px) + abs(y - py) == 1):
-                # NOVO: Radar quebrado mostra 4 'X' falsos em cruz
+               
                 char = f"{DOS_VERMELHO}X{reset}"
             elif not glitch and monstro_visivel and x == mx and y == my:
-                char = f"{DOS_VERMELHO}X{reset}"       # Monstro real
+                char = f"{DOS_VERMELHO}X{reset}"       
             elif (x, y) in armadilhas:
-                char = f"{DOS_AMARELO}*{reset}"        # Armadilha (Faísca *)
+                char = f"{DOS_AMARELO}*{reset}"        
             elif x == POS_FUSIVEL_X and y == POS_FUSIVEL_Y and not fios_cortados:
                 char = f"{DOS_AMARELO}F{reset}"       
             elif x == POS_SAIDA_X and y == POS_SAIDA_Y:
@@ -261,10 +261,10 @@ class MinigameMinotauro(BaseMinigame):
 
     def mover_minotauro(self, acao_jogador):
 
-        chance_erro = 0.25 # 25% de chance de errar o caminho
+        chance_erro = 0.25
         acao_norm = acao_jogador.lower().strip()
 
-        # 2. Estratégia de Furtividade
+       
         if acao_norm == "esperar":
             chance_erro = 0.75 
             

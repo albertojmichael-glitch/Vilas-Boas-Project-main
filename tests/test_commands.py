@@ -25,14 +25,14 @@ def mapa_mock():
     return copy.deepcopy(MAPA_ORIGINAL)
 
 def test_cmd_ir_valido(jogo_mock, mapa_mock):
-    """Testa se o jogador consegue ir da entrada para a sala de jantar."""
+    
     sucesso = cmd_ir("ir frente", jogo_mock, mapa_mock)
     
     assert sucesso is True
     assert jogo_mock.sala_atual == "sala de jantar"
 
 def test_cmd_ir_invalido(jogo_mock, mapa_mock):
-    """Testa o bloqueio ao tentar ir para uma direção que não existe na sala."""
+    
     jogo_mock.sala_atual = "entrada"
     sucesso = cmd_ir("ir norte_inventado", jogo_mock, mapa_mock)
     
@@ -41,7 +41,7 @@ def test_cmd_ir_invalido(jogo_mock, mapa_mock):
     assert jogo_mock.sala_atual == "entrada" 
 
 def test_cmd_pegar_sucesso(jogo_mock, mapa_mock):
-    """Testa se o jogador consegue pegar um item do chão."""
+    
     jogo_mock.sala_atual = "entrada"
     mapa_mock["entrada"]["itens"] = ["tabua pequena de madeira"]
     
@@ -52,7 +52,7 @@ def test_cmd_pegar_sucesso(jogo_mock, mapa_mock):
     assert "tabua pequena de madeira" not in mapa_mock["entrada"]["itens"]
 
 def test_cmd_usar_bateria(jogo_mock, mapa_mock):
-    """Testa se o uso de um item altera o status do GameState corretamente."""
+    
     jogo_mock.inventario = ["bateria nova"]
     jogo_mock.turnos_luz = 1
     

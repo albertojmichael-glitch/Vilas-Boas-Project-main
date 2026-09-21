@@ -3,7 +3,7 @@ from state import GameState
 from villas_boas.engine.core import processar_fluxo_jogo
 
 class SilenciadorUI:
-    """Uma interface falsa que não imprime nada na tela para o teste rodar rápido."""
+    
     def exibir(self, texto): pass
     def animar(self, texto, tempo=0, cor="", jogo=None): pass
     def limpar(self): pass

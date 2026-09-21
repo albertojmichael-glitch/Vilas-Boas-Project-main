@@ -3,11 +3,7 @@ from app import app, MEMORIA_SESSOES
 
 @pytest.fixture
 def cliente():
-    """
-    Cria um cliente de teste do Flask. 
-    Isso nos permite fazer requisições GET/POST simulando um navegador real,
-    mantendo os cookies de sessão entre as chamadas!
-    """
+    
     
     app.config['TESTING'] = True
     

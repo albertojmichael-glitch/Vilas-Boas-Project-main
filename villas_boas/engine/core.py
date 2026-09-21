@@ -34,12 +34,9 @@ from views import (
 logger = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------------------
-# Helpers de IA / pathfinding (inalterados)
-# ---------------------------------------------------------------------------
 
 def calcular_caminho_bfs(mapa, inicio, destino):
-    """Algoritmo de pathfinding para a IA navegar pelas salas conectadas."""
+    
     if inicio not in mapa or destino not in mapa:
         return []
     fila = [[inicio]]
@@ -65,7 +62,7 @@ def calcular_caminho_bfs(mapa, inicio, destino):
 
 
 def processar_ia_inimigo(jogo):
-    """Cérebro da Máquina de Estados da IA."""
+
     if getattr(jogo, 'god_mode', False) or jogo.estado_atual != "JOGO":
         return
 
@@ -123,9 +120,7 @@ ARTE_COFRE = r'''
  \__________________________/
 '''
 
-# Variação exibida depois de uma tentativa errada: o painel começa a
-# mostrar sinais de estresse (rachaduras, luz piscando) para dar feedback
-# visual de que as tentativas estão se esgotando.
+
 ARTE_COFRE_TENSO = r'''
   __________________________
  /  ______________/\_______  \
@@ -191,15 +186,7 @@ def imprimir_painel_cofre(jogo, primeira_vez=False):
     ui.exibir(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}")
 
 
-# ---------------------------------------------------------------------------
-# Helper novo: telemetria segura
-# Substitui os ~8 blocos idênticos de "try: from app import registrar_telemetria
-# ... except (ImportError, AttributeError): pass" espalhados pelo arquivo.
-# Mesmo comportamento: se o app não estiver disponível (ex. testes, import
-# circular), a falha é silenciosamente ignorada — exceto que agora também
-# logamos um warning em vez de engolir tudo em silêncio, o que ajuda a
-# depurar sem mudar o fluxo do jogo.
-# ---------------------------------------------------------------------------
+
 
 
 def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
@@ -210,12 +197,7 @@ def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
         logger.warning(f"Falha ao registrar telemetria ({evento}/{motivo}): {e}")
 
 
-# ---------------------------------------------------------------------------
-# Helper novo: pós-processamento de turno (barulho da IA / fuga correndo)
-# Isso era um bloco duplicado (colado duas vezes, uma para a primeira
-# tentativa de comando e outra para o fallback de "correr X" -> "ir X").
-# Extraído 1:1, sem alterar nenhuma condição ou valor.
-# ---------------------------------------------------------------------------
+
 
 def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
     """Aplica os efeitos de barulho/IA depois que um comando gastou turno."""
@@ -264,20 +246,13 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
 
 
 def desbloquear_conquista(jogo, id_conquista):
-    # Condição unida (SIM102) e usando o CONQUISTAS_DB que acabamos de importar
+   
     if id_conquista in CONQUISTAS_DB and id_conquista not in jogo.conquistas: 
         jogo.conquistas.append(id_conquista)
         jogo.novas_conquistas_turno.append(CONQUISTAS_DB[id_conquista])
 
 
-# ---------------------------------------------------------------------------
-# Helper novo: checagem de finais
-# Extrai a cascata "morte / saida / cama / hall de entrada" que ficava
-# dentro do bloco JOGO/COMBATE_ANIMATRONICO. Mesma ordem de condições,
-# mesmos motivos de telemetria, mesmo comportamento de retorno.
-# Retorna True se algum final/morte foi disparado (equivalente a "já
-# tratamos o turno, não precisa reimprimir o contexto da sala").
-# ---------------------------------------------------------------------------
+
 
 def verificar_final_de_jogo(jogo):
     if jogo.sala_atual == "morte":
@@ -304,7 +279,7 @@ def verificar_final_de_jogo(jogo):
             registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro", jogo)
             rodar_final("verdadeiro", jogo)
             
-            # --- Gatilhos: Final Verdadeiro ---
+           
             desbloquear_conquista(jogo, "final_verdadeiro")
             if jogo.dificuldade_escolhida == "PESADELO":
                 desbloquear_conquista(jogo, "pesadelo_verdadeiro")
@@ -322,7 +297,7 @@ def verificar_final_de_jogo(jogo):
             registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Neutro", jogo)
             rodar_final("final_bom", jogo)
             
-            # --- Final Neutro ---
+            
             desbloquear_conquista(jogo, "final_bom")
             if jogo.dificuldade_escolhida == "PESADELO":
                 desbloquear_conquista(jogo, "pesadelo_neutro")
@@ -346,7 +321,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     comando = normalizar(comando_bruto)
     ui = jogo.ui_handler
 
-    # --- NOVO: SALVAGUARDA GLOBAL PARA O GOD MODE ---
+    
     if comando.startswith("tp ") and getattr(jogo, 'god_mode', False) and "MINIGAME" in getattr(jogo, "estado_atual", ""):
         jogo.estado_atual = "JOGO"
         jogo.minigame_atual = None
@@ -636,8 +611,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
 
             if not gastou_turno:
-                # fallback: "correr <direção>" é tratado como "ir <direção>",
-                # mas marcando que foi uma corrida para os efeitos de barulho.
+                
                 jogador_correu = False
 
                 if comando.startswith("correr "):
@@ -664,11 +638,11 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
                 jogo.sala_atual = "01"
 
-            # gatilho do final verdadeiro (incêndio)
+            # gatilho do final verdadeiro
             if jogo.estado_atual == "FIM" and getattr(jogo, 'incendio', False):
                 registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro", jogo)
                 
-                # --- Gatilhos: Final Verdadeiro (Pelo Incêndio) ---
+                # Final Verdadeiro 
                 desbloquear_conquista(jogo, "final_verdadeiro")
                 if jogo.dificuldade_escolhida == "PESADELO":
                     desbloquear_conquista(jogo, "pesadelo_verdadeiro")
@@ -682,9 +656,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             if not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
                 imprimir_contexto_sala(jogo)
         
-    # ==========================================
-    # FLUXO DE MODOS DE DESAFIO E PERSONALIZADO
-    # ==========================================
+    
     elif jogo.estado_atual == "MENU_DESAFIOS":
         if comando == "voltar":
             jogo.estado_atual = "MENU"
@@ -696,7 +668,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         
         if comando == "1":
             jogo.dificuldade_escolhida = "DESAFIO_SPEEDRUN"
-            jogo.fast_mode = True # Força texto rápido para speedrun
+            jogo.fast_mode = True 
             ui.animar(f"{DOS_AMARELO}MODO SPEEDRUN ATIVADO. O CRONÔMETRO ESTÁ RODANDO.{RESET}\n", 0.04, jogo=jogo)
         elif comando == "2":
             jogo.dificuldade_escolhida = "DESAFIO_FANTASMA"
@@ -793,8 +765,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     elif jogo.estado_atual == "MINIGAME_JON":
         passo = getattr(jogo, 'jon_passos_dados', 0)
 
-        # Pequenas variações de texto por passo, para o minigame não soar
-        # idêntico do início ao fim — mesma mecânica, mais atmosfera.
+        
         frases_progresso = [
             "Jon rasteja em silêncio pelos dutos...",
             "O metal range baixinho sob o peso de Jon.",

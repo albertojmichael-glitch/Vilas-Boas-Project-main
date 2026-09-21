@@ -65,18 +65,18 @@ def atualizar_eventos_de_tempo(jogo):
         jogo.turnos_luz = 9999
         return
 
-    # 1. DEFINIÇÃO DAS SALAS ILUMINADAS (ZONAS SEGURAS DE LUZ)
+    
     salas_iluminadas = ["sala de fliperamas", "hall de entrada", "sala de refrigeração", "01", "balcão", "mesas de jantar"]
 
     if getattr(jogo, "amanheceu", False) or jogo.sala_atual in salas_iluminadas:
         jogo.turnos_no_escuro = 0
-        # A luz da lanterna NÃO é drenada aqui, e o escuro é resetado.
+        
     else:
         if jogo.turnos_luz > 0:
             jogo.turnos_luz -= 1
             jogo.turnos_no_escuro = 0
             
-            # Avisos prévios de bateria fraca
+         
             if jogo.turnos_luz == 2:
                 ui.buffer.append("@@GLITCH_LUZ@@")
                 ui.exibir(f"\n{DOS_AMARELO}Sua lanterna dá uma leve piscada. A luz está enfraquecendo...{RESET}")
@@ -106,7 +106,7 @@ def atualizar_eventos_de_tempo(jogo):
                     ui.exibir(f"\n{DOS_VERMELHO}Você cai de mau jeito no escuro e bate a cabeça. Você não consegue mais levantar...{RESET}")
                     jogo.sala_atual = "morte"
 
-    # Restante dos eventos (Fuga do incêndio e enjoo)
+
     if getattr(jogo, "incendio", False):
         jogo.turnos_fuga -= 1
         ui.exibir(f"\n{DOS_VERMELHO}O RESTAURANTE ESTÁ DESMORONANDO ({jogo.turnos_fuga} turnos para fugir){RESET}")
@@ -182,10 +182,7 @@ def corromper_texto(texto, intensidade=0.5):
     return "".join(resultado)
 
 def texto_cintilante(texto, paleta="perigo"):
-    """
-    Alterna cores a cada caractere para simular luzes piscando ou alertas críticos.
-    Paletas: 'perigo' (Vermelho/Amarelo), 'sistema' (Verde/Branco), 'fantasma' (Branco/Cinza)
-    """
+    
     if paleta == "perigo":
         cores = [DOS_VERMELHO, DOS_AMARELO]
     elif paleta == "sistema":

@@ -96,7 +96,7 @@ def cmd_ir(comando, jogo, mapa):
                     
                     if item_drop == "bateria nova":
                         jogo.bateria_ajuda_gerada = True
-            # ------------------------------------
+            
         
         
         ui.pausar(0.5)

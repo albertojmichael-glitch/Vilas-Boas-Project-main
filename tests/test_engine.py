@@ -24,7 +24,7 @@ def mapa_mock():
     return copy.deepcopy(MAPA_ORIGINAL)
 
 def test_processar_comando_alias(jogo_mock, mapa_mock):
-    """Testa se a engine traduz abreviações (aliases) como 'f' para 'ir frente'."""
+   
     
     processar_comando("f", jogo_mock, mapa_mock)
     
@@ -39,7 +39,7 @@ def test_processar_comando_god_mode_tp(jogo_mock, mapa_mock):
     assert jogo_mock.sala_atual == "01"
 
 def test_processar_comando_combate_morte(jogo_mock, mapa_mock):
-    """Testa se o jogador morre caso tente atacar fora do God Mode durante um embate."""
+    
     jogo_mock.estado_atual = "COMBATE_ANIMATRONICO"
     jogo_mock.god_mode = False
     

@@ -95,7 +95,7 @@ class MinigameSeguranca(BaseMinigame):
 
     
     def _custo_extra_por_hora(self):
-        """Quanto mais tarde, mais caro fica usar qualquer sistema."""
+       
         if self.turno >= TURNO_CRITICO:
             return CUSTO_EXTRA_CRITICO
         if self.turno >= TURNO_INICIO_CALOR:
@@ -164,13 +164,7 @@ class MinigameSeguranca(BaseMinigame):
         return self.rick_pos >= RICK_POS_PORTA
 
     def _processar_avanco_monstro(self, jogo):
-        """
-        Avança os animatrônicos durante o tempo perdido no override manual (captcha).
-        Reaproveita a mesma lógica de movimento do turno normal, mas SEM cobrar
-        energia da porta nem disparar eventos de calor/gerador — aqui é só o
-        monstro se aproveitando da distração do jogador no terminal.
-        Retorna 'morte' se alguém invadiu a sala, ou None para continuar.
-        """
+        
         ui = self.ui
         god_mode = getattr(jogo, "god_mode", False)
 
@@ -303,11 +297,7 @@ class MinigameSeguranca(BaseMinigame):
 
     
     def processar_turno(self, acao, jogo):
-        """
-        Processa o input do jogador no minigame de Segurança, gerenciando a máquina de 
-        estados do terminal, consumo de energia, interceptação de captchas sob pressão 
-        e a progressão da ameaça animatrônica.
-        """
+        
         ui = self.ui
         
         acao_norm = acao.lower().strip()
@@ -717,8 +707,7 @@ class MinigameSeguranca(BaseMinigame):
             ui.exibir(f"\n{DOS_VERMELHO} Você jura ter visto algo na ventilação... Será que é coisa da sua cabeça?{RESET}")
 
     def _resolver_fim_de_turno(self, ui, jogo, god_mode):
-        """Processa tudo que acontece quando um turno é consumido.
-        Retorna 'morte' se o jogador foi pego, ou None para continuar."""
+        
         self.usos_sistema_turno = 0
 
         if self.turnos_gerador_ativo > 0:

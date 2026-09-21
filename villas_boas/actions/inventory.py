@@ -68,11 +68,7 @@ def cmd_largar(comando, jogo, mapa):
     return True
 
 
-# --- Handlers de "usar item" -------------------------------------------
-# Cada handler recebe (jogo, mapa, item), onde `item` já foi resolvido
-# via encontrar_melhor_match (a grafia exata presente no inventário).
-# Todos retornam True/False exatamente como os ramos correspondentes
-# faziam no if/elif original.
+
 
 def _usar_lanterna(jogo, mapa, item):
     ui = jogo.ui_handler

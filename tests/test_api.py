@@ -1,11 +1,11 @@
 def test_ping(cliente):
-    """Verifica se o servidor Flask está online e respondendo."""
+    
     resposta = cliente.get('/ping')
     assert resposta.status_code == 200
     assert b"Estou vivo!" in resposta.data
 
 def test_iniciar_jogo_cria_sessao(cliente):
-    """Testa se a rota /iniciar gera um UUID seguro e retorna o estado inicial."""
+    
     resposta = cliente.get('/iniciar')
     
     
@@ -18,10 +18,6 @@ def test_iniciar_jogo_cria_sessao(cliente):
     assert dados["estado"]["sala"] == "SISTEMA"
 
 def test_fluxo_comando_basico(cliente):
-    """
-    Simula um jogador acessando o site e digitando o comando 'dir'
-    para sair da tela de boot e ir para o Menu.
-    """
     
     cliente.get('/iniciar')
     
@@ -41,7 +37,7 @@ def test_fluxo_comando_basico(cliente):
     assert "COMMAND  COM" in texto_terminal
 
 def test_comando_invalido_seguranca(cliente):
-    """Garante que a API bloqueie payloads maliciosos ou muito longos."""
+    
     cliente.get('/iniciar')
     
     payload_malicioso = {

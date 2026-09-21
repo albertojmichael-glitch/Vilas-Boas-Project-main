@@ -52,7 +52,7 @@ def digitar(texto, tempo_base=0.03, cor="", jogo=None):
 
 
 class UIHandler:
-    """Classe base para abstrair as saídas de texto."""
+   
 
     def limpar(self):
         limpar_tela()
