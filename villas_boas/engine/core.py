@@ -867,7 +867,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         imprimir_contexto_sala(jogo)
 
     elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q1":
-        if comando == "1994":
+        if comando == "1995":
             jogo.web_julgamento["pontos"] += 1
             falar_pianista(True, ui, jogo)
         else:
@@ -944,8 +944,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 imprimir_contexto_sala(jogo)
                 
             else:
-                ui.animar("Quem é você? *A tela desliga* Você não merece nossa ajuda.", 0.05, DOS_VERMELHO, jogo)
                 ui.exibir("@@JUMPSCARE@@")
+                ui.pausar(2)
+                ui.animar("Quem é você? *A tela desliga* Você não merece nossa ajuda.", 0.05, DOS_VERMELHO, jogo)
                 ui.pausar(1)
 
                 registrar_telemetria_segura(

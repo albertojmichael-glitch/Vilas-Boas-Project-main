@@ -211,7 +211,7 @@ class MinigameSeguranca(BaseMinigame):
         
         self._mover_animatronicos(ui)
 
-        return None
+        return "continuar"
 
     def _caroline_na_porta(self):
         return self.caroline_caminho == "porta" and self.caroline_pos >= CAROLINE_POS_PORTA
@@ -776,7 +776,7 @@ class MinigameSeguranca(BaseMinigame):
 
         ui.exibir("\n[A atualizar sistema...]")
         ui.pausar(1.2)
-        return None
+        return "continuar"
 
     def _mover_animatronicos(self, ui):
         if self.rick_pos == RICK_POS_PORTA and not self.porta_fechada and random.random() < CHANCE_RICK_RECUAR:
