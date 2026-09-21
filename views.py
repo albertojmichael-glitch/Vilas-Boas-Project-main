@@ -421,7 +421,7 @@ def rodar_final(tipo_final, jogo):
         ui.animar("- 'Eu não consegui te salvar, me desculpa...'", 0.09, DOS_AMARELO, jogo)
         ui.animar("- 'Não consegui salvar ninguém, o que eu fiz.'", 0.09, DOS_AMARELO, jogo)
         ui.animar("- 'Me ajUde, EU SINTO FALTA DE CASA.'", 0.1, DOS_VERMELHO, jogo)
-        ui.animar("- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas, eu não posso fazer mais nada.", 0.05, DOS_AMARELO, jogo)
+        ui.animar("- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas,f eu não posso fazer mais nada.", 0.05, DOS_AMARELO, jogo)
         ui.pausar(2)
         ui.animar("- ... *Caroline abraça Rogério*", 0.09, DOS_VERMELHO, jogo)
         ui.animar("- 'Eu esperO tE eNContrar Lá, meu bem.'", 0.09, DOS_VERMELHO, jogo)

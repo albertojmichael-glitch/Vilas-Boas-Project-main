@@ -120,11 +120,11 @@ def atualizar_eventos_de_tempo(jogo):
             jogo.turnos_luz -= 1
         jogo.turnos_enjoado -= 1
 
-    # 2. LÓGICA DA SAFEROOM (SALA 01 E OUTRAS)
+   
     salas_seguras_ia = ["saida", "cama", "final_bom", "morte", "tubo de ventilação", "01"]
 
     if jogo.dificuldade_escolhida == "NORMAL":
-        # No modo normal, o perseguidor só conta turnos se você NÃO estiver na saferoom
+        
         if jogo.sala_atual not in salas_seguras_ia:
             jogo.turnos_mesma_sala += 1
             if jogo.turnos_mesma_sala == jogo.turnos_perseguidor_aviso:
@@ -134,7 +134,7 @@ def atualizar_eventos_de_tempo(jogo):
                 ui.pausar(4)
                 jogo.sala_atual = "morte"
         else:
-            # Reseta os turnos se ele entrou na Saferoom
+           
             jogo.turnos_mesma_sala = 0
 
     elif jogo.dificuldade_escolhida == "PESADELO" and jogo.posicao_perseguidor != "morte" and jogo.sala_atual not in salas_seguras_ia:
