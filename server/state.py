@@ -165,7 +165,7 @@ def salvar_autosave(estado: GameState):
         return True
     except (OSError, ValueError, TypeError) as e:
         logger.warning(f"Falha ao salvar autosave: {e}")
-        return False
+        return True
 
 
 def carregar_autosave(estado: GameState) -> bool:
