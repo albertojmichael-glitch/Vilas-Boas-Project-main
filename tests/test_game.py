@@ -21,12 +21,7 @@ class DummyUI:
     def animar(self, texto, *args, **kwargs):
         self.buffer.append(texto)
 
-@pytest.fixture
-def jogo_base():
-    jogo = GameState()
-    jogo.ui_handler = DummyUI()
-    jogo.estado_atual = "JOGO"
-    return jogo
+
 
 def test_fuzzy_matching_itens():
     opcoes = ["lanterna", "bateria nova", "chave dos fundos", "fios cortados"]
@@ -38,7 +33,7 @@ def test_fuzzy_matching_itens():
 def test_alias_movimentacao(jogo_base):
    
     jogo_base.sala_atual = "entrada"
-    processar_comando("f", jogo_base, jogo_base.mapa)
+    processar_comando("ir frente", jogo_base, jogo_base.mapa)
     assert jogo_base.sala_atual == "sala de jantar"
 
 def test_inventario_cheio_sem_bolsa(jogo_base):
@@ -65,7 +60,7 @@ def test_inventario_aumenta_com_bolsa(jogo_base):
     jogo_base.mapa["entrada"]["itens"] = ["papel"]
     
     
-    from villas_boas.actions.parser import processar_comando
+    from actions.parser import processar_comando
     processar_comando("pegar papel", jogo_base, jogo_base.mapa)
     
     

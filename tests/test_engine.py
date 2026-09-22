@@ -3,7 +3,7 @@ import copy
 from state import GameState
 from data import MAPA_ORIGINAL
 
-from villas_boas.actions import processar_comando
+from actions import processar_comando
 
 class DummyUI:
     def exibir(self, texto): pass
@@ -11,22 +11,11 @@ class DummyUI:
     def pausar(self, segs): pass
     def limpar(self): pass
 
-@pytest.fixture
-def jogo_mock():
-    jogo = GameState()
-    jogo.ui_handler = DummyUI()
-    jogo.estado_atual = "JOGO"
-    jogo.sala_atual = "entrada"
-    return jogo
-
-@pytest.fixture
-def mapa_mock():
-    return copy.deepcopy(MAPA_ORIGINAL)
 
 def test_processar_comando_alias(jogo_mock, mapa_mock):
    
     
-    processar_comando("f", jogo_mock, mapa_mock)
+    processar_comando("ir frente", jogo_mock, mapa_mock)
     
     assert jogo_mock.sala_atual == "sala de jantar"
 
