@@ -11,7 +11,6 @@ const terminal = document.getElementById('terminal');
 const loadingSpinner = document.getElementById('loading');
 const inputLineDiv = document.querySelector('.input-line');
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-// Use a URL do Railway em produção, ou localhost para testes
 const API_URL = "https://vilas-boas-project-main.up.railway.app";
 
 const hpEl = document.getElementById('hud-hp');
@@ -107,7 +106,7 @@ function iniciarSomAmbiente() {
 
   
     if (!audioAmbienteLoop) {
-        audioAmbienteLoop = new Audio('/static/audio/ambiente.mp3');
+        audioAmbienteLoop = new Audio('./assets/audio/ambiente.mp3');
         audioAmbienteLoop.loop = true; 
         audioAmbienteLoop.volume = (typeof pref_volume !== 'undefined' ? pref_volume : 1.0) * 0.6; 
         audioAmbienteLoop.play().catch(err => console.log("Autoplay bloqueado:", err));
@@ -127,7 +126,7 @@ function tocarSonsAssustadoresAleatorios() {
     
     setTimeout(() => {
         
-        const audios = ['/static/audio/sonsrandomicos.mp3', '/static/audio/sonsrandomicos2.mp3'];
+        const audios = ['./assets/audio/sonsrandomicos.mp3', './assets/audio/sonsrandomicos2.mp3'];
         const escolhido = audios[Math.floor(Math.random() * audios.length)];
         
         const audioSusto = new Audio(escolhido);
@@ -228,13 +227,13 @@ window.addEventListener('click', (e) => {
 
 
 function tocarPassoMetalico() {
-    const passoAudio = new Audio('/static/audio/metalrangendo.mp3');
+    const passoAudio = new Audio('./assets/audio/metalrangendo.mp3');
     passoAudio.volume = (typeof pref_volume !== 'undefined' ? pref_volume : 1.0);
     passoAudio.play().catch(e => console.log("Erro ao tocar passo:", e));
 }
 
 function tocarPorta() {
-    const portaAudio = new Audio('/static/audio/portafechandoabrindo.mp3');
+    const portaAudio = new Audio('./assets/audio/portafechandoabrindo.mp3');
     portaAudio.volume = (typeof pref_volume !== 'undefined' ? pref_volume : 1.0);
     portaAudio.play().catch(e => console.log(e));
 }
@@ -472,7 +471,7 @@ function carregarPreferencias() {
             document.getElementById('volume-jump-val-display').innerText = `${Math.round(pref_volume_jumpscare * 100)}%`;
             
           
-            const testeSusto = new Audio('/static/audio/grito.mp3');
+            const testeSusto = new Audio('./assets/audio/grito.mp3');
             testeSusto.volume = pref_volume * pref_volume_jumpscare;
             testeSusto.play();
             setTimeout(() => testeSusto.pause(), 300);
@@ -1342,11 +1341,11 @@ function ativarJumpscare() {
     const img = document.getElementById('img-jumpscare');
     
     
-    const imagens = ['/static/images/JUMPSCARE1.jpg', '/static/images/JUMPSCARE2.jpg'];
+    const imagens = ['./assets/static/images/JUMPSCARE1.jpg', './assets/static/images/JUMPSCARE2.jpg'];
     img.src = imagens[Math.floor(Math.random() * imagens.length)];
     
     
-    const audioSusto = new Audio('/static/audio/grito.mp3'); 
+    const audioSusto = new Audio('./assets/audio/grito.mp3'); 
     audioSusto.volume = typeof pref_volume !== 'undefined' ? pref_volume : 1.0; 
     
     
@@ -1372,9 +1371,9 @@ function ativarBSOD() {
     
     
     const imagens = [
-        '/static/images/JAPONESMEDO.jpg',
-        '/static/images/SHEISHERE1.jpg',
-        '/static/images/SHEISHERE2.jpg'
+        './assets/static/images/JAPONESMEDO.jpg',
+        './assets/static/images/SHEISHERE1.jpg',
+        './assets/static/images/SHEISHERE2.jpg'
     ];
     imgCreepy.src = imagens[Math.floor(Math.random() * imagens.length)];
     

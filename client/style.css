@@ -528,13 +528,13 @@ input, textarea {
 
 .screen-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
-#layer-static { background: url('images/estatica.png') center/cover; opacity: 0; }
+#layer-static { background: url('./assets/images/estatica.png') center/cover; opacity: 0; }
 @keyframes tremble {
     0% { background-position: 0 0; } 50% { background-position: 10px -5px; } 100% { background-position: -5px 5px; }
 }
 .static-active { opacity: 1 !important; animation: tremble 0.08s infinite; filter: contrast(1.5); }
 
-#layer-color-bars { background: url('images/tvcolorida.png') no-repeat center/cover; }
+#layer-color-bars { background: url('./assets/images/tvcolorida.png') no-repeat center/cover; }
 #layer-blue { background-color: #0000aa; display: flex; align-items: center; justify-content: center; }
 .vcr-text { color: #00ff00; font-family: 'VT323', monospace; font-size: 2.5rem; text-shadow: 2px 2px 0px #000; animation: blinker 1s linear infinite; }
 @keyframes blinker { 50% { opacity: 0; } }
