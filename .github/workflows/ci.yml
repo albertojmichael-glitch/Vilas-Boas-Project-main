@@ -26,6 +26,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install ruff pytest mypy pip-audit
+        cd server
         pip install -r requirements.txt
 
     - name: Verificar lint e formatação com Ruff
