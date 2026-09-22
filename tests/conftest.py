@@ -3,7 +3,7 @@ import copy
 import sys
 import os
 
-from server.state import GameState
+from state import GameState
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'server')))
 

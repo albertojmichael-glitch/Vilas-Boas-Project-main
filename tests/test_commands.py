@@ -2,8 +2,8 @@ import pytest
 import copy
 from state import GameState
 from data import MAPA_ORIGINAL
-from server.villas_boas.actions.movement import cmd_ir
-from server.villas_boas.actions.inventory import cmd_pegar, cmd_usar
+from villas_boas.actions.movement import cmd_ir
+from villas_boas.actions.inventory import cmd_pegar, cmd_usar
 
 
 class DummyUI:
