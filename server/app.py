@@ -24,7 +24,7 @@ from flask import Flask, jsonify, redirect, request, send_from_directory, sessio
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic import BaseModel, Field, field_validator, ValidationError, validator
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
@@ -203,7 +203,7 @@ class ComandoRequest(BaseModel):
     )
     telemetria: bool = Field(default=True)
 
-    @validator('comando', pre=True)
+    @field_validator("comando", mode="before")
     def limpar_comando(cls, v):
         if not isinstance(v, str):
             return ""

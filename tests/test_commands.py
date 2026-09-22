@@ -22,7 +22,19 @@ def jogo_mock():
 
 @pytest.fixture
 def mapa_mock():
-    return copy.deepcopy(MAPA_ORIGINAL)
+    
+    return {
+        "entrada": {
+            "descrição": "Sala inicial do teste",
+            "frente": "sala de jantar",
+            "itens": []
+        },
+        "sala de jantar": {
+            "descrição": "Sala vizinha",
+            "atrás": "entrada",
+            "itens": []
+        }
+    }
 
 def test_cmd_ir_valido(jogo_mock, mapa_mock):
     
