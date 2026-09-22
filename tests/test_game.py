@@ -4,9 +4,9 @@ import os
 import json
 from unittest.mock import patch
 from state import GameState
-from villas_boas.actions import processar_comando
-from villas_boas.utils import encontrar_melhor_match
-from villas_boas.engine import MinigameMinotauro, MinigameSeguranca
+from server.villas_boas.actions import processar_comando
+from server.villas_boas.utils import encontrar_melhor_match
+from server.villas_boas.engine import MinigameMinotauro, MinigameSeguranca
 
 
 class DummyUI:

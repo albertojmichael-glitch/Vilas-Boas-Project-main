@@ -1,5 +1,5 @@
 import pytest
-from app import app, MEMORIA_SESSOES
+from server.app import app, MEMORIA_SESSOES
 
 @pytest.fixture
 def cliente():
