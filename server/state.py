@@ -156,7 +156,7 @@ def registrar_final(nome_final: str) -> bool:
 
 def salvar_autosave(estado: GameState):
     if estado.estado_atual != GameStateEnum.JOGO.value:
-        return
+        return False
     try:
         dados = estado.to_dict()
         AUTOSAVE_FILE.write_text(
@@ -165,7 +165,7 @@ def salvar_autosave(estado: GameState):
         return True
     except (OSError, ValueError, TypeError) as e:
         logger.warning(f"Falha ao salvar autosave: {e}")
-    return True
+        return False
 
 
 def carregar_autosave(estado: GameState) -> bool:

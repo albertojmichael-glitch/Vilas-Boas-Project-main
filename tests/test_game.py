@@ -111,6 +111,7 @@ def test_salvar_e_carregar_autosave(jogo_base, tmp_path):
     jogo_base.sala_atual = "01"
     jogo_base.hp = 1
     jogo_base.inventario = ["chave dos fundos"]
+    jogo_base.estado_atual = "JOGO"
     sucesso_save = state.salvar_autosave(jogo_base)
     assert sucesso_save is True
     novo_jogo = GameState()
