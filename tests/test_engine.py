@@ -3,7 +3,7 @@ import copy
 from state import GameState
 from data import MAPA_ORIGINAL
 
-from actions import processar_comando
+from villas_boas.actions import processar_comando
 
 class DummyUI:
     def exibir(self, texto): pass
