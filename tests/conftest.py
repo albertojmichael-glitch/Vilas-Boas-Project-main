@@ -1,5 +1,12 @@
 import pytest
-from server.app import app, MEMORIA_SESSOES
+import sys
+import os
+
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'server')))
+
+from app import MEMORIA_SESSOES, app
+
 
 @pytest.fixture
 def cliente():

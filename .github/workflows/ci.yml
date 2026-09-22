@@ -40,7 +40,7 @@ jobs:
 
     - name: Verificação estática de tipos com Mypy
       run: |
-        mypy app.py state.py --ignore-missing-imports || true
+        run: cd server && mypy app.py state.py --ignore-missing-imports || true
 
     - name: Executar testes automatizados com Pytest
       run: |
