@@ -878,7 +878,7 @@ def auth_google_callback():
             
         
         
-        return redirect("https://seu-projeto.vercel.app/?leaderboard=sucesso")
+        return redirect("https:vilas-boas-project-main-qv1stl5lb-ssm-studios.vercel.app/?leaderboard=sucesso")
         
     except Exception as e:  # noqa: BLE001
         logger.error(f"Erro no OAuth do Google: {e}")
