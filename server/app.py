@@ -45,7 +45,9 @@ CLIENT_DIR = os.path.abspath(os.path.join(SERVER_DIR, "..", "client"))
 
 app = Flask(__name__, static_folder=CLIENT_DIR, static_url_path="/")
 
-
+@app.route("/")
+def raiz():
+    return send_from_directory(BASE_DIR, "index.html")
 
 
 from villas_boas.engine.core import processar_fluxo_jogo
@@ -460,11 +462,6 @@ def gerar_resposta_json(jogo):
     }
 
     return jsonify(resposta)
-
-
-@app.route("/")
-def raiz():
-    return send_from_directory(BASE_DIR, "index.html")
 
 
 @app.route("/ping")
