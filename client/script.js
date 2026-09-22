@@ -11,6 +11,8 @@ const terminal = document.getElementById('terminal');
 const loadingSpinner = document.getElementById('loading');
 const inputLineDiv = document.querySelector('.input-line');
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// Use a URL do Railway em produção, ou localhost para testes
+const API_URL = "https://seu-backend.up.railway.app";
 
 const hpEl = document.getElementById('hud-hp');
 const luzEl = document.getElementById('hud-luz');
@@ -279,7 +281,7 @@ function closeSaves() {
 
 async function exportarSave() {
     try {
-        const res = await fetch('/save/export');
+        const res = await fetch(API_URL + '/save/export', { credentials: 'include' });
         if (!res.ok) throw new Error("Nenhum progresso encontrado no servidor.");
         const data = await res.json();
         
@@ -316,10 +318,11 @@ async function importarSave(event) {
             }
             
             
-            const res = await fetch('/save/import', {
+            const res = await fetch(API_URL + '/save/import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dados)
+                body: JSON.stringify(dados),
+                credentials: 'include' 
             });
             
             const result = await res.json();
@@ -339,7 +342,7 @@ async function importarSave(event) {
 
 async function gerarLinkCompartilhamentoUI() {
     try {
-        const res = await fetch('/share/generate');
+        const res = await fetch(API_URL + '/share/generate', { credentials: 'include' });
         const data = await res.json();
         
         if (res.ok) {
@@ -968,7 +971,9 @@ async function fetchSeguro(url, options) {
     const startTime = Date.now(); 
     
     try {
-        const res = await fetch(url, options);
+        options = options || {};
+        options.credentials = 'include';
+        const res = await fetch(API_URL + url, options);
         if (!res.ok) throw new Error("Servidor offline");
         const data = await res.json(); 
 

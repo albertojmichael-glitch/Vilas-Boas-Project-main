@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pymongo
 
-from flask import url_for 
+from flask import url_for
 from authlib.integrations.flask_client import OAuth
 from werkzeug.middleware.proxy_fix import ProxyFix
 from cachetools import TTLCache
@@ -33,6 +33,22 @@ try:
     import redis
 except ImportError:
     redis = None
+
+from flask import Flask, send_from_directory
+
+
+SERVER_DIR = os.path.abspath(os.path.dirname(__file__))
+
+
+CLIENT_DIR = os.path.abspath(os.path.join(SERVER_DIR, "..", "client"))
+
+
+app = Flask(__name__, static_folder=CLIENT_DIR, static_url_path="/")
+
+@app.route("/")
+def raiz():
+    
+    return send_from_directory(CLIENT_DIR, "index.html")
 
 
 from villas_boas.engine.core import processar_fluxo_jogo
@@ -88,7 +104,7 @@ if IS_PRODUCTION:
     app.config.update(
         SESSION_COOKIE_SECURE=True,     
         SESSION_COOKIE_HTTPONLY=True,   
-        SESSION_COOKIE_SAMESITE='Lax',  
+        SESSION_COOKIE_SAMESITE='None',  
     )
     print(" Segurança de Cookies: Modo Produção ativado (Secure=True).")
 else:
@@ -134,7 +150,8 @@ else:
     mongo_client = None
     logger.warning("⚠ Rodando sem Banco de Dados MongoDB. Usando arquivos locais.")
 
-CORS(app, supports_credentials=True)
+
+CORS(app, supports_credentials=True, origins=["https://seu-projeto.vercel.app"])
 limiter = Limiter(key_func=get_remote_address, app=app, storage_uri="memory://")
 
 
