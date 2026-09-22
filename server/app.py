@@ -45,10 +45,7 @@ CLIENT_DIR = os.path.abspath(os.path.join(SERVER_DIR, "..", "client"))
 
 app = Flask(__name__, static_folder=CLIENT_DIR, static_url_path="/")
 
-@app.route("/")
-def raiz():
-    
-    return send_from_directory(CLIENT_DIR, "index.html")
+
 
 
 from villas_boas.engine.core import processar_fluxo_jogo
