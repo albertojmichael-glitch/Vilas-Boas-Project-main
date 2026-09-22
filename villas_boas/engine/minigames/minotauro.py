@@ -125,22 +125,20 @@ def desenhar_radar_ascii(px, py, mx, my, fios_cortados, armadilhas, glitch=False
         for x in range(GRID_MIN_X, GRID_MAX_X + 1):
             char = " "
             if x == px and y == py:
+                
                 char = f"{DOS_BRANCO}@{reset}"
-            elif (
-                glitch
-                and (abs(x - px) + abs(y - py) == 1)
-                or not glitch
-                and monstro_visivel
-                and x == mx
-                and y == my
+
+            elif (glitch and (abs(x - px) + abs(y - py) == 1)) or (
+                not glitch and monstro_visivel and x == mx and y == my
             ):
                 char = f"{DOS_VERMELHO}X{reset}"
-            elif not glitch and monstro_visivel and x == mx and y == my:
-                char = f"{DOS_VERMELHO}X{reset}"       
+
             elif (x, y) in armadilhas:
-                char = f"{DOS_AMARELO}*{reset}"        
+                char = f"{DOS_AMARELO}*{reset}"
+
             elif x == POS_FUSIVEL_X and y == POS_FUSIVEL_Y and not fios_cortados:
-                char = f"{DOS_AMARELO}F{reset}"       
+                char = f"{DOS_AMARELO}F{reset}"
+
             elif x == POS_SAIDA_X and y == POS_SAIDA_Y:
                 char = f"{DOS_VERDE}S{reset}"         
                 
