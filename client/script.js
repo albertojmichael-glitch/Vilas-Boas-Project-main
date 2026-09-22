@@ -12,7 +12,7 @@ const loadingSpinner = document.getElementById('loading');
 const inputLineDiv = document.querySelector('.input-line');
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // Use a URL do Railway em produção, ou localhost para testes
-const API_URL = "https://seu-backend.up.railway.app";
+const API_URL = "https://vilas-boas-project-main.up.railway.app";
 
 const hpEl = document.getElementById('hud-hp');
 const luzEl = document.getElementById('hud-luz');

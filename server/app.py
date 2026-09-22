@@ -877,7 +877,8 @@ def auth_google_callback():
             leaderboard_collection.insert_one(registro)
             
         
-        return redirect("/?leaderboard=sucesso")
+        
+        return redirect("https://seu-projeto.vercel.app/?leaderboard=sucesso")
         
     except Exception as e:  # noqa: BLE001
         logger.error(f"Erro no OAuth do Google: {e}")
