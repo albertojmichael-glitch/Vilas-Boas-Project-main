@@ -36,19 +36,15 @@ except ImportError:
 
 from flask import Flask, send_from_directory
 
-
 SERVER_DIR = os.path.abspath(os.path.dirname(__file__))
 
-
 CLIENT_DIR = os.path.abspath(os.path.join(SERVER_DIR, "..", "client"))
-
 
 app = Flask(__name__, static_folder=CLIENT_DIR, static_url_path="/")
 
 @app.route("/")
 def raiz():
     return send_from_directory(BASE_DIR, "index.html")
-
 
 from villas_boas.engine.core import processar_fluxo_jogo
 from state import GameState
@@ -58,7 +54,6 @@ from security import assinar_dados
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-
 IS_PRODUCTION = bool(
     os.environ.get("FLASK_ENV") == "production"
     or os.environ.get("RENDER")
@@ -66,17 +61,12 @@ IS_PRODUCTION = bool(
     or os.environ.get("PROD")
 )
 
-
-
 SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
-
 
 if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
     print("➣ ERRO FATAL: SECRET_KEY e/ou ADMIN_TOKEN não encontrados no ambiente. ")
     sys.exit(1) 
-
-
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 
@@ -84,7 +74,6 @@ app.secret_key = SECRET_KEY or "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024 
-
 
 _key_hash = hashlib.sha256((app.secret_key).encode()).digest()
 CIPHER_SUITE = Fernet(base64.urlsafe_b64encode(_key_hash))
@@ -97,7 +86,6 @@ google = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
-
 
 if IS_PRODUCTION:
     app.config.update(
@@ -114,7 +102,6 @@ else:
     )
     print(" Segurança de Cookies: Modo Desenvolvimento (Secure=False).")
 
-
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
@@ -130,11 +117,9 @@ logger = logging.getLogger(__name__)
 SAVES_DIR_ENV = os.environ.get("SAVES_DIR", os.path.join(BASE_DIR, "saves"))
 os.makedirs(SAVES_DIR_ENV, exist_ok=True)
 
-
 if not ADMIN_TOKEN:
     ADMIN_TOKEN = secrets.token_urlsafe(32)
     logger.warning("⚠ ADMIN_TOKEN não definido no ambiente. Uma senha aleatória segura foi gerada para esta sessão.")
-
 
 MONGO_URI = os.environ.get("MONGO_URI")
 if MONGO_URI:
@@ -149,14 +134,10 @@ else:
     mongo_client = None
     logger.warning("⚠ Rodando sem Banco de Dados MongoDB. Usando arquivos locais.")
 
-
 CORS(app, supports_credentials=True, origins=["https://seu-projeto.vercel.app"])
 limiter = Limiter(key_func=get_remote_address, app=app, storage_uri="memory://")
 
-
 REDIS_URL = os.environ.get("REDIS_URL")
-
-
 
 class RedisSessionStore:
     def __init__(self, client):
@@ -175,7 +156,6 @@ class RedisSessionStore:
         
         self.client.setex(key, 3600, json.dumps(value.to_dict()))
 
-
 if REDIS_URL and redis is not None:
     try:
         redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
@@ -193,7 +173,6 @@ if REDIS_URL and redis is not None:
 else:
     logger.info("Usando TTLCache na memória RAM local.")
     MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
-
 
 class ComandoRequest(BaseModel):
     comando: str = Field(
@@ -237,7 +216,6 @@ def requer_admin(f):
         return f(*args, **kwargs)
     return decorated
 
-
 class WebUIHandler(UIHandler):
     def __init__(self):
         self.buffer = []
@@ -268,7 +246,6 @@ class WebUIHandler(UIHandler):
 
     def obter_input(self, prompt_text):
         return ""
-
 
 def ansi_para_html(texto_ansi):
     import re
@@ -325,7 +302,6 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes="", jogo=None):
             "timestamp": time.time(),
         }
         
-        
         if jogo:
             doc.update({
                 "hp_restante": getattr(jogo, 'hp', 0),
@@ -338,11 +314,8 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes="", jogo=None):
 
         telemetry_collection.insert_one(doc)
         
-    
     except Exception as e:  # noqa: BLE001
         logger.error(f"Erro na telemetria: Falha de sanitização. Detalhes: {e}")
-
-
 
 def carregar_save_web(jogo):
     sid = obter_sid_seguro()
@@ -399,7 +372,6 @@ def salvar_save_web(jogo):
     if not sid:
         return
 
-    
     dados_json = json.dumps(jogo.to_dict(), ensure_ascii=False)
     dados_criptografados = CIPHER_SUITE.encrypt(dados_json.encode("utf-8")).decode("utf-8")
 
@@ -419,10 +391,8 @@ def salvar_save_web(jogo):
         except Exception:
             logger.exception("Erro ao gerar autosave local blindado")
 
-
 def gerar_resposta_json(jogo):
     linhas = []
-    
     
     if jogo and hasattr(jogo, "ui_handler") and hasattr(jogo.ui_handler, "buffer"):
         linhas = [
@@ -432,19 +402,16 @@ def gerar_resposta_json(jogo):
         ]
         jogo.ui_handler.buffer.clear()
 
-    
     conquistas_enviadas = getattr(jogo, 'novas_conquistas_turno', []).copy()
     if hasattr(jogo, 'novas_conquistas_turno'):
         jogo.novas_conquistas_turno.clear()
 
-    
     estado_jogo = getattr(jogo, "estado_atual", "")
     if estado_jogo in ["MENU", "AGUARDANDO_DIR"]:
         sala_exibicao = "SISTEMA"
     else:
         sala_exibicao = getattr(jogo, "sala_atual", "SISTEMA").upper()
 
-    
     resposta = {
         "linhas": linhas, 
         "estado": {
@@ -463,11 +430,9 @@ def gerar_resposta_json(jogo):
 
     return jsonify(resposta)
 
-
 @app.route("/ping")
 def ping():
     return "Estou vivo!", 200
-
 
 @app.route("/style.css")
 def serve_css():
@@ -475,19 +440,16 @@ def serve_css():
         return send_from_directory(BASE_DIR, "style.min.css")
     return send_from_directory(BASE_DIR, "style.css")
 
-
 @app.route("/script.js")
 def serve_js():
     if os.path.exists(os.path.join(BASE_DIR, "script.min.js")):
         return send_from_directory(BASE_DIR, "script.min.js")
     return send_from_directory(BASE_DIR, "script.js")
 
-
 @app.errorhandler(404)
 @app.errorhandler(405)
 def page_not_found(e):
     return send_from_directory(BASE_DIR, "index.html")
-
 
 @app.route("/iniciar", methods=["GET"])
 def iniciar_jogo():
@@ -514,7 +476,6 @@ def iniciar_jogo():
     resposta = gerar_resposta_json(jogo)
     resposta.headers["Cache-Control"] = "no-store"
     return resposta
-
 
 @app.route("/comando", methods=["GET", "POST"])
 @limiter.limit("60 per minute")
@@ -548,7 +509,6 @@ def receber_comando():
 
     tem_save = obter_caminho_autosave(sid).exists()
 
-    
     if comando:
         jogo.log_comandos.append(comando)
 
@@ -575,8 +535,6 @@ def receber_comando():
 
    
     return gerar_resposta_json(jogo)
-
-
 
 @app.route('/save/export', methods=['GET'])
 @limiter.limit("5 per minute")
@@ -644,8 +602,6 @@ def importar_save():
                 "erro": "Arquivo de save inválido, corrompido ou de uma versão incompatível."
             }
         ), 400
-
-
 
 @app.route("/achievements", methods=["GET"])
 def listar_conquistas():
@@ -741,7 +697,6 @@ def obter_replay(id_replay):
     except InvalidId: 
         return jsonify({"erro": "ID de replay inválido."}), 400
 
-
 @app.route("/share/generate", methods=["GET"])
 @limiter.limit("5 per minute")
 def gerar_link_compartilhamento():
@@ -762,7 +717,6 @@ def gerar_link_compartilhamento():
 
     url_share = f"{request.host_url}share/{share_token}"
     return jsonify({"link": url_share, "mensagem": "Link válido por 24 horas."})
-
 
 @app.route("/share/<share_token>", methods=["GET"])
 def carregar_save_compartilhado(share_token):
@@ -793,7 +747,6 @@ def carregar_save_compartilhado(share_token):
     )
 
     return redirect("/")
-
 
 @app.route("/saves", methods=["GET"])
 @limiter.limit("10 per minute")
@@ -831,7 +784,6 @@ def listar_saves_paginados():
     except (pymongo.errors.PyMongoError, ValueError) as e:
         logger.error(f"Erro ao listar saves paginados: {e}")
         return jsonify({"erro": "Erro interno do servidor"}), 500
-
 
 @app.route("/login/google")
 def login_google():
@@ -878,7 +830,6 @@ def auth_google_callback():
         logger.error(f"Erro no OAuth do Google: {e}")
         return "Falha na autenticação com o Google.", 500
 
-
 @app.after_request
 def aplicar_headers_de_seguranca(response):
     
@@ -898,7 +849,6 @@ def aplicar_headers_de_seguranca(response):
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
         
     return response
-
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
