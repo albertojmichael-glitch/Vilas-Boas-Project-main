@@ -729,9 +729,9 @@ def auditoria_mortes():
 
         return jsonify({"mortes_identificadas": auditoria})
         
-    except Exception as e:
+    except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"erro": str(e)}), 500
+        return jsonify({"erro": "Erro ao consultar a auditoria no banco de dados."}), 500
 
 
 @app.route("/api/replay/<int:id_replay>", methods=["GET"])
