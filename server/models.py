@@ -19,6 +19,8 @@ class Jogador(db.Model):
     final_alcancado = db.Column(db.String(100))
     dificuldade = db.Column(db.String(50))
     timestamp = db.Column(db.Float, default=time.time, index=True)
+    saves = db.relationship('SaveJogo', backref='jogador', lazy=True)
+    historico_telemetria = db.relationship('Telemetria', backref='jogador', lazy=True)
 
 
 class SaveJogo(db.Model):
@@ -26,6 +28,7 @@ class SaveJogo(db.Model):
     __tablename__ = "saves"
 
     sid = db.Column(db.String(36), primary_key=True)
+    jogador_id = db.Column(db.Integer, db.ForeignKey('jogadores.id'), nullable=True)
     dados = db.Column(db.Text, nullable=False)  # texto Fernet
     atualizado_em = db.Column(db.Float, default=time.time, onupdate=time.time, index=True)
 
@@ -35,6 +38,8 @@ class Telemetria(db.Model):
     __tablename__ = "telemetria"
 
     id = db.Column(db.Integer, primary_key=True)
+    jogador_id = db.Column(db.Integer, db.ForeignKey('jogadores.id'), nullable=True)
+    sid_sessao = db.Column(db.String(36), index=True)
     evento = db.Column(db.String(50), index=True, nullable=False)
     sala = db.Column(db.String(50), index=True)
     dificuldade = db.Column(db.String(50))

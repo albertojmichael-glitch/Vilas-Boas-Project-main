@@ -140,7 +140,7 @@ if not ADMIN_TOKEN:
 origens_permitidas = ["http://localhost:5000", "http://127.0.0.1:5000"]
 if IS_PRODUCTION:
   
-    origens_permitidas.append("https://vilas-boas-project-main.vercel.app/") 
+    origens_permitidas.append("https://vilas-boas-project-main.vercel.app") 
 
 CORS(app, supports_credentials=True, origins=origens_permitidas)
 
@@ -312,11 +312,14 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes="", jogo=None):
         return
 
     try:
+        sid_atual = session.get("sid")
         registro = Telemetria(
+
             evento=str(evento)[:50],
             sala=str(sala)[:50],
             dificuldade=str(dificuldade)[:50],
             detalhes=str(detalhes)[:256],
+            sid_sessao=sid_atual
         )
 
         if jogo:
@@ -703,6 +706,33 @@ def ver_telemetria():
         logger.exception("Erro no analytics")
         return jsonify({"erro": "Erro interno do servidor"}), 500
 
+@app.route("/admin/auditoria-mortes", methods=["GET"])
+@requer_admin
+def auditoria_mortes():
+    try:
+        
+        resultados = (
+            db.session.query(Jogador.email, Telemetria.sala, Telemetria.log_comandos)
+            .join(Telemetria, Jogador.id == Telemetria.jogador_id)
+            .filter(Telemetria.evento == "MORTE")
+            .limit(50)
+            .all()
+        )
+
+        auditoria = []
+        for email, sala, comandos in resultados:
+            auditoria.append({
+                "vitima": email,
+                "morreu_na_sala": sala,
+                "ultimas_palavras": comandos[-3:] if comandos else [] 
+            })
+
+        return jsonify({"mortes_identificadas": auditoria})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erro": str(e)}), 500
+
 
 @app.route("/api/replay/<int:id_replay>", methods=["GET"])
 def obter_replay(id_replay):
@@ -829,26 +859,35 @@ def login_google():
 def auth_google_callback():
     sid = session.get("sid")
     if not sid or sid not in MEMORIA_SESSOES:
-        return "Sessão de jogo não encontrada. Jogue novamente para registrar.", 400
+        return "Sessão de jogo não encontrada.", 400
 
     try:
         token = google.authorize_access_token()
         user_info = token.get("userinfo")
         email_jogador = user_info.get("email")
-
         jogo = MEMORIA_SESSOES[sid]
         iniciais = session.get("arcade_initials", "UNK")
-
         if getattr(jogo, "tempo_total_segundos", 0) > 0:
-            db.session.add(
-                Jogador(
-                    iniciais=iniciais,
-                    email=email_jogador,
-                    tempo_segundos=jogo.tempo_total_segundos,
-                    final_alcancado=jogo.sala_atual,
-                    dificuldade=jogo.dificuldade_escolhida,
-                )
+            
+            novo_jogador = Jogador(
+                iniciais=iniciais,
+                email=email_jogador,
+                tempo_segundos=jogo.tempo_total_segundos,
+                final_alcancado=jogo.sala_atual,
+                dificuldade=jogo.dificuldade_escolhida,
             )
+            db.session.add(novo_jogador)
+            db.session.flush() 
+            save_atual = db.session.get(SaveJogo, sid)
+            if save_atual:
+                save_atual.jogador_id = novo_jogador.id
+
+           
+            Telemetria.query.filter_by(sid_sessao=sid).update(
+                {"jogador_id": novo_jogador.id}
+            )
+
+           
             db.session.commit()
 
         return redirect(f"{FRONTEND_URL}/?leaderboard=sucesso")
