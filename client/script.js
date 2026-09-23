@@ -312,10 +312,9 @@ async function importarSave(event) {
             const dados = JSON.parse(e.target.result);
             
             
-            if (!dados || typeof dados !== 'object' || !('sala_atual' in dados) || !('hp' in dados)) {
+            if (!dados || typeof dados !== 'object' || !('dados_seguros' in dados)) {
                 throw new Error("Estrutura de save incompatível.");
             }
-            
             
             const res = await fetch(API_URL + '/save/import', {
                 method: 'POST',
@@ -326,13 +325,13 @@ async function importarSave(event) {
             
             const result = await res.json();
             if (res.ok) {
-                alert("Save corrompido... importado com sucesso! Reiniciando terminal...");
+                alert("Save corrompido... importado com sucesso! A reiniciar o terminal...");
                 window.location.reload();
             } else {
                 alert("[ERRO DE BIOS] " + result.erro);
             }
         } catch (erro) {
-            alert("[ERRO FATAL] O arquivo fornecido não é um JSON válido do sistema.");
+            alert("[ERRO FATAL] O ficheiro fornecido não é um JSON válido do sistema.");
         }
     };
     reader.readAsText(file);
