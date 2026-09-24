@@ -46,7 +46,7 @@ from views import imprimir_tela_boot
 from security import assinar_dados
 from config import Config
 from extensions import db, migrate, cors
-from models import db, Jogador, SaveJogo, Telemetria, Compartilhamento
+from models import Compartilhamento, Jogador, SaveJogo, Telemetria
 
 def create_app():
     """Application Factory: Monta o app sob demanda."""
@@ -497,7 +497,7 @@ def gerar_resposta_json(jogo):
 
 @app.route("/")
 def raiz():
-    return send_from_directory(BASE_DIR, "index.html")
+    return send_from_directory( "index.html") 
 
 
 @app.route("/ping")
@@ -507,22 +507,22 @@ def ping():
 
 @app.route("/style.css")
 def serve_css():
-    if os.path.exists(os.path.join(BASE_DIR, "style.min.css")):
-        return send_from_directory(BASE_DIR, "style.min.css")
-    return send_from_directory(BASE_DIR, "style.css")
+    if os.path.exists(os.path.join(app.config.get("BASE_DIR"), "style.min.css")):
+        return send_from_directory(app.config.get("BASE_DIR"), "style.min.css")
+    return send_from_directory(app.config.get("BASE_DIR"), "style.css")
 
 
 @app.route("/script.js")
 def serve_js():
-    if os.path.exists(os.path.join(BASE_DIR, "script.min.js")):
-        return send_from_directory(BASE_DIR, "script.min.js")
-    return send_from_directory(BASE_DIR, "script.js")
+    if os.path.exists(os.path.join(app.config.get("BASE_DIR"), "script.min.js")):
+        return send_from_directory(app.config.get("BASE_DIR"), "script.min.js")
+    return send_from_directory(app.config.get("BASE_DIR"), "script.js")
 
 
 @app.errorhandler(404)
 @app.errorhandler(405)
 def page_not_found(e):
-    return send_from_directory(BASE_DIR, "index.html")
+    return send_from_directory(app.config.get("BASE_DIR"), "index.html")
 
 
 # rotas do jogo
@@ -562,7 +562,7 @@ def iniciar_jogo():
 @limiter.limit("500 per hour")
 def receber_comando():
     if request.method == "GET":
-        return send_from_directory(BASE_DIR, "index.html")
+        return send_from_directory(app.config.get("BASE_DIR"), "index.html")
 
     sid = obter_sid_seguro()
 
@@ -958,7 +958,7 @@ def aplicar_headers_de_seguranca(response):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
 
-    if IS_PRODUCTION:
+    if app.config.get("IS_PRODUCTION"):
         response.headers["Strict-Transport-Security"] = (
             "max-age=31536000; includeSubDomains"
         )
