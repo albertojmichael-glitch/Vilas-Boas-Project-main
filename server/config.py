@@ -35,6 +35,10 @@ class Config:
             if not cls.DATABASE_URL:
                 sys.exit("➣ ERRO FATAL: DATABASE_URL ausente na produção.")
 
+
+        if not cls.SECRET_KEY:
+            cls.SECRET_KEY = "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
+
       
         cls.FRONTEND_URL = cls.FRONTEND_URL or "http://localhost:5000"
         
