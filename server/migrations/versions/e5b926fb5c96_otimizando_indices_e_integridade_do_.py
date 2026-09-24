@@ -34,24 +34,24 @@ def upgrade():
         batch_op.create_index(batch_op.f('ix_jogadores_email'), ['email'], unique=True)
 
     with op.batch_alter_table('saves', schema=None) as batch_op:
-        
-        
+        # 1. Cria a coluna ANTES de referenciá-la no índice
         batch_op.add_column(sa.Column('jogador_id', sa.Integer(), nullable=True))
-        
         
         batch_op.alter_column('sid',
                existing_type=sa.VARCHAR(length=36),
                type_=sa.Uuid(),
                existing_nullable=False,
                postgresql_using='sid::uuid')
-               
-        
+        batch_op.drop_index(batch_op.f('ix_saves_atualizado_em'))
         batch_op.create_index('ix_save_jogador_atualizado', ['jogador_id', 'atualizado_em'], unique=False)
         
-       
+        # 2. Cria a chave estrangeira (Foreign Key)
         batch_op.create_foreign_key(None, 'jogadores', ['jogador_id'], ['id'])
 
     with op.batch_alter_table('telemetria', schema=None) as batch_op:
+        # 3. Cria a coluna na telemetria ANTES de referenciá-la no índice
+        batch_op.add_column(sa.Column('jogador_id', sa.Integer(), nullable=True))
+        
         batch_op.alter_column('dificuldade',
                existing_type=sa.VARCHAR(length=50),
                type_=sa.String(length=20),
@@ -61,8 +61,11 @@ def upgrade():
         batch_op.create_index('ix_telemetria_evento_sala', ['evento', 'sala'], unique=False)
         batch_op.create_index('ix_telemetria_evento_timestamp', ['evento', 'timestamp'], unique=False)
         batch_op.create_index('ix_telemetria_jogador_evento', ['jogador_id', 'evento'], unique=False)
+        
+        # 4. Cria a chave estrangeira (Foreign Key)
+        batch_op.create_foreign_key(None, 'jogadores', ['jogador_id'], ['id'])
 
-  
+    # ### end Alembic commands ###
 
 
 def downgrade():
@@ -77,6 +80,9 @@ def downgrade():
                existing_type=sa.String(length=20),
                type_=sa.VARCHAR(length=50),
                existing_nullable=True)
+               
+        # Deleta a coluna que foi criada no upgrade
+        batch_op.drop_column('jogador_id')
 
     with op.batch_alter_table('saves', schema=None) as batch_op:
         batch_op.drop_index('ix_save_jogador_atualizado')
@@ -85,6 +91,9 @@ def downgrade():
                existing_type=sa.Uuid(),
                type_=sa.VARCHAR(length=36),
                existing_nullable=False)
+               
+        # Deleta a coluna que foi criada no upgrade
+        batch_op.drop_column('jogador_id')
 
     with op.batch_alter_table('jogadores', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_jogadores_email'))
