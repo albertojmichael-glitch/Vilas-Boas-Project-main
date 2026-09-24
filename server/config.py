@@ -5,6 +5,8 @@ import secrets
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
+
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     
     IS_PRODUCTION = bool(
         os.environ.get("FLASK_ENV") == "production"
