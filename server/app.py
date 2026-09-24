@@ -47,9 +47,6 @@ from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET, UIHandle
 from views import imprimir_tela_boot
 from security import assinar_dados
 
-db.init_app(app)
-migrate = Migrate(app, db)
-
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 IS_PRODUCTION = bool(
