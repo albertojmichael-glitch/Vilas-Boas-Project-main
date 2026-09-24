@@ -64,18 +64,8 @@ def create_app():
 
 app = create_app()
 
-# Configuração geral / segurança
+
 app.secret_key = app.config.get("SECRET_KEY")
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
-app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
-
-_key_hash = hashlib.sha256((app.secret_key).encode()).digest()
-CIPHER_SUITE = Fernet(base64.urlsafe_b64encode(_key_hash))
-
-# Configuração geral / segurança
-
-app.secret_key = SECRET_KEY or "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
@@ -92,7 +82,8 @@ google = oauth.register(
     client_kwargs={"scope": "openid email profile"},
 )
 
-if IS_PRODUCTION:
+
+if app.config.get("IS_PRODUCTION"):
     app.config.update(
         SESSION_COOKIE_SECURE=True,
         SESSION_COOKIE_HTTPONLY=True,
@@ -108,15 +99,17 @@ else:
     print(" Segurança de Cookies: Modo Desenvolvimento (Secure=False).")
 
 
-# Logging
+#logging
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+
 )
-log_file = os.path.join(BASE_DIR, "villas_boas.log")
+log_file = os.path.join(app.config.get("BASE_DIR"), "villas_boas.log")
 file_handler = RotatingFileHandler(
     log_file, maxBytes=10_000_000, backupCount=5, encoding="utf-8"
 )
+
 file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 logging.getLogger().addHandler(file_handler)
 logger = logging.getLogger(__name__)
@@ -204,7 +197,7 @@ def requer_admin(f):
         token = request.headers.get("X-Admin-Token") or request.args.get("token")
         ip_origem = get_remote_address()
 
-        if not token or not hmac.compare_digest(str(token), str(ADMIN_TOKEN)):
+        if not token or not hmac.compare_digest(str(token), str(app.config.get("ADMIN_TOKEN"))):
             logger.warning(
                 f"TENTATIVA INVASÃO ADMIN: IP {ip_origem} tentou acessar {request.path}"
             )
@@ -921,7 +914,7 @@ def auth_google_callback():
         jogo = obter_ou_recuperar_jogo(sid)
         if not jogo:
             logger.warning("OAuth concluído, mas o estado do jogo sumiu da memória e do banco.")
-            return redirect(f"{FRONTEND_URL}/?leaderboard=falha_sessao")
+            return redirect(f"{app.config.get('FRONTEND_URL')}/?leaderboard=falha_sessao")
             
         iniciais = session.get("arcade_initials", "UNK")
         if getattr(jogo, "tempo_total_segundos", 0) > 0:
@@ -944,7 +937,7 @@ def auth_google_callback():
             )
             db.session.commit()
 
-        return redirect(f"{FRONTEND_URL}/?leaderboard=sucesso")
+        return redirect(f"{app.config.get('FRONTEND_URL')}/?leaderboard=sucesso")
 
     except Exception as e:  # noqa: BLE001
         db.session.rollback()
