@@ -32,6 +32,7 @@ from flask_limiter.util import get_remote_address
 from pydantic import BaseModel, Field, field_validator, ValidationError
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
+from flask_migrate import Migrate
 
 from models import db, Jogador, SaveJogo, Telemetria, Compartilhamento
 
@@ -45,6 +46,9 @@ from state import GameState
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET, UIHandler
 from views import imprimir_tela_boot
 from security import assinar_dados
+
+db.init_app(app)
+migrate = Migrate(app, db)
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -66,10 +70,23 @@ if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 
 
+
+
+
+
+
 # Banco de dados (PostgreSQL via SQLAlchemy)
 
-banco_url = os.getenv("DATABASE_URL", "sqlite:///local_testes.db")
-if banco_url.startswith("postgres://"):
+banco_url = os.getenv("DATABASE_URL")
+
+if IS_PRODUCTION and not banco_url:
+    print("➣ ERRO FATAL: DATABASE_URL não encontrada no ambiente de produção. Abortando para evitar fallback para SQLite.")
+    sys.exit(1)
+
+if not banco_url:
+    banco_url = "sqlite:///local_testes.db"
+    print(" Aviso: DATABASE_URL ausente. Usando banco SQLite local para desenvolvimento.")
+elif banco_url.startswith("postgres://"):
     banco_url = banco_url.replace("postgres://", "postgresql://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = banco_url
@@ -77,9 +94,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True, "pool_recycle": 300}
 
 db.init_app(app)
-
-with app.app_context():
-    db.create_all()
 
 
 # Configuração geral / segurança

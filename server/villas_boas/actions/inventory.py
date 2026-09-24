@@ -302,21 +302,21 @@ def cmd_combinar(comando, jogo, mapa):
     
     if len(partes) != 2:
         ui.exibir("Use o formato: combinar [item1] com [item2]")
-        return False
+        return True 
 
     item1 = encontrar_melhor_match(partes[0].strip(), jogo.inventario)
     item2 = encontrar_melhor_match(partes[1].strip(), jogo.inventario)
     
     if not item1 or not item2:
         ui.exibir("Você precisa ter os dois itens no inventário.")
-        return False
+        return True 
 
     chave_combinacao = frozenset([item1, item2])
     handler = _COMBINAR_HANDLERS.get(chave_combinacao)
 
     if handler is None:
         ui.exibir("Esses itens não parecem combinar.")
-        return False
+        return True 
 
     return handler(jogo, mapa, ui)
 

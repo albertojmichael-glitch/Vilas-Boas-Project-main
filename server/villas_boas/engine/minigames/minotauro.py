@@ -335,7 +335,7 @@ class MinigameMinotauro(BaseMinigame):
         return "continuar"
 
     def _processar_god_mode_ataque(self, acao, jogo):
-        """Trata o ataque cheat em god mode. Retorna string de resultado ou None se não aplicável."""
+        
         if acao in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False):
             self.ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{RESET}")
             self.ui.exibir(f"{DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{RESET}")
@@ -349,9 +349,9 @@ class MinigameMinotauro(BaseMinigame):
         ui = self.ui
         turno_gasto = False
         
-        
         acao_norm = acao.strip().lower()
 
+        
         if acao_norm in ["ir esquerda", "e"]:
             if self.px > GRID_MIN_X: self.px -= 1
             else: ui.exibir("Você bate a cara na parede...")
@@ -368,15 +368,6 @@ class MinigameMinotauro(BaseMinigame):
             if self.py > GRID_MIN_Y: self.py -= 1
             else: ui.exibir("Você bate as costas na porta de metal. Ela não abre...")
             turno_gasto = True
-        
-        
-        if turno_gasto and (self.px, self.py) in self.armadilhas:
-            self.armadilhas.remove((self.px, self.py))
-            self.bateria -= 3
-            ui.buffer.append("@@GLITCH_LUZ@@")
-            ui.exibir(f"\n{DOS_VERMELHO}Você pisou em fios eletricos. A lanterna pisca e perde muita energia.{RESET}")
-            ui.pausar(1.5)
-
         elif acao_norm == "esperar": 
             ui.exibir("Você fica imóvel aguardando...")
             turno_gasto = True
@@ -422,8 +413,17 @@ class MinigameMinotauro(BaseMinigame):
             else:
                 ui.exibir("A porta de saída não fica aqui. Tente voltar para trás.")
         else: 
+            
             ui.exibir(f"{DOS_AMARELO}Comando não reconhecido no escuro. Você gasta segundos tropeçando...{RESET}")
             turno_gasto = True 
+
+        
+        if turno_gasto and (self.px, self.py) in self.armadilhas:
+            self.armadilhas.remove((self.px, self.py))
+            self.bateria -= 3
+            ui.buffer.append("@@GLITCH_LUZ@@")
+            ui.exibir(f"\n{DOS_VERMELHO}Você pisou em fios eletricos. A lanterna pisca e perde muita energia.{RESET}")
+            ui.pausar(1.5)
 
         return turno_gasto
 

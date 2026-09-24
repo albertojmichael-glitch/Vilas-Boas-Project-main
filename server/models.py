@@ -9,7 +9,8 @@ db = SQLAlchemy()
 
 
 class Jogador(db.Model):
-    """Registro do leaderboard (antes: leaderboard_collection)."""
+    """Registro de jogadores e estatísticas para o leaderboard."""
+    
     __tablename__ = "jogadores"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -24,7 +25,8 @@ class Jogador(db.Model):
 
 
 class SaveJogo(db.Model):
-    """Saves criptografados (antes: saves_collection)."""
+    """Armazenamento de saves criptografados por sessão do jogador."""
+    
     __tablename__ = "saves"
 
     sid = db.Column(db.String(36), primary_key=True)
@@ -34,7 +36,8 @@ class SaveJogo(db.Model):
 
 
 class Telemetria(db.Model):
-    """Eventos de telemetria (antes: telemetry_collection)."""
+    """Histórico de eventos e comandos de jogo para auditoria e analytics."""
+    
     __tablename__ = "telemetria"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -54,7 +57,8 @@ class Telemetria(db.Model):
 
 
 class Compartilhamento(db.Model):
-    """Links de share (antes: shares_collection)."""
+    """Gerenciamento de tokens de tempo limite para links de share."""
+   
     __tablename__ = "compartilhamentos"
 
     share_token = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
