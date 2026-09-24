@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from sqlalchemy import JSON, func
 
-db = SQLAlchemy()
+from extensions import db
 
 
 class Jogador(db.Model):

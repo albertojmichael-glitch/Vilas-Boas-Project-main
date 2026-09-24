@@ -34,8 +34,6 @@ from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from flask_migrate import Migrate
 
-from models import db, Jogador, SaveJogo, Telemetria, Compartilhamento
-
 try:
     import redis
 except ImportError:
@@ -46,49 +44,34 @@ from state import GameState
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET, UIHandler
 from views import imprimir_tela_boot
 from security import assinar_dados
+from config import Config
+from extensions import db, migrate, cors
+from models import db, Jogador, SaveJogo, Telemetria, Compartilhamento
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+def create_app():
+    """Application Factory: Monta o app sob demanda."""
+    app_instance = Flask(__name__, static_folder=Config.BASE_DIR, static_url_path="/")
+    
+    # Injeta todas as variáveis do Config de uma vez só
+    app_instance.config.from_object(Config)
+    
+    # Acopla as ferramentas ao app recém-criado
+    db.init_app(app_instance)
+    migrate.init_app(app_instance, db)
+    cors.init_app(app_instance, supports_credentials=True, origins=Config.ALLOWED_ORIGINS)
 
-IS_PRODUCTION = bool(
-    os.environ.get("FLASK_ENV") == "production"
-    or os.environ.get("RENDER")
-    or os.environ.get("RAILWAY_STATIC_URL")
-    or os.environ.get("PROD")
-)
+    return app_instance
 
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5000")
-SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
-ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
+app = create_app()
 
-if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
-    print("➣ ERRO FATAL: SECRET_KEY e/ou ADMIN_TOKEN não encontrados no ambiente.")
-    sys.exit(1)
+# Configuração geral / segurança
+app.secret_key = app.config.get("SECRET_KEY")
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
 
-app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
-
-
-# Banco de dados (PostgreSQL via SQLAlchemy)
-
-banco_url = os.getenv("DATABASE_URL")
-
-if IS_PRODUCTION and not banco_url:
-    print("➣ ERRO FATAL: DATABASE_URL não encontrada no ambiente de produção.")
-    sys.exit(1)
-
-if not banco_url:
-    banco_url = "sqlite:///local_testes.db"
-    print(" Aviso: DATABASE_URL ausente. Usando banco SQLite local.")
-elif banco_url.startswith("postgres://"):
-    banco_url = banco_url.replace("postgres://", "postgresql://", 1)
-
-app.config["SQLALCHEMY_DATABASE_URI"] = banco_url
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True, "pool_recycle": 300}
-
-db.init_app(app)
-migrate = Migrate(app, db)
-
-
+_key_hash = hashlib.sha256((app.secret_key).encode()).digest()
+CIPHER_SUITE = Fernet(base64.urlsafe_b64encode(_key_hash))
 
 # Configuração geral / segurança
 
@@ -138,19 +121,6 @@ file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(messa
 logging.getLogger().addHandler(file_handler)
 logger = logging.getLogger(__name__)
 
-if not ADMIN_TOKEN:
-    ADMIN_TOKEN = secrets.token_urlsafe(32)
-    logger.warning(
-        "⚠ ADMIN_TOKEN não definido no ambiente. "
-        "Uma senha aleatória segura foi gerada para esta sessão."
-    )
-
-origens_permitidas = ["http://localhost:5000", "http://127.0.0.1:5000"]
-if IS_PRODUCTION:
-  
-    origens_permitidas.append("https://vilas-boas-project-main.vercel.app") 
-
-CORS(app, supports_credentials=True, origins=origens_permitidas)
 
 limiter = Limiter(key_func=get_remote_address, app=app, storage_uri="memory://")
 
