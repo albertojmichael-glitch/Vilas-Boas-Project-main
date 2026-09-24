@@ -26,13 +26,26 @@ class Jogador(db.Model):
 
 class SaveJogo(db.Model):
     """Armazenamento de saves criptografados por sessão do jogador."""
-    
     __tablename__ = "saves"
 
     sid = db.Column(db.String(36), primary_key=True)
     jogador_id = db.Column(db.Integer, db.ForeignKey('jogadores.id'), nullable=True)
-    dados = db.Column(db.Text, nullable=False)  # texto Fernet
-    atualizado_em = db.Column(db.Float, default=time.time, onupdate=time.time, index=True)
+    
+    
+    metadados = db.Column(JSON, default=dict)
+    
+    
+    save_version = db.Column(db.Integer, default=1, nullable=False)
+    
+    
+    checksum = db.Column(db.String(64), index=True)
+    
+   
+    dados = db.Column(db.Text, nullable=False)
+    
+    
+    criado_em = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    atualizado_em = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), index=True)
 
 
 class Telemetria(db.Model):
