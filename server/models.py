@@ -3,7 +3,7 @@ import uuid
 
 from flask_sqlalchemy import SQLAlchemy
 
-from sqlalchemy import JSON
+from sqlalchemy import JSON, func
 
 db = SQLAlchemy()
 
