@@ -54,7 +54,7 @@ import threading
 fila_telemetria = queue.Queue()
 
 def worker_telemetria(app_instance):
-    """Roda em background, coletando eventos da fila e salvando no banco em lotes."""
+    
     with app_instance.app_context():
         while True:
             lote = []
@@ -73,12 +73,12 @@ def worker_telemetria(app_instance):
                 try:
                     db.session.add_all(lote)
                     db.session.commit()
-                except Exception as e:
+                except SQLAlchemyError as e: 
                     db.session.rollback()
                     app_instance.logger.error(f"Falha ao gravar lote de telemetria: {e}")
 
 def create_app():
-    """Application Factory: Monta o app sob demanda."""
+    
     app_instance = Flask(__name__, static_folder=Config.BASE_DIR, static_url_path="/")
     
     
