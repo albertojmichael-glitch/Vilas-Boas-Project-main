@@ -406,17 +406,44 @@ def salvar_save_web(jogo):
     if not sid:
         return
 
-    dados_json = json.dumps(jogo.to_dict(), ensure_ascii=False)
-    dados_criptografados = CIPHER_SUITE.encrypt(dados_json.encode("utf-8")).decode(
-        "utf-8"
-    )
+    estado_dict = jogo.to_dict()
+    
+    
+    metadados = {
+        "hp": estado_dict.get("hp", 3),
+        "sala": estado_dict.get("sala_atual", "desconhecida"),
+        "inventario_tamanho": len(estado_dict.get("inventario", []))
+    }
+
+   
+    json_str_ordenado = json.dumps(estado_dict, sort_keys=True, ensure_ascii=False)
+    checksum_gerado = hashlib.sha256(json_str_ordenado.encode('utf-8')).hexdigest()
 
     try:
         registro = db.session.get(SaveJogo, sid)
+        
+        
+        if registro and registro.checksum == checksum_gerado:
+            return
+
+      
+        dados_json = json.dumps(estado_dict, ensure_ascii=False)
+        dados_criptografados = CIPHER_SUITE.encrypt(dados_json.encode("utf-8")).decode("utf-8")
+
         if registro:
             registro.dados = dados_criptografados
+            registro.metadados = metadados
+            registro.checksum = checksum_gerado
+            registro.save_version = 1
         else:
-            db.session.add(SaveJogo(sid=sid, dados=dados_criptografados))
+            db.session.add(SaveJogo(
+                sid=sid, 
+                dados=dados_criptografados,
+                metadados=metadados,
+                checksum=checksum_gerado,
+                save_version=1
+            ))
+            
         db.session.commit()
     except SQLAlchemyError:
         db.session.rollback()
