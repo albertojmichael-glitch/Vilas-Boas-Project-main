@@ -34,13 +34,22 @@ def upgrade():
         batch_op.create_index(batch_op.f('ix_jogadores_email'), ['email'], unique=True)
 
     with op.batch_alter_table('saves', schema=None) as batch_op:
+        
+        
+        batch_op.add_column(sa.Column('jogador_id', sa.Integer(), nullable=True))
+        
+        
         batch_op.alter_column('sid',
                existing_type=sa.VARCHAR(length=36),
                type_=sa.Uuid(),
                existing_nullable=False,
                postgresql_using='sid::uuid')
-        batch_op.drop_index(batch_op.f('ix_saves_atualizado_em'))
+               
+        
         batch_op.create_index('ix_save_jogador_atualizado', ['jogador_id', 'atualizado_em'], unique=False)
+        
+       
+        batch_op.create_foreign_key(None, 'jogadores', ['jogador_id'], ['id'])
 
     with op.batch_alter_table('telemetria', schema=None) as batch_op:
         batch_op.alter_column('dificuldade',
@@ -53,7 +62,7 @@ def upgrade():
         batch_op.create_index('ix_telemetria_evento_timestamp', ['evento', 'timestamp'], unique=False)
         batch_op.create_index('ix_telemetria_jogador_evento', ['jogador_id', 'evento'], unique=False)
 
-    # ### end Alembic commands ###
+  
 
 
 def downgrade():
