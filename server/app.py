@@ -450,7 +450,43 @@ def salvar_save_web(jogo):
         logger.exception("Erro ao salvar progresso no PostgreSQL")
 
 
+def obter_ou_recuperar_jogo(sid):
+    """
+    Tenta obter o estado do jogo da memória. Se falhar (ex: restart do servidor),
+    tenta recuperar o último estado salvo no PostgreSQL de forma invisível para o jogador.
+    """
+    
+    jogo = MEMORIA_SESSOES.get(sid)
+    if jogo:
+        return jogo
 
+    
+    registro = db.session.get(SaveJogo, sid)
+    if not registro:
+        
+        return None 
+
+    try:
+        
+        dados_json = CIPHER_SUITE.decrypt(registro.dados.encode("utf-8")).decode("utf-8")
+        estado_dict = json.loads(dados_json)
+        
+        
+        jogo_recuperado = GameState()
+        
+        
+        for chave, valor in estado_dict.items():
+            if hasattr(jogo_recuperado, chave):
+                setattr(jogo_recuperado, chave, valor)
+            
+        
+        MEMORIA_SESSOES[sid] = jogo_recuperado
+        
+        return jogo_recuperado
+        
+    except Exception as e:
+        logger.exception("Falha ao tentar recuperar a sessão corrompida do banco de dados.")
+        return None
 # resposta JSON
 
 def gerar_resposta_json(jogo):
@@ -575,7 +611,10 @@ def receber_comando():
         MEMORIA_SESSOES[sid] = GameState()
         MEMORIA_SESSOES[sid].estado_atual = "AGUARDANDO_DIR"
 
-    jogo = MEMORIA_SESSOES[sid]
+    jogo = obter_ou_recuperar_jogo(sid)
+    if not jogo:
+        return jsonify({"erro": "Sessão expirada. Digite 'iniciar' para recomeçar."}), 404
+
     jogo.ui_handler = WebUIHandler()
 
     dados = request.json or {}
@@ -624,7 +663,10 @@ def exportar_save():
     if not sid or sid not in MEMORIA_SESSOES:
         return jsonify({"erro": "Nenhum jogo ativo encontrado."}), 404
 
-    jogo = MEMORIA_SESSOES[sid]
+    jogo = obter_ou_recuperar_jogo(sid)
+    if not jogo:
+        return jsonify({"erro": "Nenhum jogo ativo para processar o save."}), 404
+
     dados_json = json.dumps(jogo.to_dict(), ensure_ascii=False)
     dados_criptografados = CIPHER_SUITE.encrypt(dados_json.encode("utf-8")).decode("utf-8")
 
@@ -679,7 +721,11 @@ def listar_conquistas():
     if not sid or sid not in MEMORIA_SESSOES:
         return jsonify({"erro": "Sessão não encontrada", "conquistas": []})
 
-    jogo = MEMORIA_SESSOES[sid]
+    jogo = obter_ou_recuperar_jogo(sid)
+    if not jogo:
+        # Retorna vazio silenciosamente para não quebrar o front-end
+        return jsonify({"conquistas": [], "total": 0})
+
     conquistas = getattr(jogo, "conquistas", [])
     return jsonify({"conquistas": conquistas, "total": len(conquistas)})
 
@@ -900,7 +946,13 @@ def auth_google_callback():
         token = google.authorize_access_token()
         user_info = token.get("userinfo")
         email_jogador = user_info.get("email")
-        jogo = MEMORIA_SESSOES[sid]
+        
+        
+        jogo = obter_ou_recuperar_jogo(sid)
+        if not jogo:
+            logger.warning("OAuth concluído, mas o estado do jogo sumiu da memória e do banco.")
+            return redirect(f"{FRONTEND_URL}/?leaderboard=falha_sessao")
+            
         iniciais = session.get("arcade_initials", "UNK")
         if getattr(jogo, "tempo_total_segundos", 0) > 0:
             
@@ -917,12 +969,9 @@ def auth_google_callback():
             if save_atual:
                 save_atual.jogador_id = novo_jogador.id
 
-           
             Telemetria.query.filter_by(sid_sessao=sid).update(
                 {"jogador_id": novo_jogador.id}
             )
-
-           
             db.session.commit()
 
         return redirect(f"{FRONTEND_URL}/?leaderboard=sucesso")
