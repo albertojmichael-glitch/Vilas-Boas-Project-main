@@ -37,7 +37,8 @@ def upgrade():
         batch_op.alter_column('sid',
                existing_type=sa.VARCHAR(length=36),
                type_=sa.Uuid(),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='sid::uuid')
         batch_op.drop_index(batch_op.f('ix_saves_atualizado_em'))
         batch_op.create_index('ix_save_jogador_atualizado', ['jogador_id', 'atualizado_em'], unique=False)
 

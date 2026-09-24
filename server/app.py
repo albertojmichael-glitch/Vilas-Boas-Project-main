@@ -47,18 +47,26 @@ from security import assinar_dados
 from config import Config
 from extensions import db, migrate, cors
 from models import Compartilhamento, Jogador, SaveJogo, Telemetria
+import queue
+import threading
+
+
+fila_telemetria = queue.Queue()
 
 def create_app():
     """Application Factory: Monta o app sob demanda."""
     app_instance = Flask(__name__, static_folder=Config.BASE_DIR, static_url_path="/")
     
-    # Injeta todas as variáveis do Config de uma vez só
+    
     app_instance.config.from_object(Config)
     
-    # Acopla as ferramentas ao app recém-criado
+    
     db.init_app(app_instance)
     migrate.init_app(app_instance, db)
     cors.init_app(app_instance, supports_credentials=True, origins=Config.ALLOWED_ORIGINS)
+
+    thread = threading.Thread(target=worker_telemetria, args=(app_instance,), daemon=True)
+    thread.start()
 
     return app_instance
 
@@ -97,6 +105,36 @@ else:
         SESSION_COOKIE_SAMESITE="Lax",
     )
     print(" Segurança de Cookies: Modo Desenvolvimento (Secure=False).")
+
+
+def worker_telemetria(app_instance):
+    """Roda em background, coletando eventos da fila e salvando no banco em lotes."""
+    with app_instance.app_context():
+        while True:
+            lote = []
+            try:
+                
+                evento = fila_telemetria.get(timeout=5.0)
+                lote.append(evento)
+                
+                
+                while len(lote) < 50:
+                    try:
+                        lote.append(fila_telemetria.get_nowait())
+                    except queue.Empty:
+                        break
+                        
+            except queue.Empty:
+                pass 
+
+            
+            if lote:
+                try:
+                    db.session.add_all(lote)
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    app_instance.logger.error(f"Falha ao gravar lote de telemetria: {e}")
 
 
 #logging
@@ -282,31 +320,27 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes="", jogo=None):
     if not session.get("permite_telemetria", True):
         return
 
-    try:
-        sid_atual = session.get("sid")
-        registro = Telemetria(
+    sid_atual = session.get("sid")
+    
+    
+    registro = Telemetria(
+        evento=str(evento)[:50],
+        sala=str(sala)[:50],
+        dificuldade=str(dificuldade)[:50],
+        detalhes=str(detalhes)[:256],
+        sid_sessao=sid_atual
+    )
 
-            evento=str(evento)[:50],
-            sala=str(sala)[:50],
-            dificuldade=str(dificuldade)[:50],
-            detalhes=str(detalhes)[:256],
-            sid_sessao=sid_atual
-        )
+    if jogo:
+        registro.hp_restante = getattr(jogo, "hp", 0)
+        registro.luz_restante = getattr(jogo, "turnos_luz", 0)
+        registro.nivel_barulho = getattr(jogo, "nivel_barulho", 0)
+        registro.inventario_qtd = len(getattr(jogo, "inventario", []))
+        registro.bolsas = getattr(jogo, "bolsas_coletadas", 0)
+        registro.log_comandos = getattr(jogo, "log_comandos", [])
 
-        if jogo:
-            registro.hp_restante = getattr(jogo, "hp", 0)
-            registro.luz_restante = getattr(jogo, "turnos_luz", 0)
-            registro.nivel_barulho = getattr(jogo, "nivel_barulho", 0)
-            registro.inventario_qtd = len(getattr(jogo, "inventario", []))
-            registro.bolsas = getattr(jogo, "bolsas_coletadas", 0)
-            registro.log_comandos = getattr(jogo, "log_comandos", [])
-
-        db.session.add(registro)
-        db.session.commit()
-
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        logger.error(f"Erro na telemetria: {e}")
+    
+    fila_telemetria.put(registro)
 
 
 
@@ -633,7 +667,6 @@ def exportar_save():
     dados_json = json.dumps(jogo.to_dict(), ensure_ascii=False)
     dados_criptografados = CIPHER_SUITE.encrypt(dados_json.encode("utf-8")).decode("utf-8")
 
-    
     resumo_publico = {
         "sala": jogo.sala_atual,
         "hp": jogo.hp,
@@ -655,10 +688,17 @@ def importar_save():
     payload = request.json
     dados_seguros = payload.get("dados_seguros") if payload else None
 
-    if not dados_seguros:
+  
+    if not dados_seguros or not isinstance(dados_seguros, str):
         return jsonify({"erro": "Arquivo corrompido ou formato não suportado."}), 400
 
+    
+    if len(dados_seguros) > 50000:
+        logger.warning(f"Tentativa de injeção de payload massivo barrada. SID: {sid}")
+        return jsonify({"erro": "O arquivo excede o tamanho máximo permitido."}), 413
+
     try:
+        
         dados_json = CIPHER_SUITE.decrypt(dados_seguros.encode("utf-8")).decode("utf-8")
         dados_save = json.loads(dados_json)
         
@@ -686,7 +726,7 @@ def listar_conquistas():
 
     jogo = obter_ou_recuperar_jogo(sid)
     if not jogo:
-        # Retorna vazio silenciosamente para não quebrar o front-end
+        
         return jsonify({"conquistas": [], "total": 0})
 
     conquistas = getattr(jogo, "conquistas", [])
@@ -948,20 +988,22 @@ def auth_google_callback():
 
 @app.after_request
 def aplicar_headers_de_seguranca(response):
+    
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-        "font-src 'self' https://fonts.gstatic.com;"
+        "script-src 'self'; "
+        "style-src 'self' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "object-src 'none'; "
+        "frame-ancestors 'none';"
     )
 
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
 
+    
     if app.config.get("IS_PRODUCTION"):
-        response.headers["Strict-Transport-Security"] = (
-            "max-age=31536000; includeSubDomains"
-        )
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
     return response
 
