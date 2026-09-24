@@ -70,22 +70,17 @@ if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 
 
-
-
-
-
-
 # Banco de dados (PostgreSQL via SQLAlchemy)
 
 banco_url = os.getenv("DATABASE_URL")
 
 if IS_PRODUCTION and not banco_url:
-    print("➣ ERRO FATAL: DATABASE_URL não encontrada no ambiente de produção. Abortando para evitar fallback para SQLite.")
+    print("➣ ERRO FATAL: DATABASE_URL não encontrada no ambiente de produção.")
     sys.exit(1)
 
 if not banco_url:
     banco_url = "sqlite:///local_testes.db"
-    print(" Aviso: DATABASE_URL ausente. Usando banco SQLite local para desenvolvimento.")
+    print(" Aviso: DATABASE_URL ausente. Usando banco SQLite local.")
 elif banco_url.startswith("postgres://"):
     banco_url = banco_url.replace("postgres://", "postgresql://", 1)
 
@@ -94,6 +89,8 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True, "pool_recycle": 300}
 
 db.init_app(app)
+migrate = Migrate(app, db)
+
 
 
 # Configuração geral / segurança
