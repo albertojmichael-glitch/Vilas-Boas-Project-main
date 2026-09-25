@@ -25,7 +25,18 @@ def create_app():
    
     db.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app, supports_credentials=True, origins=Config.ALLOWED_ORIGINS)
+
+    origens_permitidas = Config.ALLOWED_ORIGINS
+    if isinstance(origens_permitidas, str):
+        origens_permitidas = [origem.strip() for origem in origens_permitidas.split(",")]
+
+    
+    cors.init_app(app, 
+                  supports_credentials=True, 
+                  origins=origens_permitidas,
+                  allow_headers=["Content-Type", "Authorization", "X-Admin-Token"],
+                  expose_headers=["Content-Type", "Authorization"])
+
     limiter.init_app(app)
     oauth.init_app(app)
 
