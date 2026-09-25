@@ -1,6 +1,7 @@
 import os
 import sys
 import secrets
+from typing import ClassVar
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -15,7 +16,7 @@ class Config:
         or os.environ.get("PROD")
     )
 
-    cls.SQLALCHEMY_ENGINE_OPTIONS = {
+    SQLALCHEMY_ENGINE_OPTIONS = {
     "pool_pre_ping": True,
     "pool_recycle": int(os.environ.get("DB_POOL_RECYCLE", 300)),
     "pool_size": int(os.environ.get("DB_POOL_SIZE", 5)),

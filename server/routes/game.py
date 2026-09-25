@@ -109,7 +109,7 @@ def importar_save():
         return jsonify({"sucesso": True, "mensagem": "Save importado."})
     except InvalidToken:
         return jsonify({"erro": "[ ERRO CRÍTICO ] ASSINATURA INVÁLIDA."}), 403
-    except Exception:
+    except (ValueError, TypeError, KeyError):
         return jsonify({"erro": "Arquivo de save inválido."}), 400
 
 @game_bp.route("/share/generate", methods=["GET"])
@@ -139,7 +139,7 @@ def carregar_compartilhado(share_token):
         session["sid"], session.permanent = novo_sid, True
         MEMORIA_SESSOES[novo_sid] = GameState.from_dict(dados)
         return redirect("/")
-    except Exception:
+    except (ValueError, TypeError, KeyError):
         return "Save corrompido.", 500
 
 @game_bp.route("/achievements", methods=["GET"])

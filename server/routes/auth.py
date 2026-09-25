@@ -3,6 +3,8 @@ from flask import Blueprint, redirect, url_for, session, request, current_app
 from extensions import db, oauth, MEMORIA_SESSOES
 from models import Jogador, SaveJogo, Telemetria
 from services.save_service import obter_ou_recuperar_jogo
+from sqlalchemy.exc import SQLAlchemyError
+from authlib.integrations.base_client.errors import OAuthError
 
 logger = logging.getLogger(__name__)
 auth_bp = Blueprint('auth', __name__)
@@ -41,7 +43,7 @@ def auth_google_callback():
             db.session.commit()
 
         return redirect(f"{current_app.config.get('FRONTEND_URL')}/?leaderboard=sucesso")
-    except Exception as e:
+    except (SQLAlchemyError, OAuthError, ValueError) as e:
         db.session.rollback()
         logger.error(f"Erro no OAuth do Google: {e}")
         return "Falha na autenticação.", 500
