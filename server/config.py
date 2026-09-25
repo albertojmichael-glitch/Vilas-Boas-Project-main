@@ -15,6 +15,14 @@ class Config:
         or os.environ.get("PROD")
     )
 
+    cls.SQLALCHEMY_ENGINE_OPTIONS = {
+    "pool_pre_ping": True,
+    "pool_recycle": int(os.environ.get("DB_POOL_RECYCLE", 300)),
+    "pool_size": int(os.environ.get("DB_POOL_SIZE", 5)),
+    "max_overflow": int(os.environ.get("DB_MAX_OVERFLOW", 10)),
+    "pool_timeout": 30
+    }
+
     
     SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
     ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
@@ -34,6 +42,8 @@ class Config:
                 sys.exit("➣ ERRO FATAL: FRONTEND_URL ausente na produção.")
             if not cls.DATABASE_URL:
                 sys.exit("➣ ERRO FATAL: DATABASE_URL ausente na produção.")
+            if not cls.DATABASE_URL.startswith("postgres"):
+                sys.exit("➣ ERRO FATAL: Ambiente de produção exige PostgreSQL. Falhando rapidamente.")
 
 
         if not cls.SECRET_KEY:
