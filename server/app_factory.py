@@ -26,9 +26,15 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
-    origens_permitidas = Config.ALLOWED_ORIGINS
-    if isinstance(origens_permitidas, str):
-        origens_permitidas = [origem.strip() for origem in origens_permitidas.split(",")]
+    
+    raw_origins = str(Config.ALLOWED_ORIGINS)
+
+    
+    if "](" in raw_origins:
+        raw_origins = raw_origins.split("](")[0].replace("[", "")
+
+    
+    origens_permitidas = [origem.strip() for origem in raw_origins.split(",") if origem.strip()]
 
     
     cors.init_app(app, 
