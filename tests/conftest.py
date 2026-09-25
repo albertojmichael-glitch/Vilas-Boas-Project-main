@@ -10,7 +10,8 @@ from state import GameState
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'server')))
 
-from app import MEMORIA_SESSOES, app
+from app import app
+from extensions import MEMORIA_SESSOES
 
 
 
