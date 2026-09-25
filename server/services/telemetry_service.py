@@ -8,21 +8,22 @@ fila_telemetria = queue.Queue()
 
 def worker_telemetria(app_instance):
     
-    with app_instance.app_context():
-        while True:
-            lote = []
-            try:
-                evento = fila_telemetria.get(timeout=5.0)
-                lote.append(evento)
-                while len(lote) < 50:
-                    try:
-                        lote.append(fila_telemetria.get_nowait())
-                    except queue.Empty:
-                        break
-            except queue.Empty:
-                pass 
+    while True:
+        lote = []
+        try:
+            evento = fila_telemetria.get(timeout=5.0)
+            lote.append(evento)
+            while len(lote) < 50:
+                try:
+                    lote.append(fila_telemetria.get_nowait())
+                except queue.Empty:
+                    break
+        except queue.Empty:
+            pass 
 
-            if lote:
+        if lote:
+           
+            with app_instance.app_context():
                 try:
                     db.session.add_all(lote)
                     db.session.commit()
