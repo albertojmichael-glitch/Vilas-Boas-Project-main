@@ -16,12 +16,12 @@ class Config:
         or os.environ.get("PROD")
     )
 
-    SQLALCHEMY_ENGINE_OPTIONS = {
-    "pool_pre_ping": True,
-    "pool_recycle": int(os.environ.get("DB_POOL_RECYCLE", 300)),
-    "pool_size": int(os.environ.get("DB_POOL_SIZE", 5)),
-    "max_overflow": int(os.environ.get("DB_MAX_OVERFLOW", 10)),
-    "pool_timeout": 30
+    SQLALCHEMY_ENGINE_OPTIONS: ClassVar[dict] = {
+        "pool_pre_ping": True,
+        "pool_recycle": int(os.environ.get("DB_POOL_RECYCLE", "300")),
+        "pool_size": int(os.environ.get("DB_POOL_SIZE", "5")),
+        "max_overflow": int(os.environ.get("DB_MAX_OVERFLOW", "10")),
+        "pool_timeout": 30,
     }
 
     
