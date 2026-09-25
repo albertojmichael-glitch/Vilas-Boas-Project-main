@@ -25,7 +25,7 @@ class Config:
 
     @classmethod
     def validar_e_configurar(cls):
-        """Aplica regras de negócio e fallbacks sobre as variáveis base."""
+       
        
         if cls.IS_PRODUCTION:
             if not cls.SECRET_KEY or not cls.ADMIN_TOKEN:

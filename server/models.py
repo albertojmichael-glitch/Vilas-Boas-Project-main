@@ -13,7 +13,7 @@ class Jogador(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     iniciais = db.Column(db.String(3), nullable=False)
-    # UNIQUE garante que o mesmo email do Google nunca gere cadastros duplicados no Leaderboard
+    
     email = db.Column(db.String(120), unique=True, index=True, nullable=True) 
     tempo_segundos = db.Column(db.Float, nullable=False)
     final_alcancado = db.Column(db.String(50))
@@ -26,12 +26,12 @@ class Jogador(db.Model):
 class SaveJogo(db.Model):
     __tablename__ = "saves"
     
-    # Índices compostos aceleram consultas que filtram múltiplas colunas ao mesmo tempo
+    
     __table_args__ = (
         Index('ix_save_jogador_atualizado', 'jogador_id', 'atualizado_em'),
     )
 
-    # O uso do db.Uuid (nativo do SQLAlchemy 2.0+) é muito mais rápido para indexar do que String(36)
+    
     sid = db.Column(db.Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     jogador_id = db.Column(db.Integer, db.ForeignKey('jogadores.id'), nullable=True)
     
@@ -39,7 +39,7 @@ class SaveJogo(db.Model):
     save_version = db.Column(db.Integer, default=1, nullable=False)
     checksum = db.Column(db.String(64), index=True)
     
-    # db.Text no PostgreSQL já lida perfeitamente com payloads gigantes (até 1GB)
+   
     dados = db.Column(db.Text, nullable=False)
     
     criado_em = db.Column(db.DateTime(timezone=True), server_default=func.now())
@@ -48,8 +48,7 @@ class SaveJogo(db.Model):
 class Telemetria(db.Model):
     __tablename__ = "telemetria"
     
-    # Estes índices farão o seu painel /admin/analytics carregar instantaneamente, 
-    # pois o PostgreSQL não precisará ler a tabela inteira para agrupar as mortes por sala.
+   
     __table_args__ = (
         Index('ix_telemetria_evento_sala', 'evento', 'sala'),
         Index('ix_telemetria_evento_timestamp', 'evento', 'timestamp'),
@@ -76,7 +75,7 @@ class Telemetria(db.Model):
 
 
 class Compartilhamento(db.Model):
-    """Gerenciamento de tokens de tempo limite para links de share."""
+   
    
     __tablename__ = "compartilhamentos"
 

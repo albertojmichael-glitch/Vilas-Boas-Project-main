@@ -157,7 +157,7 @@ def _usar_disquete(jogo, mapa, item):
             logger.debug(f"ARTE_DISQUETE indisponível no arquivo de dados: {e}")
             pass
 
-        # --- LORE: DISQUETE 1 ---
+        #  lore disquete 1 
         if item == "disquete1":
             ui.animar(f"{DOS_AMARELO}ARQUIVO RECUPERADO: ANGELA.TXT{RESET}", 0.05, DOS_AMARELO, jogo)
             ui.animar(f"{DOS_BRANCO}'Hoje vim mostrar para meu esposo João, meu local de trabalho, o Vilas Boas. Talvez não tenha sido uma boa ideia.'{RESET}", 0.06, DOS_BRANCO, jogo)
@@ -166,7 +166,7 @@ def _usar_disquete(jogo, mapa, item):
             ui.animar(f"{DOS_VERMELHO}'Talvez... Seja loucura minha, mas eu vi alguem me chamando para a cozinha privada pela janela do escritório, vou ir lá ver.'{RESET}", 0.05, DOS_VERMELHO, jogo)
             ui.animar(f"{DOS_VERMELHO}'Ela foi libertada.'{RESET}", 0.10, DOS_VERMELHO, jogo)
         
-        # --- LORE: DISQUETE 2 ---
+        #  lore disquete 2 
         elif item == "disquete2":
             ui.animar(f"{DOS_AMARELO}ARQUIVO RECUPERADO: MICHEL.TXT{RESET}", 0.05, DOS_AMARELO, jogo)
             ui.animar(f"{DOS_BRANCO}'Depois que a Caroline partiu, não encontramos ninguém para alavancar esse projeto.'{RESET}", 0.06, DOS_BRANCO, jogo)
@@ -176,7 +176,7 @@ def _usar_disquete(jogo, mapa, item):
             ui.animar(f"{DOS_BRANCO}'Sou um covarde que levou todas essas pessoas à morte. Não vou mais deixar que isso me consuma, vou ir embora enquanto há tempo.'{RESET}", 0.06, DOS_BRANCO, jogo)
             ui.animar(f"{DOS_VERMELHO}Ele fugiu.{RESET}", 0.10, DOS_VERMELHO, jogo)
         
-        # --- LORE: DISQUETE 3 ---
+        #  lore disquete 3 
         elif item == "disquete3":
             ui.animar(f"{DOS_AMARELO}ARQUIVO RECUPERADO: RENATO.TXT{RESET}", 0.05, DOS_AMARELO, jogo)
             ui.animar(f"{DOS_BRANCO}'1994, 3 de setembro. O restaurante está indo bem, mantendo uma clientela fiel. Escrevo isso como relatório.'{RESET}", 0.05, DOS_BRANCO, jogo)
