@@ -32,8 +32,8 @@ def create_app():
 
     
     cors.init_app(app, 
-                  supports_credentials=True, 
-                  origins=origens_permitidas,
+                  resources={r"/*": {"origins": origens_permitidas}},
+                  supports_credentials=True,
                   allow_headers=["Content-Type", "Authorization", "X-Admin-Token"],
                   expose_headers=["Content-Type", "Authorization"])
 
