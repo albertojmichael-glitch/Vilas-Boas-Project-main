@@ -1318,7 +1318,7 @@ function iniciarLoginESalvar() {
     btn.disabled = true;
 
     
-    window.location.href = `/login/google?iniciais=${iniciais}`;
+    window.location.href = `${API_URL}/login/google?iniciais=${iniciais}`;
 }
 
 
