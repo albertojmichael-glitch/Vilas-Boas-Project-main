@@ -8,9 +8,11 @@ from config import Config
 from extensions import db, migrate, cors, limiter, oauth
 
 def create_app():
-    """Monta o aplicativo Flask e junta todas as peças."""
+    
     app = Flask(__name__, static_folder=Config.BASE_DIR, static_url_path="/")
     
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+    app.config['SESSION_COOKIE_SECURE'] = True
     app.config.from_object(Config)
     app.secret_key = app.config.get("SECRET_KEY")
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
