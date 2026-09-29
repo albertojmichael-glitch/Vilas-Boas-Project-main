@@ -235,7 +235,7 @@ class MinigameMinotauro(BaseMinigame):
         self.ui.exibir(f"\n[{opcoes}]")
 
     def _dar_passo(self, alvo_x, alvo_y, chance_erro=0.0):
-        """Função auxiliar para pathfinding com taxa de erro baseada em som/escuro"""
+        
         if random.random() < chance_erro:
             
             dx = random.choice([-1, 0, 1])
@@ -292,7 +292,7 @@ class MinigameMinotauro(BaseMinigame):
         self.my = max(GRID_MIN_Y, min(GRID_MAX_Y, self.my))
 
     def _resolver_colisao(self, jogo, dist_ui, px_old, py_old, mx_old, my_old, quem_moveu="jogador"):
-        """Centraliza a lógica de colisão para evitar duplicação de código"""
+       
         if self.px == self.mx and self.py == self.my:
             if dist_ui > DISTANCIA_PERIGO:
                 
@@ -323,7 +323,7 @@ class MinigameMinotauro(BaseMinigame):
         return None
 
     def _processar_investigacao(self, acao, jogo):
-        """Trata o comando de examinar o celular quebrado. Retorna string de resultado ou None se a ação não for essa."""
+      
         if acao not in ["celular quebrado", "ver celular quebrado", "olhar celular quebrado", "examinar celular quebrado", "investigar celular quebrado", "celular"]:
             return None
 
@@ -344,8 +344,7 @@ class MinigameMinotauro(BaseMinigame):
         return None
 
     def _processar_movimento_e_acoes(self, acao, jogo):
-        """Aplica a ação escolhida (movimento, esperar, itens, cortar fios, sair).
-        Retorna True se o turno foi consumido (o minotauro deve se mover em seguida)."""
+      
         ui = self.ui
         turno_gasto = False
         
@@ -458,6 +457,8 @@ class MinigameMinotauro(BaseMinigame):
                 self.bateria -= 1
                 if self.bateria <= 0:
                     ui.exibir("\n A sua lanterna apaga, você entra em desespero e bate na bateria fazendo barulho.")
+                    ui.pausar(2)
+                    ui.buffer.append("@@JUMPSCARE@@")
                     ui.pausar(2)
                     ui.exibir("\n Você sente uma mão atravessando seu estômago por trás, não há nada a se fazer.")
                     return "morte"

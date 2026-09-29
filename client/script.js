@@ -1361,7 +1361,7 @@ function ativarJumpscare() {
     
     setTimeout(() => {
         tela.style.display = 'none';
-    }, 1200);
+    }, 2500);
 }
 
 function ativarBSOD() {

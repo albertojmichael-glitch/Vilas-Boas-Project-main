@@ -187,7 +187,7 @@ def falar_pianista(acertou, ui, jogo):
     else:
         ui.exibir(f"{DOS_VERMELHO}Acorde dissonante.{RESET}")
         ui.animar(
-            f'"{random.choice(["Errado. Eles não perdoam mentiras.", "Você deveria lembrar melhor do que isso, Rogério.", "Uma nota fora do lugar... como você.", "Isso não é o que consta no registro do restaurante."])}"',
+            f'"{random.choice(["Errado. Eles não perdoam mentiras.", "Você deveria lembrar melhor do que isso, Rogério.", "Uma nota fora do lugar... como você.", "Isso não é o que consta no registro."])}"',
             0.04,
             DOS_AMARELO,
             jogo,
@@ -344,6 +344,8 @@ def imprimir_contexto_sala(jogo):
 def dar_tela_de_morte(jogo):
     jogo.estado_atual = "FIM"
     ui = jogo.ui_handler
+    ui.buffer.append("@@JUMPSCARE@@")
+    ui.pausar(2)
     ui.animar(f"{DOS_VERMELHO}{CAVEIRA_MORTE}{RESET}", 0.002, jogo=jogo)
     ui.animar("☠ GAME OVER. A NOITE ENGOLIU VOCÊ.", 0.05, DOS_VERMELHO, jogo)
     ui.animar(
@@ -352,10 +354,7 @@ def dar_tela_de_morte(jogo):
 
 
 def animar_frames_ascii(ui, frames, delay=0.4, jogo=None):
-    """
-    Renderiza uma verdadeira animação ASCII quadro a quadro limpando a tela.
-    'frames' deve ser uma lista de strings cruas (raw strings).
-    """
+
     for frame in frames:
         ui.limpar()
         ui.exibir(f"{DOS_BRANCO}{frame}{RESET}")
@@ -380,11 +379,13 @@ def rodar_final(tipo_final, jogo):
         ui.buffer.append("@@GLITCH_LUZ@@")
         ui.animar("Você olha pelo retrovisor. Algo se mexe no banco de trás.", 0.05, DOS_VERMELHO, jogo)
         ui.pausar(1)
+        ui.buffer.append("@@JUMPSCARE@@")
+        ui.pausar(2)
         ui.buffer.append("@@BLACKOUT@@")
 
         try:
             from data import ARTE_FINAL_MEDIOCRE
-            ui.animar(f"{DOS_BRANCO}{ARTE_FINAL_MEDIOCRE}{RESET}", 0.005, jogo=jogo)
+            ui.animar(f"<pre style='font-family: inherit; margin: 0;'>{DOS_BRANCO}{ARTE_FINAL_MEDIOCRE}{RESET}</pre>", 0.015, jogo=jogo)
         except ImportError: pass
         
         ui.exibir(f"\n{DOS_VERMELHO}[ FINAL MEDÍOCRE: ALGO TE SEGUIU... ]{RESET}")
@@ -402,6 +403,7 @@ def rodar_final(tipo_final, jogo):
         ui.pausar(2)
         ui.buffer.append("@@BLACKOUT@@")
         ui.animar("Você fecha os olhos. Pensando em não acordar nunca mais.", 0.10, DOS_BRANCO, jogo)
+        ui.buffer.append("@@JUMPSCARE@@")
         
         ui.exibir(f"\n{DOS_BRANCO}[ FINAL BONS SONHOS ]{RESET}")
         liberou_deus = registrar_final("bons_sonhos")
@@ -428,9 +430,14 @@ def rodar_final(tipo_final, jogo):
         ui.pausar(1.5)
         
         ui.buffer.append("@@GLITCH_LUZ@@")
-        ui.animar("Você começa a cuspir sangue. A mão metálica dela atravessou seu estômago.", 0.04, DOS_VERMELHO, jogo)
+        ui.pausar(2)
+        ui.buffer.append("@@JUMPSCARE@@")
+        ui.pausar(2)
+        ui.animar("Você começa a cuspir sangue. A mão metálica dela atravessou seu estômago.", 0.05, DOS_VERMELHO, jogo)
         ui.pausar(1)
         ui.buffer.append("@@LOW_POWER@@")
+
+        
         
         ui.animar("Nada mais faz sentido, sua visão começa a tremer, mas pela última vez, você olha nos olhos dela.", 0.04, DOS_VERMELHO, jogo)
         ui.pausar(1.5)

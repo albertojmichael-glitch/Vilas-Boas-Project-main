@@ -353,6 +353,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.fast_mode = False
             jogo.dificuldade_escolhida = "NORMAL"
             jogo.minigame_atual = None
+            jogo.tempo_inicio = time.time()
 
             if comando == "dir":
                 ui.limpar()
@@ -526,6 +527,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 return
 
             jogo.estado_atual = "JOGO"
+            jogo.tempo_inicio = time.time()
             imprimir_tutorial(ui, jogo=jogo)
             ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna dá três piscadas fracas...{RESET}", 0.04, jogo=jogo)
             ui.animar(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}", 0.04, jogo=jogo)
@@ -538,6 +540,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.hp = 9999; jogo.furia_noite = 0; jogo.energia_min_noite = 9999; jogo.energia_max_noite = 9999
             jogo.turnos_luz = 9999
             jogo.estado_atual = "JOGO"
+            jogo.tempo_inicio = time.time()
             ui.animar(f"{DOS_AMARELO}MODO DEUS ATIVADO. ACESSO AOS BASTIDORES CONCEDIDO.{RESET}\n", 0.04, jogo=jogo)
             ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna brilha com a força de uma estrela...{RESET}", 0.04, jogo=jogo)
             imprimir_contexto_sala(jogo)
@@ -688,6 +691,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             return
             
         jogo.estado_atual = "JOGO"
+        jogo.tempo_inicio = time.time()
         imprimir_tutorial(ui, jogo=jogo)
         imprimir_contexto_sala(jogo)
 
@@ -712,6 +716,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.hp = int(comando)
             jogo.dificuldade_escolhida = "CUSTOM"
             jogo.estado_atual = "JOGO"
+            jogo.tempo_inicio = time.time()
             ui.limpar()
             ui.animar(f"{DOS_VERDE}PARÂMETROS ACEITOS. INICIANDO SIMULAÇÃO PERSONALIZADA.{RESET}\n", 0.04, jogo=jogo)
             imprimir_tutorial(ui, jogo=jogo)
