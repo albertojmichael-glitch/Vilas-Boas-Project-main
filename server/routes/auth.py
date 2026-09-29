@@ -17,7 +17,8 @@ def login_google():
 @auth_bp.route("/auth/google/callback")
 def auth_google_callback():
     sid = session.get("sid")
-    if not sid or sid not in MEMORIA_SESSOES: return "Sessão de jogo não encontrada.", 400
+    if not sid or sid not in MEMORIA_SESSOES: 
+        return "Sessão de jogo não encontrada.", 400
 
     try:
         user_info = oauth.google.authorize_access_token().get("userinfo")
@@ -28,21 +29,43 @@ def auth_google_callback():
             return redirect(f"{current_app.config.get('FRONTEND_URL')}/?leaderboard=falha_sessao")
             
         if getattr(jogo, "tempo_total_segundos", 0) > 0:
-            novo_jogador = Jogador(
-                iniciais=session.get("arcade_initials", "UNK"),
-                email=user_info.get("email"),
-                tempo_segundos=jogo.tempo_total_segundos,
-                final_alcancado=jogo.sala_atual,
-                dificuldade=jogo.dificuldade_escolhida,
-            )
-            db.session.add(novo_jogador); db.session.flush() 
+            email_jogador = user_info.get("email")
             
+            
+            jogador = Jogador.query.filter_by(email=email_jogador).first()
+            
+            if jogador:
+   
+                if jogo.tempo_total_segundos < jogador.tempo_segundos:
+                    jogador.tempo_segundos = jogo.tempo_total_segundos
+                    jogador.final_alcancado = jogo.sala_atual
+                    jogador.dificuldade = jogo.dificuldade_escolhida
+                    jogador.iniciais = session.get("arcade_initials", "UNK")
+            else:
+             
+                jogador = Jogador(
+                    iniciais=session.get("arcade_initials", "UNK"),
+                    email=email_jogador,
+                    tempo_segundos=jogo.tempo_total_segundos,
+                    final_alcancado=jogo.sala_atual,
+                    dificuldade=jogo.dificuldade_escolhida,
+                )
+                db.session.add(jogador)
+                
+            db.session.flush() 
+            
+         
             save_atual = db.session.get(SaveJogo, sid)
-            if save_atual: save_atual.jogador_id = novo_jogador.id
-            Telemetria.query.filter_by(sid_sessao=sid).update({"jogador_id": novo_jogador.id})
+            if save_atual: 
+                save_atual.jogador_id = jogador.id
+                
+            from models import Telemetria 
+            Telemetria.query.filter_by(sid_sessao=sid).update({"jogador_id": jogador.id})
+            
             db.session.commit()
 
         return redirect(f"{current_app.config.get('FRONTEND_URL')}/?leaderboard=sucesso")
+        
     except (SQLAlchemyError, OAuthError, ValueError) as e:
         db.session.rollback()
         logger.error(f"Erro no OAuth do Google: {e}")

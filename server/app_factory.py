@@ -10,28 +10,26 @@ from extensions import db, migrate, cors, limiter, oauth
 def create_app():
     
     app = Flask(__name__, static_folder=Config.BASE_DIR, static_url_path="/")
-    
-    app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-    app.config['SESSION_COOKIE_SECURE'] = True
+
+
     app.config.from_object(Config)
+
+    app.config.update(
+        SESSION_COOKIE_SAMESITE="None",
+        SESSION_COOKIE_SECURE=True,
+        SESSION_COOKIE_HTTPONLY=True,
+        PERMANENT_SESSION_LIFETIME=timedelta(days=30),
+        MAX_CONTENT_LENGTH=1 * 1024 * 1024
+    )
+
     app.secret_key = app.config.get("SECRET_KEY")
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
-    app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
 
-    if app.config.get("IS_PRODUCTION"):
-        app.config.update(SESSION_COOKIE_SECURE=True, SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="None")
-    else:
-        app.config.update(SESSION_COOKIE_SECURE=False, SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
-
-   
     db.init_app(app)
     migrate.init_app(app, db)
 
-    
     raw_origins = Config.ALLOWED_ORIGINS
 
-    
     if isinstance(raw_origins, str):
         
         raw_origins = raw_origins.replace("[", "").replace("]", "").replace("'", "").replace('"', "")

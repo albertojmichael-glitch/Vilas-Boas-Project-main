@@ -385,7 +385,9 @@ def rodar_final(tipo_final, jogo):
 
         try:
             from data import ARTE_FINAL_MEDIOCRE
-            ui.animar(f"<pre style='font-family: inherit; margin: 0;'>{DOS_BRANCO}{ARTE_FINAL_MEDIOCRE}{RESET}</pre>", 0.015, jogo=jogo)
+            arte_corrigida = ARTE_FINAL_MEDIOCRE.replace(" ", "\u00A0")
+
+            ui.animar(f"{DOS_BRANCO}{arte_corrigida}{RESET}", 0.015, jogo=jogo)
         except ImportError: pass
         
         ui.exibir(f"\n{DOS_VERMELHO}[ FINAL MEDÍOCRE: ALGO TE SEGUIU... ]{RESET}")
