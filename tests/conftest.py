@@ -6,9 +6,12 @@ import os
 
 
 
-from state import GameState
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'server')))
+
+caminho_server = os.path.abspath(os.path.join(os.path.dirname(__file__), '../server'))
+sys.path.insert(0, caminho_server)
+
+from state import GameState
 
 from app import app
 from extensions import MEMORIA_SESSOES

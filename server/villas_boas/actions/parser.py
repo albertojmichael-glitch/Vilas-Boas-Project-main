@@ -1,11 +1,30 @@
-from villas_boas.utils import encontrar_melhor_match, normalizar
+import difflib
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from data import descricoes_itens
-
 
 from villas_boas.actions.inspection import cmd_examinar
 from villas_boas.actions.movement import cmd_ir
 from villas_boas.actions.inventory import cmd_pegar, cmd_largar, cmd_usar, cmd_combinar, cmd_inventario
+
+
+
+def normalizar(comando_bruto):
+  
+    if not comando_bruto:
+        return ""
+    
+    comando_sujo = str(comando_bruto).lower().strip()
+    for pontuacao in [".", ",", "!", "?", '"', "'"]:
+        comando_sujo = comando_sujo.replace(pontuacao, "")
+        
+    return " ".join(comando_sujo.split())
+
+def encontrar_melhor_match(palavra_digitada, lista_opcoes, limite=0.6):
+   
+    matches = difflib.get_close_matches(palavra_digitada, lista_opcoes, n=1, cutoff=limite)
+    return matches[0] if matches else None
+
+
 
 def processar_comando(comando, jogo, mapa):
     ui = jogo.ui_handler
@@ -43,24 +62,17 @@ def processar_comando(comando, jogo, mapa):
         comando = mapa_direcoes[comando.lower()]
 
     if comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"]:
-    
         if jogo.sala_atual == "01":  
             if not getattr(jogo, 'noite_vencida', False):
-            
-                from minigames import MinigameSeguranca
-
+                # Usamos um import seguro local para evitar circularidade com minigames
+                from villas_boas.engine.minigames.seguranca import MinigameSeguranca
                 jogo.estado_atual = "MINIGAME_SEGURANCA"
-
                 jogo.minigame_atual = MinigameSeguranca(jogo)
-
                 jogo.minigame_atual.imprimir_status()
                 return True
-
-
             else:
                 jogo.ui_handler.exibir(f"{DOS_AMARELO}A mesa de controle está desligada. A noite já terminou.{RESET}")
                 return True
-
         else:
             jogo.ui_handler.exibir(f"{DOS_BRANCO}Não há nenhuma cadeira de segurança aqui.{RESET}")
             return True
@@ -84,11 +96,7 @@ def processar_comando(comando, jogo, mapa):
 
     if comando.startswith("tp ") and getattr(jogo, 'god_mode', False):
         destino_desejado = comando.replace("tp ", "").strip()
-        
-        
         lugares_validos = list(mapa.keys()) + ["morte", "saida", "cama", "final_bom", "01"]
-        
-        
         match_destino = encontrar_melhor_match(destino_desejado, lugares_validos)
         
         if match_destino:
@@ -96,20 +104,17 @@ def processar_comando(comando, jogo, mapa):
             ui.exibir(f"{DOS_AMARELO}[GOD MODE] Teleportado para: {match_destino}{RESET}")
         else:
             ui.exibir(f"{DOS_VERMELHO}[GOD MODE ERRO] O destino '{destino_desejado}' não existe na planta do edifício.{RESET}")
-            
         return True
 
     if jogo.sala_atual == "sala de energia":
-            
-            from minigames import MinigameMinotauro
-            jogo.estado_atual = "MINIGAME_MINOTAURO"
-            jogo.minigame_atual = MinigameMinotauro(jogo)
-            
-            try:
-                jogo.minigame_atual.imprimir_status()
-            except AttributeError:
-                pass
-            return True
+        from villas_boas.engine.minigames.minotauro import MinigameMinotauro
+        jogo.estado_atual = "MINIGAME_MINOTAURO"
+        jogo.minigame_atual = MinigameMinotauro(jogo)
+        try:
+            jogo.minigame_atual.imprimir_status()
+        except AttributeError:
+            pass
+        return True
         
     elif comando.startswith("gerar ") and getattr(jogo, 'god_mode', False):
         item_desejado = comando.replace("gerar ", "").strip()
@@ -126,11 +131,8 @@ def processar_comando(comando, jogo, mapa):
         if match_item:
             jogo.inventario.append(match_item)
             ui.exibir(f"{DOS_AMARELO}[GOD MODE] O item '{match_item}' materializou-se na sua mochila.{RESET}")
-
             if match_item == "fios cortados":
                 jogo.fios_cortados_inventario = True
-
-
         else:
             ui.exibir(f"{DOS_VERMELHO}[GOD MODE ERRO] Matéria não catalogada. O sistema não sabe como fabricar '{item_desejado}'.{RESET}")
         return True
@@ -180,7 +182,6 @@ def processar_comando(comando, jogo, mapa):
         return True
         
     else:
-        
         erros = getattr(jogo, 'erros_consecutivos', 0) + 1
         jogo.erros_consecutivos = erros
         

@@ -625,6 +625,10 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
 
                 if comando.startswith("correr "):
                     direcao = comando.replace("correr ", "").strip()
+                    mapa_direcoes = {"f": "frente", "t": "atrás", "e": "esquerda", "d": "direita"}
+                    if direcao in mapa_direcoes:
+                        direcao = mapa_direcoes[direcao]
+                        
                     comando_bruto = f"ir {direcao}"
                     comando = comando_bruto
                     jogador_correu = True
@@ -660,6 +664,11 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                     
                 rodar_final("verdadeiro", jogo)
                 return
+
+            # conquista acumulador
+            if len(jogo.inventario) >= 9:
+                desbloquear_conquista(jogo, "acumulador")
+            
 
             
             if not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":

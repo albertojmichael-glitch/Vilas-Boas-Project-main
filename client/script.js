@@ -20,6 +20,79 @@ const salaEl = document.getElementById('hud-sala');
 const saidasEl = document.getElementById('hud-saidas');
 
 
+const SAVE_VERSION = 1.0;
+
+const SafeStorage = {
+    save: function(key, data) {
+        try {
+            const payload = {
+                __version__: SAVE_VERSION,
+                timestamp: Date.now(),
+                data: data
+            };
+            const jsonString = JSON.stringify(payload);
+            
+          
+            const oldData = localStorage.getItem(key);
+            if (oldData) localStorage.setItem(key + '_backup', oldData);
+            
+            localStorage.setItem(key, jsonString);
+        } catch (e) {
+            console.error("[SISTEMA] Erro crítico de I/O no disco local:", e);
+        }
+    },
+    
+    load: function(key, defaultValue) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return defaultValue;
+            
+  
+            if (!raw.includes('__version__')) {
+                const parsed = JSON.parse(raw);
+                this.save(key, parsed); 
+                return parsed;
+            }
+
+            const parsed = JSON.parse(raw);
+            
+    
+            if (parsed.__version__ < SAVE_VERSION) {
+                console.warn(`[SISTEMA] Atualizando save do formato ${parsed.__version__} para ${SAVE_VERSION}`);
+            }
+            
+            return parsed.data;
+        } catch (e) {
+            console.warn(`[SISTEMA] Setor corrompido em ${key}. Iniciando protocolo de recuperação...`);
+            return this.recover(key, defaultValue);
+        }
+    },
+    
+    recover: function(key, defaultValue) {
+        try {
+            const rawBackup = localStorage.getItem(key + '_backup');
+            if (!rawBackup) throw new Error("Fita de backup inexistente.");
+            
+            
+            localStorage.setItem(key, rawBackup);
+            
+           
+            if (typeof adicionarLinhaTerminal === "function") {
+                adicionarLinhaTerminal(`[ AVISO ] Anomalia de memória detectada. Backup de segurança restaurado.`, "amarelo");
+            }
+            
+            const parsed = JSON.parse(rawBackup);
+            return parsed.data !== undefined ? parsed.data : parsed;
+        } catch (e) {
+            if (typeof adicionarLinhaTerminal === "function") {
+                adicionarLinhaTerminal(`[ FATAL ] Perda de dados irreversível no setor: ${key}.`, "vermelho");
+            }
+            return defaultValue;
+        }
+    }
+};
+
+
 let audioAmbienteLoop = null;
 let sonsRandomicosAtivos = false;
 let audioCtx = null;
@@ -164,8 +237,8 @@ const CATALOGO_CONQUISTAS = [
     { id: "primeira_morte", nome: "Sangue no Carpete", desc: "Bem-vindo ao Vilas Boas.", icone: "☠" },
     { id: "mente_brilhante", nome: "Mente Brilhante", desc: "Abra o cofre na primeira tentativa.", icone: "★" },
     { id: "labirinto", nome: "Labirinto", desc: "Sobreviva à Sala de Energia.", icone: "☄" },
-    { id: "acumulador", nome: "Acumulador", desc: "Encha todos os 15 espaços do inventário.", icone: "☑" },
-    { id: "glicose", nome: "Glicose Duvidosa", desc: "Coma o doce velho encontrado no chão.", icone: "✴" },
+    { id: "acumulador", nome: "Acumulador", desc: "Encha todos os 9 espaços do inventário.", icone: "☑" },
+    { id: "glicose", nome: "Glicose Mortal", desc: "Coma o doce velho encontrado no chão.", icone: "✴" },
     { id: "trapaceiro", nome: "Hacker", desc: "Ative o God Mode.", icone: "☣" },
     { id: "normal_zerado", nome: "Fim do Expediente", desc: "Sobreviva à noite na dificuldade Normal.", icone: "♨" },
     { id: "final_bom", nome: "Sobrevivente", desc: "Alcance o Final Neutro.", icone: "☀" },
@@ -180,7 +253,7 @@ function abrirModalConquistas() {
     const title = document.getElementById('achievements-title');
 
     
-    const salvas = JSON.parse(localStorage.getItem('vilasBoasAchievements') || '{}');
+    const salvas = SafeStorage.load('vilasBoasAchievements', {});
     
     grid.innerHTML = ''; 
     let quantidadeDesbloqueada = 0;
@@ -311,9 +384,15 @@ async function importarSave(event) {
         try {
             const dados = JSON.parse(e.target.result);
             
-            
-            if (!dados || typeof dados !== 'object' || !('dados_seguros' in dados)) {
-                throw new Error("Estrutura de save incompatível.");
+       
+            if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+                throw new Error("Estrutura do arquivo incompatível com o sistema host.");
+            }
+            if (!dados.dados_seguros || typeof dados.dados_seguros !== 'string') {
+                throw new Error("Assinatura de segurança (dados_seguros) ausente ou corrompida.");
+            }
+            if (!dados.resumo || typeof dados.resumo !== 'object' || !dados.resumo.sala) {
+                throw new Error("Metadados (header) de ambiente ausentes.");
             }
             
             const res = await fetch(API_URL + '/save/import', {
@@ -325,13 +404,14 @@ async function importarSave(event) {
             
             const result = await res.json();
             if (res.ok) {
-                alert("Save corrompido... importado com sucesso! A reiniciar o terminal...");
+                alert("Memórias injetadas com sucesso. A reiniciar o terminal...");
                 window.location.reload();
             } else {
-                alert("[ERRO DE BIOS] " + result.erro);
+                alert("[ERRO DE BIOS] " + (result.erro || "Falha na decodificação do servidor."));
             }
         } catch (erro) {
-            alert("[ERRO FATAL] O ficheiro fornecido não é um JSON válido do sistema.");
+            
+            alert(`[ERRO FATAL] O arquivo fornecido foi rejeitado.\nMotivo: ${erro.message}`);
         }
     };
     reader.readAsText(file);
@@ -611,24 +691,19 @@ let toastTimeout;
 function processarConquistas(listaConquistas) {
     if (!listaConquistas || listaConquistas.length === 0) return;
 
-    
-    let salvas = JSON.parse(localStorage.getItem('vilasBoasAchievements') || '{}');
+   
+    let salvas = SafeStorage.load('vilasBoasAchievements', {});
     
     listaConquistas.forEach(conquista => {
-        
         if (!salvas[conquista.id]) {
             salvas[conquista.id] = conquista; 
-            
-            
             if (typeof reproduzirBeep === "function") reproduzirBeep('sucesso');
-            
-            
             mostrarToastConquista(conquista);
         }
     });
 
-    
-    localStorage.setItem('vilasBoasAchievements', JSON.stringify(salvas));
+   
+    SafeStorage.save('vilasBoasAchievements', salvas);
 }
 
 function mostrarToastConquista(conquista) {
