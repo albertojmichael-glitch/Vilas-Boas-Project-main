@@ -3,6 +3,27 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## Atualização, Correções e Adições 30/09/26
+
+### Adicionado
+* **Sistema de Prevenção de Corrupção (SafeStorage):** Implementado no `script.js` um wrapper para o `localStorage` com versionamento de saves, geração de shadow backups automáticos e protocolo de recuperação em caso de falha de leitura.
+* **Validação Estrita de Saves:** A função de importação de ficheiros JSON agora valida ativamente a assinatura de segurança, tipagem e estrutura de metadados antes de comunicar com o backend, bloqueando arquivos malformados.
+* **Suíte de Testes Automatizados:** Adicionado ambiente de testes com `pytest` (mockando a UI) para validar regras de inventário, integridade de conversão save/load, regras de movimentação, condições de vitória e tratamento de inputs.
+* **Módulo de Testes no PATH:** Injetado o diretório do servidor no `sys.path` via `conftest.py` para compatibilidade nativa do `pytest` com a estrutura modular do backend.
+
+### Corrigido
+* **Desalinhamento de ASCII Art:** Substituição de espaços em branco por espaços rígidos Unicode (`\u00A0`) antes da renderização no terminal web, impedindo o navegador HTML de colapsar a formatação da arte do carro (Final Medíocre) e outras imagens.
+* **Amnésia de Sessão e Comandos Inválidos (Erro 401/400):** Forçada a injeção incondicional de `SESSION_COOKIE_SAMESITE="None"` e `SESSION_COOKIE_SECURE=True` no `app_factory.py`, permitindo a comunicação cross-origin (Vercel -> Railway) e impedindo a criação de sessões em branco a cada comando.
+* **Erro 500 no Login via Google OAuth:** A função de callback do OAuth agora verifica corretamente a existência prévia do jogador pelo e-mail (`Jogador.query.filter_by().first()`). Em vez de gerar um `IntegrityError` no PostgreSQL, o sistema apenas atualiza os recordes de tempo de jogadores existentes.
+* **Gatilho da Conquista "Acumulador":** O cálculo da conquista foi corrigido no `core.py` e a descrição no `script.js` atualizada para exigir 9 espaços ocupados no inventário (3 base + 6 de duas bolsas), ativando-se dinamicamente no final de um turno válido.
+* **Colapso de Espaços no Parser:** A função de normalização de comandos agora funde múltiplos espaços sucessivos digitados pelo jogador usando `split()` e `join()`, impedindo comandos como "pegar     chave" de falharem.
+* **Atalho de Ação "Correr":** O alias "correr [direção]" foi mapeado adequadamente no `core.py` para as direções básicas e consome turno, acionando o ruído (nível 100) para alertar a Inteligência Artificial, conforme coberto pelos novos testes unitários.
+
+### Alterado
+* **Configuração Dinâmica de Infraestrutura:** Remoção de origens fixas do CORS. A `ALLOWED_ORIGINS` e a execução da thread `ENABLE_TELEMETRY` agora dependem rigorosamente de variáveis de ambiente (`os.environ`), facilitando os testes de desenvolvimento local.
+* **Detecção de Ambiente Frontend:** A `API_URL` no `script.js` foi configurada para detectar automaticamente o `localhost` ou domínios de produção, eliminando a necessidade de alterar a URL da API manualmente antes de cada commit.
+* **Limpeza de Dependências:** O arquivo extinto `utils.py` foi depreciado, e as suas funções residuais (`normalizar` e `encontrar_melhor_match` via `difflib`) foram centralizadas no arquivo `parser.py` para maior coesão de código.
+
 ## Atualização de Imersão, Áudio e Sistemas 15/09/26
 
 * **Adicionado:** 
