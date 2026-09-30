@@ -58,7 +58,7 @@ A Noite(Sala de Segurança): Com o cartão de segurança, o jogador pode iniciar
 
 Labirinto do Minotauro: Ao entrar na sala dos fundos, e ir na slaa de energia, inicia o minigame do minotauro, onde você precisa atravessar uma sala com a entidade "minotauro" te perseguindo, com curtos circuitos em areas da sala, te obrigando a pensar, analisar, desviar e arriscar. Chegando na final, voc~^e precisa pegar o item "Fios Cortados", e seguir de volta para a saída, iniciando a fuga na sala de energia. Minigame obrigatório para pegar o item necessario para o final verdadeiro, "Fios Cortados". Exigindo movimentação precisa sob pressão.
 
-##Comandos do Jogo
+## Comandos do Jogo
 
 * **Movimentação:*
 
@@ -92,7 +92,7 @@ ajuda
 
 dir, mem, chkdsk (comandos do MS-DOS no menu principal)
 
-###Lore e História (Spoilers)
+### Lore e História (Spoilers)
 
 O jogador assume o papel de Rogério, um homem atormentado por insônia, culpa e por memórias reprimidas depois que sua companheira, Caroline, vai trabalhar no restaurante, e desaparece misteriosamente.
 8 meses depois do Desaparecimento, março de 2008, Rogério se encontra em reparar seus erros, e ir atrás da pessoa que ele mais ama.
