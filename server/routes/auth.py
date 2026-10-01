@@ -66,7 +66,11 @@ def auth_google_callback():
 
         return redirect(f"{current_app.config.get('FRONTEND_URL')}/?leaderboard=sucesso")
         
-    except (SQLAlchemyError, OAuthError, ValueError) as e:
+    except Exception as e:
+        import traceback
         db.session.rollback()
-        logger.error(f"Erro no OAuth do Google: {e}")
-        return "Falha na autenticação.", 500
+        erro_detalhado = traceback.format_exc()
+        logger.error(f"Erro CRÍTICO no OAuth:\n{erro_detalhado}")
+        
+       
+        return f"<h1>Erro 500 - Diagnóstico</h1><pre style='color: red; white-space: pre-wrap;'>{erro_detalhado}</pre>", 500
