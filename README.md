@@ -56,7 +56,7 @@ O Julgamento do Pianista: Usando a partitura rasgada, mostra um interrogatório 
 
 A Noite(Sala de Segurança): Com o cartão de segurança, o jogador pode iniciar o minigame da noite, onde você precisa sobreviver até as 6 da manhã, enfrentando todos os animatronicos com energia e recursos limitados. Vence-lo te leva ao final do jogo, onde o sol está quase nascendo, mas que você precisa terminar o que começou.
 
-Labirinto do Minotauro: Ao entrar na sala dos fundos, e ir na slaa de energia, inicia o minigame do minotauro, onde você precisa atravessar uma sala com a entidade "minotauro" te perseguindo, com curtos circuitos em areas da sala, te obrigando a pensar, analisar, desviar e arriscar. Chegando na final, voc~^e precisa pegar o item "Fios Cortados", e seguir de volta para a saída, iniciando a fuga na sala de energia. Minigame obrigatório para pegar o item necessario para o final verdadeiro, "Fios Cortados". Exigindo movimentação precisa sob pressão.
+Labirinto do Minotauro: Ao entrar na sala dos fundos, e ir na sala de energia, inicia o minigame do minotauro, onde você precisa atravessar uma sala com a entidade "minotauro" te perseguindo, com curtos circuitos em areas da sala, te obrigando a pensar, analisar, desviar e arriscar. Chegando na final, você precisa pegar o item "Fios Cortados", e seguir de volta para a saída, iniciando a fuga na sala de energia. Minigame obrigatório para pegar o item necessario para o final verdadeiro, "Fios Cortados". Exigindo movimentação precisa sob pressão.
 
 ## Comandos do Jogo
 
