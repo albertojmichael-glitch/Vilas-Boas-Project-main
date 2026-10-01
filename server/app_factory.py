@@ -14,9 +14,11 @@ def create_app():
 
     app.config.from_object(Config)
 
+    is_prod = app.config.get("IS_PRODUCTION", False)
+
     app.config.update(
-        SESSION_COOKIE_SAMESITE="None",
-        SESSION_COOKIE_SECURE=True,
+        SESSION_COOKIE_SAMESITE="None" if is_prod else "Lax",
+        SESSION_COOKIE_SECURE=is_prod,
         SESSION_COOKIE_HTTPONLY=True,
         PERMANENT_SESSION_LIFETIME=timedelta(days=30),
         MAX_CONTENT_LENGTH=1 * 1024 * 1024
