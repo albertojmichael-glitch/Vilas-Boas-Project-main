@@ -3,6 +3,7 @@ import threading
 from datetime import timedelta
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
+from sqlalchemy.exc import SQLAlchemyError
 
 from config import Config
 from extensions import db, migrate, cors, limiter, oauth
@@ -74,21 +75,21 @@ def create_app():
             db.session.execute(db.text("ALTER TABLE saves ADD COLUMN metadados JSON DEFAULT '{}';"))
             db.session.commit()
             print("Coluna 'metadados' adicionada com sucesso.")
-        except Exception:
+        except SQLAlchemyError:
             db.session.rollback()
 
         try:
             db.session.execute(db.text("ALTER TABLE saves ADD COLUMN save_version INTEGER DEFAULT 1 NOT NULL;"))
             db.session.commit()
             print("Coluna 'save_version' adicionada com sucesso.")
-        except Exception:
+        except SQLAlchemyError:
             db.session.rollback()
 
         try:
             db.session.execute(db.text("ALTER TABLE saves ADD COLUMN checksum VARCHAR(64);"))
             db.session.commit()
             print("Coluna 'checksum' adicionada com sucesso.")
-        except Exception:
+        except SQLAlchemyError:
             db.session.rollback()
 
     
