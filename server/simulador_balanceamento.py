@@ -9,7 +9,6 @@ class SilenciadorUI:
         self.mensagens_turno = []
         
     def exibir(self, texto):
-        
         texto_limpo = re.sub(r'\x1b\[[0-9;]*m', '', texto).replace('\n', ' ').strip()
         if texto_limpo:
             self.mensagens_turno.append(texto_limpo)
@@ -39,9 +38,7 @@ def simular_rota_especifica(rota, dificuldade="NORMAL", mostrar_logs=True):
     jogo.estado_atual = "JOGO"
     jogo.dificuldade_escolhida = dificuldade
     jogo.hp = 2 if dificuldade == "PESADELO" else 3
-    
-   
-    jogo.sala_atual = "entrada" 
+    jogo.sala_atual = "hall de entrada" 
     
     print("\n" + "="*60)
     print(f"✪ TESTANDO O CAMINHO DOURADO ({dificuldade})")
@@ -66,11 +63,11 @@ def simular_rota_especifica(rota, dificuldade="NORMAL", mostrar_logs=True):
             elif comando == "[VENCER_NOITE]":
                 jogo.noite_vencida = True
                 jogo.sala_atual = "01" 
+                jogo.estado_atual = "JOGO"
                 if mostrar_logs:
                     print(f"[{turno:02d}] minigame de segurança pulado com sucesso!")
                 continue
             
-           
             jogo.ui_handler.mensagens_turno = []
             
             if mostrar_logs:
@@ -79,7 +76,6 @@ def simular_rota_especifica(rota, dificuldade="NORMAL", mostrar_logs=True):
             processar_fluxo_jogo(comando, jogo)
             
             if mostrar_logs:
-               
                 for msg in jogo.ui_handler.mensagens_turno:
                     print(f"      > {msg}")
                 print(f"      [Status] Sala: {jogo.sala_atual} | HP: {jogo.hp} | Luz: {jogo.turnos_luz}\n")
@@ -88,83 +84,52 @@ def simular_rota_especifica(rota, dificuldade="NORMAL", mostrar_logs=True):
         pass 
         
     print("-" * 60)
-    if getattr(jogo, 'noite_vencida', False) or jogo.estado_atual == "FIM":
-        print(f"☘ VITÓRIA CONFIRMADA! A rota funciona perfeitamente. (Total: {turno} turnos)")
-    elif jogo.sala_atual == "morte":
-        print(f"☠ MORTE no turno {turno}.")
+    status_vitoria = getattr(jogo, 'noite_vencida', False) or jogo.estado_atual == "FIM"
+    if status_vitoria and jogo.sala_atual != "morte":
+        print(f"☘ VITÓRIA CONFIRMADA ({dificuldade})! Total: {turno} turnos.")
+        return True
     else:
-        print(f"✉ INCONCLUSIVO. O bot parou na sala '{jogo.sala_atual}'. A rota acabou cedo demais.")
+        print(f"☠ MORTE ou FALHA ({dificuldade}) no turno {turno}. Sala final: {jogo.sala_atual}")
+        return False
 
 if __name__ == "__main__":
     
-    
-    rota_vitoria = [
-        "d",
-        "d",
-        "pegar bateria nova",
-        "pegar bolsa",
-        "atrás",
-        "e",
-        "pegar bateria nova",
-        "pegar remedio",
-        "atrás",
-        "f",
-        "pegar bateria nova",
-        "atrás",
-        "atrás",
-        "f",
-        "usar bateria nova", 
-        "d",
-        "01", 
-        "abrir cofre",
-        "1994",      
-        "atrás",
-        "atrás",
-        "e",
-        "usar chave dos fundos",
-        "f", 
-        "sala de equipamentos",
-        "pegar bateria nova",
-        "usar bateria nova",
-        "atrás",
-        "sala de mercadorias",
-        "pegar bolsa",
-        "atrás",
-        "atrás",
-        "f",
-        "sala 1",
-        "e",
-        
-        "[INJETAR_MOEDA]",
-        "jogar consertos",
-        "1", # respostas dos consertos
-        "1",
-        "1",
-        
-        "jogar julgamento",
-        "1995", # respostas do julgamento
-        "ela",
-        "1982",
-        "rogerio",
-        "joao",
-        "angela",
-        "renato",
-        
-        "ir direita",
-        "atrás",
-        "atrás", 
-        "d",
-        "01",
-        
-        "cadeira",
-        "[VENCER_NOITE]", #passa a noite automaticamente
-        
-        "atrás",
-        "atrás",
-        "atrás", 
-        "examinar poster",
-        "d"
+  
+    rota_normal = [
+        "ir direita", "ir direita", "pegar bateria nova", "pegar bolsa",
+        "atrás", "ir esquerda", "pegar bateria nova", "pegar remedio",
+        "atrás", "ir frente", "pegar bateria nova", "atrás", "atrás",
+        "frente", "usar bateria nova", "ir direita", "01", 
+        "abrir cofre", "1994", "atrás", "atrás", "ir esquerda",
+        "usar chave dos fundos", "frente", "sala de equipamentos",
+        "pegar bateria nova", "usar bateria nova", "atrás",
+        "sala de mercadorias", "pegar bolsa", "atrás", "atrás",
+        "frente", "sala 1", "ir esquerda", "[INJETAR_MOEDA]",
+        "jogar consertos", "1", "1", "1",
+        "jogar julgamento", "1995", "ela", "1982", "rogerio", "joao", "angela", "renato",
+        "ir direita", "atrás", "atrás", "ir direita", "01",
+        "cadeira", "[VENCER_NOITE]", "atrás", "atrás", "atrás", 
+        "examinar poster", "ir direita"
     ]
     
-    simular_rota_especifica(rota_vitoria, "NORMAL")
     
+    rota_pesadelo = [
+        "ir direita", "ir direita", "pegar bateria nova", "usar bateria nova", 
+        "pegar bolsa", "atrás", "ir esquerda", "pegar bateria nova", 
+        "pegar remedio", "atrás", "ir frente", "pegar bateria nova", 
+        "atrás", "atrás", "frente", "usar bateria nova", "ir direita", "01", 
+        "abrir cofre", "1994", "atrás", "atrás", "ir esquerda",
+        "usar chave dos fundos", "frente", "sala de equipamentos",
+        "pegar bateria nova", "usar bateria nova", "atrás",
+        "sala de mercadorias", "pegar bolsa", "atrás", "atrás",
+        "frente", "sala 1", "ir esquerda", "[INJETAR_MOEDA]",
+        "jogar consertos", "1", "1", "1",
+        "jogar julgamento", "1995", "ela", "1982", "rogerio", "joao", "angela", "renato",
+        "ir direita", "atrás", "atrás", "ir direita", "01",
+        "cadeira", "[VENCER_NOITE]", "atrás", "atrás", "atrás", 
+        "examinar poster", "ir direita"
+    ]
+    
+    print("=== EXECUTANDO BATERIA DE TESTES DE CAMINHO DOURADO ===")
+    simular_rota_especifica(rota_normal, "NORMAL", mostrar_logs=False)
+    simular_rota_especifica(rota_pesadelo, "PESADELO", mostrar_logs=True)
