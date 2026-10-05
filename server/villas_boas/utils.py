@@ -6,7 +6,6 @@ import unicodedata
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERMELHO, DOS_VERDE, RESET, default_ui
 
 
-
 CONQUISTAS_DB = {
     "primeira_morte": {"id": "primeira_morte", "nome": "Sangue no Carpete", "desc": "Bem-vindo ao Vilas Boas.", "icone": "☠"},
     "mente_brilhante": {"id": "mente_brilhante", "nome": "Mente Brilhante", "desc": "Abra o cofre na primeira tentativa.", "icone": "★"},

@@ -69,6 +69,28 @@ def create_app():
         app.register_blueprint(admin_bp)
         app.register_blueprint(auth_bp)
 
+        
+        try:
+            db.session.execute(db.text("ALTER TABLE saves ADD COLUMN metadados JSON DEFAULT '{}';"))
+            db.session.commit()
+            print("Coluna 'metadados' adicionada com sucesso.")
+        except Exception:
+            db.session.rollback()
+
+        try:
+            db.session.execute(db.text("ALTER TABLE saves ADD COLUMN save_version INTEGER DEFAULT 1 NOT NULL;"))
+            db.session.commit()
+            print("Coluna 'save_version' adicionada com sucesso.")
+        except Exception:
+            db.session.rollback()
+
+        try:
+            db.session.execute(db.text("ALTER TABLE saves ADD COLUMN checksum VARCHAR(64);"))
+            db.session.commit()
+            print("Coluna 'checksum' adicionada com sucesso.")
+        except Exception:
+            db.session.rollback()
+
     
     from services.telemetry_service import worker_telemetria
     thread = threading.Thread(target=worker_telemetria, args=(app,), daemon=True)
