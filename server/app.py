@@ -9,6 +9,7 @@ from app_factory import create_app
 
 app = create_app()
 
+#ola mundo apenas para dar commit
 
 # logging em arquivo
 
