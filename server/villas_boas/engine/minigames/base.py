@@ -1,5 +1,5 @@
 class BaseMinigame:
-    """interface universal para todos os minigames."""
+    
     
     def __init__(self, jogo):
         self.jogo = jogo

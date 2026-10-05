@@ -1,6 +1,6 @@
 import random
-from state import GameState
-from villas_boas.engine.core import processar_fluxo_jogo
+from server.state import GameState
+from server.villas_boas.engine.core import processar_fluxo_jogo
 
 class SilenciadorUI:
     

@@ -50,14 +50,20 @@ def cmd_ir(comando, jogo, mapa):
             ui.pausar(1.5)
             return False
 
-    destino = sala.get(direcao, direcao) 
-    
-    if direcao == "cadeira" and "cadeira" in sala:
-        destino = sala["cadeira"]
+        destino = sala.get(direcao, direcao) 
+        
+        if direcao == "cadeira" and "cadeira" in sala:
+            destino = sala["cadeira"]
 
-    lugares_validos = list(mapa.keys()) + ["morte", "saida", "01", "cadeira"]
+        
+        lugares_validos = list(mapa.keys()) + ["morte", "saida", "01", "cadeira", "cama", "final_bom", "hall de entrada"]
 
-    if destino in lugares_validos:
+       
+        if destino not in lugares_validos:
+            ui.exibir("O caminho está bloqueado ou não há saída para essa direção.")
+            return False  
+
+       
         ui.limpar()
         jogo.turnos_mesma_sala = 0
 

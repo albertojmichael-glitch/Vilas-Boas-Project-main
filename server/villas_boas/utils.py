@@ -154,8 +154,9 @@ def atualizar_eventos_de_tempo(jogo):
                 ui.pausar(3)
                 jogo.sala_atual = "morte"
             else:
+                sala_jog_dados = jogo.mapa.get(jogo.sala_atual, {})
                 conexoes_jogador = [
-                    v for k, v in jogo.mapa[jogo.sala_atual].items()
+                    v for k, v in sala_jog_dados.items()
                     if k not in ["descrição", "itens", "inspecionaveis"] and isinstance(v, str)
                 ]
                 if jogo.posicao_perseguidor in conexoes_jogador:
