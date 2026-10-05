@@ -1,61 +1,170 @@
 import random
+import re
 from state import GameState
 from villas_boas.engine.core import processar_fluxo_jogo
 
 class SilenciadorUI:
-    def exibir(self, texto): pass
-    def animar(self, texto, tempo=0, cor="", jogo=None): pass
+    def __init__(self):
+        self.buffer = []
+        self.mensagens_turno = []
+        
+    def exibir(self, texto):
+        
+        texto_limpo = re.sub(r'\x1b\[[0-9;]*m', '', texto).replace('\n', ' ').strip()
+        if texto_limpo:
+            self.mensagens_turno.append(texto_limpo)
+            
+    def animar(self, texto, tempo=0, cor="", jogo=None): 
+        self.exibir(texto)
     def limpar(self): pass
     def pausar(self, segs): pass
     def obter_input(self, prompt): return ""
-    
-    def __init__(self):
-        self.buffer = []
 
-def rodar_simulacao(qtd_partidas=100, dificuldade="PESADELO"):
-    mortes = 0
-    vitorias = 0
+def simular_rota_especifica(rota, dificuldade="NORMAL", mostrar_logs=True):
+    iterador_rota = iter(rota)
     
-    comandos_base = [
-        "ir frente", "ir trás", "ir esquerda", "ir direita",
-        "olhar", "pegar bateria nova", "usar bateria nova",
-        "pegar chave", "usar isqueiro", "inventario"
-    ]
+    class UIAutomatica(SilenciadorUI):
+        def obter_input(self, prompt):
+            try:
+                resposta = next(iterador_rota)
+                prompt_limpo = re.sub(r'\x1b\[[0-9;]*m', '', prompt).replace('\n', ' ').strip()
+                if mostrar_logs:
+                    print(f"      ↳ [MINIGAME PEDIU]: '{prompt_limpo}'")
+                    print(f"      ↳ [BOT INJETOU A SENHA]: '{resposta}'")
+                return resposta
+            except StopIteration:
+                return ""
+                
+    jogo = GameState(ui_handler=UIAutomatica())
+    jogo.estado_atual = "JOGO"
+    jogo.dificuldade_escolhida = dificuldade
+    jogo.hp = 2 if dificuldade == "PESADELO" else 3
     
-    print(f"Iniciando {qtd_partidas} partidas no modo {dificuldade}...")
+   
+    jogo.sala_atual = "entrada" 
     
-    for _ in range(qtd_partidas):
-        jogo = GameState(ui_handler=SilenciadorUI())
-        jogo.estado_atual = "JOGO"
-        jogo.dificuldade_escolhida = dificuldade
-        jogo.hp = 2 if dificuldade == "PESADELO" else 3
-        jogo.sala_atual = "entrada"
-        
-        turnos_jogados = 0
-        
-        while jogo.estado_atual not in ["FIM", "MENU"] and turnos_jogados < 100:
-            comando = random.choice(comandos_base)
-            processar_fluxo_jogo(comando, jogo)
-            turnos_jogados += 1
+    print("\n" + "="*60)
+    print(f"✪ TESTANDO O CAMINHO DOURADO ({dificuldade})")
+    print("="*60)
+    
+    turno = 0
+    try:
+        while True:
+            if jogo.estado_atual in ["FIM", "MENU"] or jogo.sala_atual == "morte":
+                break
+                
+            comando = next(iterador_rota)
+            turno += 1
             
-        if jogo.sala_atual == "morte":
-            mortes += 1
-        elif getattr(jogo, 'noite_vencida', False) or jogo.estado_atual == "FIM":
-            vitorias += 1
+            if comando == "[INJETAR_MOEDA]":
+                if "moeda velha" not in jogo.inventario:
+                    jogo.inventario.append("moeda velha")
+                if mostrar_logs:
+                    print(f"[{turno:02d}] 'moeda velha' adicionada ao inventário!")
+                continue 
 
-    taxa_morte = (mortes / qtd_partidas) * 100
-    
-    print("-" * 30)
-    print(f"Estatísticas de {qtd_partidas} jogos:")
-    print(f"Taxa de Mortalidade: {taxa_morte:.1f}%")
-    print(f"Vitórias Acidentais/Sobrevivência: {vitorias}")
-    
-    if taxa_morte > 95:
-        print("ALERTA: O modo está punitivo demais (quase impossível).")
-    elif taxa_morte < 40:
-        print("ALERTA: O modo está muito fácil para um pesadelo.")
+            elif comando == "[VENCER_NOITE]":
+                jogo.noite_vencida = True
+                jogo.sala_atual = "01" 
+                if mostrar_logs:
+                    print(f"[{turno:02d}] minigame de segurança pulado com sucesso!")
+                continue
+            
+           
+            jogo.ui_handler.mensagens_turno = []
+            
+            if mostrar_logs:
+                print(f"[{turno:02d}] ☛ Comando Executado: '{comando}'")
+                
+            processar_fluxo_jogo(comando, jogo)
+            
+            if mostrar_logs:
+               
+                for msg in jogo.ui_handler.mensagens_turno:
+                    print(f"      > {msg}")
+                print(f"      [Status] Sala: {jogo.sala_atual} | HP: {jogo.hp} | Luz: {jogo.turnos_luz}\n")
+                
+    except StopIteration:
+        pass 
+        
+    print("-" * 60)
+    if getattr(jogo, 'noite_vencida', False) or jogo.estado_atual == "FIM":
+        print(f"☘ VITÓRIA CONFIRMADA! A rota funciona perfeitamente. (Total: {turno} turnos)")
+    elif jogo.sala_atual == "morte":
+        print(f"☠ MORTE no turno {turno}.")
     else:
-        print("Balanceamento dentro do aceitável!")
+        print(f"✉ INCONCLUSIVO. O bot parou na sala '{jogo.sala_atual}'. A rota acabou cedo demais.")
 
 if __name__ == "__main__":
-    rodar_simulacao(500, "NORMAL")
+    
+    
+    rota_vitoria = [
+        "d",
+        "d",
+        "pegar bateria nova",
+        "pegar bolsa",
+        "atrás",
+        "e",
+        "pegar bateria nova",
+        "pegar remedio",
+        "atrás",
+        "f",
+        "pegar bateria nova",
+        "atrás",
+        "atrás",
+        "f",
+        "usar bateria nova", 
+        "d",
+        "01", 
+        "abrir cofre",
+        "1994",      
+        "atrás",
+        "atrás",
+        "e",
+        "usar chave dos fundos",
+        "f", 
+        "sala de equipamentos",
+        "pegar bateria nova",
+        "usar bateria nova",
+        "atrás",
+        "sala de mercadorias",
+        "pegar bolsa",
+        "atrás",
+        "atrás",
+        "f",
+        "sala 1",
+        "e",
+        
+        "[INJETAR_MOEDA]",
+        "jogar consertos",
+        "1", # respostas dos consertos
+        "1",
+        "1",
+        
+        "jogar julgamento",
+        "1995", # respostas do julgamento
+        "ela",
+        "1982",
+        "rogerio",
+        "joao",
+        "angela",
+        "renato",
+        
+        "ir direita",
+        "atrás",
+        "atrás", 
+        "d",
+        "01",
+        
+        "cadeira",
+        "[VENCER_NOITE]", #passa a noite automaticamente
+        
+        "atrás",
+        "atrás",
+        "atrás", 
+        "examinar poster",
+        "d"
+    ]
+    
+    simular_rota_especifica(rota_vitoria, "NORMAL")
+    

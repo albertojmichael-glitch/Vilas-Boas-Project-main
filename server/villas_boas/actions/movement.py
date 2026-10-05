@@ -50,85 +50,52 @@ def cmd_ir(comando, jogo, mapa):
             ui.pausar(1.5)
             return False
 
-        destino = sala.get(direcao, direcao) 
-        
-        if direcao == "cadeira" and "cadeira" in sala:
-            destino = sala["cadeira"]
+   
+    destino = sala.get(direcao, direcao) 
+    
+    if direcao == "cadeira" and "cadeira" in sala:
+        destino = sala["cadeira"]
 
-        
-        lugares_validos = list(mapa.keys()) + ["morte", "saida", "01", "cadeira", "cama", "final_bom", "hall de entrada"]
+    lugares_validos = list(mapa.keys()) + ["morte", "saida", "01", "cadeira", "cama", "final_bom", "hall de entrada"]
 
-       
-        if destino not in lugares_validos:
-            ui.exibir("O caminho está bloqueado ou não há saída para essa direção.")
-            return False  
+    if destino not in lugares_validos:
+        ui.exibir("O caminho está bloqueado ou não há saída para essa direção.")
+        return False  
 
-       
-        ui.limpar()
-        jogo.turnos_mesma_sala = 0
+    ui.limpar()
+    jogo.turnos_mesma_sala = 0
 
-        if jogo.turnos_luz <= 0 and not getattr(jogo, 'god_mode', False) and random.randint(1, 100) <= 10:
-            ui.exibir("\n No escuro, você perde a noção da direção, e acaba tropeçando no proprio pé, e cai no chão")
-            jogo.hp -= 1
-            ui.exibir(f" Você se machucou na queda. (HP: {jogo.hp})")
+    if jogo.turnos_luz <= 0 and not getattr(jogo, 'god_mode', False) and random.randint(1, 100) <= 10:
+        ui.exibir("\n No escuro, você perde a noção da direção, e acaba tropeçando no proprio pé, e cai no chão")
+        jogo.hp -= 1
+        ui.exibir(f" Você se machucou na queda. (HP: {jogo.hp})")
+        ui.pausar(2)
+        if jogo.hp <= 0:
+            ui.exibir("\n Você cai no chão e quebra sua perna, você não consegue mais andar, e escuta barulhos vindo na sua direção")
             ui.pausar(2)
-            if jogo.hp <= 0:
-                ui.exibir("\n Você cai no chão e quebra sua perna, você não consegue mais andar, e escuta barulhos vindo na sua direção")
-                ui.pausar(2)
-                jogo.sala_atual = "morte"
+            jogo.sala_atual = "morte"
+        return True
+
+    jogo.sala_atual = destino
+
+    if EVENTOS_ALEATORIOS and random.random() < 0.25:
+        evento = random.choice(EVENTOS_ALEATORIOS)
+        item_drop = evento.get("item_drop")
+        
+        if item_drop == "bateria nova" and getattr(jogo, 'bateria_ajuda_gerada', False):
             return True
-
-        jogo.sala_atual = destino
-
-        
-        
-        if EVENTOS_ALEATORIOS and random.random() < 0.25:
-            evento = random.choice(EVENTOS_ALEATORIOS)
-            item_drop = evento.get("item_drop")
             
-            
-            if item_drop == "bateria nova" and getattr(jogo, 'bateria_ajuda_gerada', False):
-                return True
-                
-            ui.pausar(0.5)
-            ui.exibir(f"\n{DOS_AMARELO}⚠ {evento['mensagem']}{RESET}")
-            
-            if item_drop and item_drop not in jogo.inventario:
-                sala_dic = mapa[jogo.sala_atual]
-                sala_dic.setdefault("itens", [])
-                if item_drop not in sala_dic["itens"]:
-                    sala_dic["itens"].append(item_drop)
-                    
-                    
-                    if item_drop == "bateria nova":
-                        jogo.bateria_ajuda_gerada = True
-            
-        
-        
         ui.pausar(0.5)
-        return True
-
-        if getattr(jogo, 'dificuldade_escolhida', 'NORMAL') == "PESADELO" and jogo.sala_atual == getattr(jogo, 'posicao_perseguidor', ''):
-            ui.limpar()
-            ui.exibir("\n" + "="*50)
-            ui.exibir(f"{DOS_VERMELHO}Quando voce entra na sala, passos pesados e cheiro de fuligem invadem o ar.{RESET}")
-            ui.exibir(f"{DOS_VERMELHO}Uma mão robótica gigante segura o seu pescoço e te levanta do chão.{RESET}")
-            ui.exibir(f"{DOS_AMARELO}Você tem UMA ação para reagir antes que ele quebre o seu pescoço.{RESET}")
-            jogo.estado_atual = "COMBATE_ANIMATRONICO" 
-            ui.pausar(2)
-            return True
+        ui.exibir(f"\n{DOS_AMARELO}⚠ {evento['mensagem']}{RESET}")
         
-        if jogo.sala_atual == "saida" and (
-        getattr(jogo, "noite_vencida", False)
-        and getattr(jogo, "fios_cortados_inventario", False)
-        and not getattr(jogo, "incendio", False)
-        ):
-            ui.exibir(f"\n{DOS_VERDE}[DISPOSITIVO]: NÍVEL 2 - PRESENÇA PRÓXIMA.{RESET}")
-            ui.exibir(f"{DOS_AMARELO}'Eu preciso terminar isso antes...', você murmura para si mesmo.{RESET}")
-            ui.exibir(f"{DOS_AMARELO}Você vira as costas para a saída.{RESET}")
-            jogo.sala_atual = "entrada"
-            ui.pausar(3)
-        else:
-            ui.pausar(1.5)
-            
-        return True
+        if item_drop and item_drop not in jogo.inventario:
+            sala_dic = mapa[jogo.sala_atual]
+            sala_dic.setdefault("itens", [])
+            if item_drop not in sala_dic["itens"]:
+                sala_dic["itens"].append(item_drop)
+                
+                if item_drop == "bateria nova":
+                    jogo.bateria_ajuda_gerada = True
+        
+    ui.pausar(0.5)
+    return True
