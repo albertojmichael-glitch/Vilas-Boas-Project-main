@@ -434,7 +434,7 @@ def rodar_final(tipo_final, jogo):
         ui.buffer.append("@@GLITCH_LUZ@@")
         ui.pausar(2)
         ui.buffer.append("@@JUMPSCARE@@")
-        ui.pausar(2)
+        ui.pausar(3)
         ui.animar("Você começa a cuspir sangue. A mão metálica dela atravessou seu estômago.", 0.05, DOS_VERMELHO, jogo)
         ui.pausar(1)
         ui.buffer.append("@@LOW_POWER@@")

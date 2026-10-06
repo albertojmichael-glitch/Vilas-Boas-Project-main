@@ -19,7 +19,7 @@ CONQUISTAS_DB = {
     
     
     "normal_zerado": {"id": "normal_zerado", "nome": "Fim do Expediente", "desc": "Sobreviva à noite na dificuldade Normal.", "icone": "♨"},
-    "final_bom": {"id": "final_bom", "nome": "Sobrevivente", "desc": "Alcance o Final Neutro.", "icone": "☀"},
+    "final_bom": {"id": "final_bom", "nome": "Juntos Novamente", "desc": "Alcance o Final Neutro.", "icone": "☀"},
     "final_verdadeiro": {"id": "final_verdadeiro", "nome": "A Verdade", "desc": "Alcance o Final Verdadeiro.", "icone": "✦"},
     "pesadelo_neutro": {"id": "pesadelo_neutro", "nome": "Pesadelo Superado", "desc": "Alcance o Final Neutro no modo PESADELO.", "icone": "♛"},
     "pesadelo_verdadeiro": {"id": "pesadelo_verdadeiro", "nome": "Sonhador", "desc": "Alcance o Final Verdadeiro no modo PESADELO.", "icone": "♚"}

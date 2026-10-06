@@ -65,7 +65,7 @@ def cmd_ir(comando, jogo, mapa):
     ui.limpar()
     jogo.turnos_mesma_sala = 0
 
-    if jogo.turnos_luz <= 0 and not getattr(jogo, 'god_mode', False) and random.randint(1, 100) <= 10:
+    if jogo.turnos_luz <= 0 and not getattr(jogo, 'god_mode', False) and getattr(jogo, 'DESAFIO_BREU', '') != 'breu_total' and random.randint(1, 100) <= 10:
         ui.exibir("\n No escuro, você perde a noção da direção, e acaba tropeçando no proprio pé, e cai no chão")
         jogo.hp -= 1
         ui.exibir(f" Você se machucou na queda. (HP: {jogo.hp})")

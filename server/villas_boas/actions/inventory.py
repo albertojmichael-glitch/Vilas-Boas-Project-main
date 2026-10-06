@@ -128,6 +128,13 @@ def _usar_chave_dos_fundos(jogo, mapa, item):
 
 def _usar_bateria_nova(jogo, mapa, item):
     ui = jogo.ui_handler
+
+    if getattr(jogo, 'DESAFIO_BREU', '') == 'breu_total':
+            ui.exibir("\nVocê tenta colocar a bateria nova, mas a sua lanterna está permanentemente quebrada.")
+            if "bateria nova" in jogo.inventario:
+                jogo.inventario.remove("bateria nova")
+            return True
+    
     ui.exibir(
         f"{DOS_VERDE}Você abre a parte inferior da lanterna e insere a bateria nova.{RESET}"
     )
