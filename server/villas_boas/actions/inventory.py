@@ -178,6 +178,7 @@ def _usar_disquete(jogo, mapa, item):
         
         #  lore disquete 3 
         elif item == "disquete3":
+            ui.exibir("@@START_FLASH_SECRETS@@")
             ui.animar(f"{DOS_AMARELO}ARQUIVO RECUPERADO: RENATO.TXT{RESET}", 0.05, DOS_AMARELO, jogo)
             ui.animar(f"{DOS_BRANCO}'1994, 3 de setembro. O restaurante está indo bem, mantendo uma clientela fiel. Escrevo isso como relatório.'{RESET}", 0.05, DOS_BRANCO, jogo)
             ui.animar(f"{DOS_BRANCO}'Sou Renato Fidelis Gomes, fundador deste local. Eu mesmo fiz esses animatrônicos, juntei placas e peças. Minhas obras-primas.'{RESET}", 0.05, DOS_BRANCO, jogo)
@@ -189,6 +190,7 @@ def _usar_disquete(jogo, mapa, item):
             ui.animar(f"{DOS_VERMELHO}'E o cozinheiro Alberto tem acesso ao sistema inteiro do restaurante, acho isso preocupante.'{RESET}", 0.06, DOS_VERMELHO, jogo)
             ui.animar(f"{DOS_BRANCO}'A ideia surgiu quando visitei Hurricane, em Utah. Descobri a Chuck E. Cheese e a Fazbear Pizza. Fiquei encantado com as atrações.'{RESET}", 0.05, DOS_BRANCO, jogo)
             ui.animar(f"{DOS_BRANCO}'Penso que se esse lugar crescer, farei parcerias com eles para trazer ao Brasil. Escrevi muito, hora de dar Adeus. (FIM)'{RESET}", 0.06, DOS_BRANCO, jogo)
+            ui.exibir("@@STOP_FLASH_SECRETS@@")
         
         ui.pausar(2)
         ui.exibir(

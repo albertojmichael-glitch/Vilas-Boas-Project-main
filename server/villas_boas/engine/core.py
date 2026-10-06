@@ -545,6 +545,12 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna brilha com a força de uma estrela...{RESET}", 0.04, jogo=jogo)
             imprimir_contexto_sala(jogo)
             desbloquear_conquista(jogo, "trapaceiro")
+
+        elif comando == "1980":
+            ui.exibir("@@PLAY_1980_SLIDESHOW@@")
+            ui.exibir(" ") 
+            return
+    
         else:
             ui.animar(f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}", 0.04, jogo=jogo)
 

@@ -20,6 +20,73 @@ const salaEl = document.getElementById('hud-sala');
 const saidasEl = document.getElementById('hud-saidas');
 
 
+const secretImages = [
+    "hidden image 19.png", "hidden image 20.png", "hidden image 21.png",
+    "HiddenImage1.webp", "HiddenImage2.webp", "HiddenImage3.webp", 
+    "HiddenImage4.webp", "HiddenImage5.webp", "HiddenImage6.webp", 
+    "HiddenImage7.webp", "HiddenImage8.webp", "HiddenImage10.webp", 
+    "HiddenImage11.webp", "HiddenImage12.webp", "HiddenImage14.webp", 
+    "HiddenImage15.webp", "HiddenImage16.webp", "HiddenImage17.webp", 
+    "HiddenImage18.webp", "HiddenImage20.webp", "mimic.webp"
+];
+
+let flashInterval = null;
+let flashTimeout = null;
+
+function startFlashingSecrets() {
+    const overlay = document.getElementById("secret-image-overlay");
+    const img = document.getElementById("secret-img-display");
+    overlay.classList.remove("hidden");
+    overlay.classList.remove("slideshow-mode");
+    
+   
+    flashInterval = setInterval(() => {
+        const randomImg = secretImages[Math.floor(Math.random() * secretImages.length)];
+        img.src = `assets/secret images/${randomImg}`;
+        img.classList.add("flash-active");
+        
+        
+        flashTimeout = setTimeout(() => {
+            img.classList.remove("flash-active");
+        }, 50 + Math.random() * 250);
+        
+    }, 800 + Math.random() * 1500); 
+}
+
+function stopFlashingSecrets() {
+    clearInterval(flashInterval);
+    clearTimeout(flashTimeout);
+    const overlay = document.getElementById("secret-image-overlay");
+    const img = document.getElementById("secret-img-display");
+    img.classList.remove("flash-active");
+    overlay.classList.add("hidden");
+}
+
+async function play1980Slideshow() {
+    const overlay = document.getElementById("secret-image-overlay");
+    const img = document.getElementById("secret-img-display");
+    
+    overlay.classList.remove("hidden");
+    overlay.classList.add("slideshow-mode"); 
+    
+   
+    for (let src of secretImages) {
+        img.src = `assets/secret images/${src}`;
+        img.classList.add("slideshow-active");
+        
+   
+        await new Promise(r => setTimeout(r, 2000));
+        
+       
+        img.classList.remove("slideshow-active");
+        await new Promise(r => setTimeout(r, 200)); 
+    }
+    
+    overlay.classList.add("hidden");
+    overlay.classList.remove("slideshow-mode");
+}
+
+
 const SAVE_VERSION = 1.0;
 
 const SafeStorage = {
@@ -847,7 +914,20 @@ function novaLinha(linha, terminalEl) {
                 linha = linha.replace("@@JUMPSCARE@@", ""); 
                 ativarJumpscare(); 
             }
-         
+
+            if (text.includes("@@START_FLASH_SECRETS@@")) {
+                startFlashingSecrets();
+                text = text.replace("@@START_FLASH_SECRETS@@", "");
+            }
+            if (text.includes("@@STOP_FLASH_SECRETS@@")) {
+                stopFlashingSecrets();
+                text = text.replace("@@STOP_FLASH_SECRETS@@", "");
+            }
+            if (text.includes("@@PLAY_1980_SLIDESHOW@@")) {
+                play1980Slideshow();
+                text = text.replace("@@PLAY_1980_SLIDESHOW@@", "");
+            }
+                    
             if (linha.includes("@@BSOD@@")) {
                 linha = linha.replace("@@BSOD@@", "");
                 ativarBSOD();
