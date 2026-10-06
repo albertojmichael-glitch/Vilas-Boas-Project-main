@@ -915,17 +915,17 @@ function novaLinha(linha, terminalEl) {
                 ativarJumpscare(); 
             }
 
-            if (text.includes("@@START_FLASH_SECRETS@@")) {
+            if (linha.includes("@@START_FLASH_SECRETS@@")) {
                 startFlashingSecrets();
-                text = text.replace("@@START_FLASH_SECRETS@@", "");
+                linha = linha.replace("@@START_FLASH_SECRETS@@", "");
             }
-            if (text.includes("@@STOP_FLASH_SECRETS@@")) {
+            if (linha.includes("@@STOP_FLASH_SECRETS@@")) {
                 stopFlashingSecrets();
-                text = text.replace("@@STOP_FLASH_SECRETS@@", "");
+                linha = linha.replace("@@STOP_FLASH_SECRETS@@", "");
             }
-            if (text.includes("@@PLAY_1980_SLIDESHOW@@")) {
+            if (linha.includes("@@PLAY_1980_SLIDESHOW@@")) {
                 play1980Slideshow();
-                text = text.replace("@@PLAY_1980_SLIDESHOW@@", "");
+                linha = linha.replace("@@PLAY_1980_SLIDESHOW@@", "");
             }
                     
             if (linha.includes("@@BSOD@@")) {
