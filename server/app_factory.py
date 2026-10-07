@@ -92,6 +92,22 @@ def create_app():
         except SQLAlchemyError:
             db.session.rollback()
 
+        
+        try:
+            db.session.execute(db.text("ALTER TABLE saves ADD COLUMN criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+            db.session.commit()
+            print("Coluna 'criado_em' adicionada com sucesso.")
+        except SQLAlchemyError:
+            db.session.rollback()
+
+        
+        try:
+            db.session.execute(db.text("ALTER TABLE saves ADD COLUMN atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+            db.session.commit()
+            print("Coluna 'atualizado_em' adicionada com sucesso.")
+        except SQLAlchemyError:
+            db.session.rollback()
+
     
     from services.telemetry_service import worker_telemetria
     thread = threading.Thread(target=worker_telemetria, args=(app,), daemon=True)
