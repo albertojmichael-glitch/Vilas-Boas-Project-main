@@ -190,9 +190,23 @@ def imprimir_painel_cofre(jogo, primeira_vez=False):
 
 
 def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
+    """Enfileira um evento de telemetria. Só funciona dentro de uma requisição web
+    (precisa da sessão para saber o sid e se o jogador autorizou a coleta)."""
     try:
-        from app import registrar_telemetria
-        registrar_telemetria(evento, sala, dificuldade, motivo, jogo)
+        from flask import has_request_context, session
+        from services.telemetry_service import registrar_telemetria
+
+        if not has_request_context():  # modo CLI: não há worker consumindo a fila
+            return
+        registrar_telemetria(
+            evento,
+            sala,
+            dificuldade,
+            motivo,
+            jogo=jogo,
+            sid_sessao=session.get("sid"),
+            permite_telemetria=session.get("permite_telemetria", True),
+        )
     except (ImportError, AttributeError) as e:
         logger.warning(f"Falha ao registrar telemetria ({evento}/{motivo}): {e}")
 

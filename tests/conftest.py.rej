@@ -1,0 +1,26 @@
+--- tests/conftest.py
++++ tests/conftest.py
+@@ -4,6 +4,8 @@ import copy
+ import sys
+ import os
+ 
++os.environ.setdefault("DATABASE_URL", "sqlite://")  # banco em memória: não toca o .db versionado
++
+ 
+ 
+ 
+@@ -80,4 +82,14 @@ def cliente():
+        
+         yield client
+         
+-        MEMORIA_SESSOES.clear()+        MEMORIA_SESSOES.clear()
++
++
++@pytest.fixture
++def app_ctx():
++    from extensions import db
++    with app.app_context():
++        db.create_all()
++        yield
++        db.session.remove()
++        db.drop_all()
