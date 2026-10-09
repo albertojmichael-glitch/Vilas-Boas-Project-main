@@ -8,6 +8,7 @@ from state import GameState
 from models import Compartilhamento, SaveJogo
 from views import imprimir_tela_boot
 from villas_boas.engine.core import processar_fluxo_jogo
+from services.save_service import CIPHER_SUITE, save_existe, carregar_save_web, salvar_save_web, obter_ou_recuperar_jogo, to_uuid
 
 from routes.helpers import ComandoRequest, WebUIHandler, obter_sid_seguro, gerar_resposta_json
 from services.save_service import CIPHER_SUITE, save_existe, carregar_save_web, salvar_save_web, obter_ou_recuperar_jogo
@@ -122,25 +123,45 @@ def gerar_link():
     db.session.commit()
     return jsonify({"link": f"{request.host_url}share/{share.share_token}", "mensagem": "Link válido por 1 hora."})
 
-@game_bp.route("/share/<share_token>", methods=["GET"])
+@game_bp.route("/share/<share_token>")
 def carregar_compartilhado(share_token):
-    share = db.session.get(Compartilhamento, share_token)
-    if not share: return "Link inválido.", 404
-    if time.time() > share.expires_at:
-        db.session.delete(share); db.session.commit(); return "Expirado.", 410
-
-    original = db.session.get(SaveJogo, share.original_sid)
+    share = db.session.execute(
+        db.select(Compartilhamento).filter_by(share_token=share_token)
+    ).scalar_one_or_none()
     
+    if not share:
+        return "Link inválido ou inexistente.", 404
+        
+    import time
+    if time.time() > share.expires_at:
+        db.session.delete(share)
+        db.session.commit()
+        return "Este link temporário expirou e foi removido do sistema.", 410
+
+    chave_original = to_uuid(share.original_sid)
+    original = db.session.get(SaveJogo, chave_original) if chave_original else None
+    
+    if not original:
+        return "O save original associado a este link foi destruído ou deixou de existir.", 404
+
     try:
-        dados = json.loads(CIPHER_SUITE.decrypt(original.dados.encode("utf-8")).decode("utf-8"))
-        novo_sid = str(uuid.uuid4())
+        dados_descriptografados = CIPHER_SUITE.decrypt(original.dados.encode("utf-8")).decode("utf-8")
+        dados = json.loads(dados_descriptografados)
+        novo_jogo = GameState.from_dict(dados)
+        
+        novo_sid = uuid.uuid4()
         db.session.add(SaveJogo(sid=novo_sid, dados=original.dados))
         db.session.commit()
-        session["sid"], session.permanent = novo_sid, True
-        MEMORIA_SESSOES[novo_sid] = GameState.from_dict(dados)
+        
+        session["sid"] = str(novo_sid)
+        session.permanent = True
+        MEMORIA_SESSOES[str(novo_sid)] = novo_jogo
+        
         return redirect("/")
-    except (ValueError, TypeError, KeyError):
-        return "Save corrompido.", 500
+    except Exception as e:
+        db.session.rollback()
+        logger.exception("Falha severa na decodificação e clonagem de save compartilhado.")
+        return "Os dados estruturais do save estão corrompidos e ilegíveis.", 500
 
 @game_bp.route("/achievements", methods=["GET"])
 def listar_conquistas():

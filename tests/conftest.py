@@ -3,6 +3,7 @@ import pytest
 import copy
 import sys
 import os
+os.environ.setdefault("DATABASE_URL", "sqlite://")
 
 
 
@@ -81,3 +82,13 @@ def cliente():
         yield client
         
         MEMORIA_SESSOES.clear()
+
+@pytest.fixture
+def app_ctx():
+    from app import app
+    from extensions import db
+    with app.app_context():
+        db.create_all()
+        yield
+        db.session.remove()
+        db.drop_all()

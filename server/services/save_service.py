@@ -44,96 +44,73 @@ def save_existe(sid):
     if not sid:
         return False
     try:
-        return db.session.get(SaveJogo, sid) is not None
+        chave = to_uuid(sid)
+        return chave is not None and db.session.get(SaveJogo, chave) is not None
     except SQLAlchemyError:
         db.session.rollback()
         logger.exception("Erro ao verificar existência de save")
         return False
 
 def carregar_save_web(jogo, sid):
-    if not sid:
+    chave = to_uuid(sid)
+    if not chave:
         return False
     try:
-        registro = db.session.get(SaveJogo, sid)
+        registro = db.session.get(SaveJogo, chave)
         if registro:
             dados = _processar_dados_save(registro.dados)
             if dados:
-                novo_jogo = GameState.from_dict(dados)
-                for k, v in novo_jogo.__dict__.items():
-                    if k != "ui_handler":
-                        setattr(jogo, k, v)
+                jogo.carregar_estado(dados)
                 return True
     except SQLAlchemyError:
-        db.session.rollback()
-        logger.exception("Erro ao buscar save criptografado no PostgreSQL")
-    except Exception:
-        logger.exception("Erro ao processar save carregado")
+        logger.exception("Falha na leitura do banco de dados ao carregar progresso.")
     return False
 
 def salvar_save_web(jogo, sid):
-    if not sid:
+    chave = to_uuid(sid)
+    if not chave:
         return
 
-    estado_dict = jogo.to_dict()
-    metadados = {
-        "hp": estado_dict.get("hp", 3),
-        "sala": estado_dict.get("sala_atual", "desconhecida"),
-        "inventario_tamanho": len(estado_dict.get("inventario", []))
-    }
-   
-    json_str_ordenado = json.dumps(estado_dict, sort_keys=True, ensure_ascii=False)
-    checksum_gerado = hashlib.sha256(json_str_ordenado.encode('utf-8')).hexdigest()
-
     try:
-        registro = db.session.get(SaveJogo, sid)
+        dados_encriptados = CIPHER_SUITE.encrypt(jogo.model_dump_json().encode('utf-8')).decode('utf-8')
+        registro = db.session.get(SaveJogo, chave)
         
-        if registro and registro.checksum == checksum_gerado:
-            return
-
-        dados_json = json.dumps(estado_dict, ensure_ascii=False)
-        dados_criptografados = CIPHER_SUITE.encrypt(dados_json.encode("utf-8")).decode("utf-8")
-
         if registro:
-            registro.dados = dados_criptografados
-            registro.metadados = metadados
-            registro.checksum = checksum_gerado
-            registro.save_version = 1
+            registro.dados = dados_encriptados
         else:
-            db.session.add(SaveJogo(
-                sid=sid, 
-                dados=dados_criptografados,
-                metadados=metadados,
-                checksum=checksum_gerado,
-                save_version=1
-            ))
+            novo_registro = SaveJogo(sid=chave, dados=dados_encriptados)
+            db.session.add(novo_registro)
             
         db.session.commit()
     except SQLAlchemyError:
         db.session.rollback()
-        logger.exception("Erro ao salvar progresso no PostgreSQL")
+        logger.exception("Erro crítico ao gravar progresso na infraestrutura de dados.")
 
 def obter_ou_recuperar_jogo(sid, memoria_sessoes):
-    
-    jogo = memoria_sessoes.get(sid)
+    if not sid:
+        return None
+        
+    jogo = memoria_sessoes.get(str(sid))
     if jogo:
         return jogo
 
-    registro = db.session.get(SaveJogo, sid)
+    chave = to_uuid(sid)
+    if not chave:
+        return None
+        
+    registro = db.session.get(SaveJogo, chave)
     if not registro:
         return None 
 
     try:
-        dados_json = CIPHER_SUITE.decrypt(registro.dados.encode("utf-8")).decode("utf-8")
-        estado_dict = json.loads(dados_json)
-        
-        jogo_recuperado = GameState()
-        for chave, valor in estado_dict.items():
-            if hasattr(jogo_recuperado, chave):
-                setattr(jogo_recuperado, chave, valor)
+        dados_recuperados = _processar_dados_save(registro.dados)
+        if not dados_recuperados:
+            return None
             
-        memoria_sessoes[sid] = jogo_recuperado
-        return jogo_recuperado
+        estado_jogo = GameState.from_dict(dados_recuperados)
+        memoria_sessoes[str(sid)] = estado_jogo
+        return estado_jogo
         
     except Exception:
-        logger.exception("Falha ao tentar recuperar a sessão corrompida do banco de dados.")
+        logger.exception("Falha irrecuperável ao tentar reconstruir a sessão a partir do banco de dados.")
         return None
