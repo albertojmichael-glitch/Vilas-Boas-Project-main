@@ -2,6 +2,7 @@ import json
 import hashlib
 import base64
 import logging
+import uuid
 from cryptography.fernet import Fernet, InvalidToken
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -15,8 +16,19 @@ logger = logging.getLogger(__name__)
 _key_hash = hashlib.sha256((Config.SECRET_KEY).encode()).digest()
 CIPHER_SUITE = Fernet(base64.urlsafe_b64encode(_key_hash))
 
+def to_uuid(sid):
+    
+    if isinstance(sid, uuid.UUID):
+        return sid
+    try:
+        return uuid.UUID(str(sid))
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
+
 def _processar_dados_save(dados_brutos):
-    """Descriptografa se for texto seguro, ou lê normalmente se for um save antigo."""
+    
     if isinstance(dados_brutos, str):
         try:
             dados_json = CIPHER_SUITE.decrypt(dados_brutos.encode("utf-8")).decode("utf-8")
