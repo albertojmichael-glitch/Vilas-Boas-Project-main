@@ -1,45 +1,45 @@
-import random
 import logging
-from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
-from data import ARTE_MESA_SEGURANCA, ARTE_INDIO
+import random
+
+from data import ARTE_INDIO, ARTE_MESA_SEGURANCA
+from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
 from villas_boas.engine.minigames.base import BaseMinigame
 
 logger = logging.getLogger(__name__)
 
 
+TURNO_FINAL = 24
+TURNO_INICIO_CALOR = 12
+TURNO_CRITICO = 22
 
-TURNO_FINAL = 24              
-TURNO_INICIO_CALOR = 12       
-TURNO_CRITICO = 22            
+CUSTO_EXTRA_MEIO = 1
+CUSTO_EXTRA_CRITICO = 3
+CUSTO_PORTA = 2
+CUSTO_BASE_INFO_PESADO = 1
+CUSTO_BASE_MOTOR = 2
 
-CUSTO_EXTRA_MEIO = 1          
-CUSTO_EXTRA_CRITICO = 3       
-CUSTO_PORTA = 2                
-CUSTO_BASE_INFO_PESADO = 1     
-CUSTO_BASE_MOTOR = 2           
-
-LIMITE_USOS_SISTEMA = 2        
+LIMITE_USOS_SISTEMA = 2
 
 
-RICK_POS_PORTA = 3              
-RICK_POS_ATAQUE = 4             
-JON_POS_VISIVEL_CAMERA = 3      
-JON_POS_SAINDO_DUTO = 4         
-JON_POS_ATAQUE = 5              
-CAROLINE_POS_PORTA = 5          
-CAROLINE_POS_ATAQUE_PORTA = 6   
-CAROLINE_POS_DUTO_VISIVEL = 4   
-CAROLINE_POS_DUTO_FUGA = 5      
-CAROLINE_POS_ATAQUE_DUTO = 6    
+RICK_POS_PORTA = 3
+RICK_POS_ATAQUE = 4
+JON_POS_VISIVEL_CAMERA = 3
+JON_POS_SAINDO_DUTO = 4
+JON_POS_ATAQUE = 5
+CAROLINE_POS_PORTA = 5
+CAROLINE_POS_ATAQUE_PORTA = 6
+CAROLINE_POS_DUTO_VISIVEL = 4
+CAROLINE_POS_DUTO_FUGA = 5
+CAROLINE_POS_ATAQUE_DUTO = 6
 
-GERADOR_DURACAO_TURNOS = 2      
+GERADOR_DURACAO_TURNOS = 2
 
-CHANCE_INTERFERENCIA_MOV = 0.10   
-CHANCE_RICK_RECUAR = 0.25         
-CHANCE_RICK_AVANCA_DE_3 = 0.8     
-CHANCE_INDIO_JANELA = 30          
-CHANCE_ALBERTO_TROLL = 20         
-CHANCE_ANOMALIA_CAMERA = 1        
+CHANCE_INTERFERENCIA_MOV = 0.10
+CHANCE_RICK_RECUAR = 0.25
+CHANCE_RICK_AVANCA_DE_3 = 0.8
+CHANCE_INDIO_JANELA = 30
+CHANCE_ALBERTO_TROLL = 20
+CHANCE_ANOMALIA_CAMERA = 1
 
 SISTEMAS_VALIDOS = {"camera", "relogio", "deteccao"}
 
@@ -50,20 +50,21 @@ class MinigameSeguranca(BaseMinigame):
         self.ui = jogo.ui_handler
         self.turno = 0
 
-        
-
         god_mode = getattr(jogo, "god_mode", False)
-        self.energia = 9999 if god_mode else random.randint(
-            getattr(jogo, "energia_min_noite", 70),
-            getattr(jogo, "energia_max_noite", 100),
+        self.energia = (
+            9999
+            if god_mode
+            else random.randint(
+                getattr(jogo, "energia_min_noite", 70),
+                getattr(jogo, "energia_max_noite", 100),
+            )
         )
 
-        
         bonus_luz = max(0, getattr(jogo, "turnos_luz", 0) - 3) * 5
         bonus_bateria = getattr(jogo, "inventario", []).count("bateria nova") * 10
         self.energia += bonus_luz + bonus_bateria
-        
-        self.mensagem_bonus = "" 
+
+        self.mensagem_bonus = ""
         if bonus_luz > 0 or bonus_bateria > 0:
             self.mensagem_bonus = f"{DOS_VERDE}[SISTEMA] Baterias extras conectadas. Energia redirecionada: +{bonus_luz + bonus_bateria}%{RESET}"
 
@@ -93,9 +94,8 @@ class MinigameSeguranca(BaseMinigame):
         self.ui.exibir("Você senta na cadeira da sala de segurança.")
         self.ui.pausar(1)
 
-    
     def _custo_extra_por_hora(self):
-       
+
         if self.turno >= TURNO_CRITICO:
             return CUSTO_EXTRA_CRITICO
         if self.turno >= TURNO_INICIO_CALOR:
@@ -110,33 +110,29 @@ class MinigameSeguranca(BaseMinigame):
             "info_pesado": 1 + extra,
             "motor": CUSTO_BASE_MOTOR + extra,
         }
-    
+
     def _gerar_captcha(self):
         tipo = random.randint(1, 4)
         if tipo == 1:
-            
             codigo = "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789", k=6))
             self.captcha_pergunta = f"Criptografia pesada. Digite {DOS_VERMELHO}{codigo}{DOS_AMARELO} de trás pra frente."
             self.captcha_resposta = codigo[::-1].lower()
-            
+
         elif tipo == 2:
-            
             nums = [random.randint(11, 99) for _ in range(4)]
             texto_nums = " ".join(map(str, nums))
             self.captcha_pergunta = f"Falha no sequenciador. Ordene crescentemente: {DOS_VERMELHO}{texto_nums}{DOS_AMARELO} (sem espaços)."
             nums.sort()
             self.captcha_resposta = "".join(map(str, nums))
-            
+
         elif tipo == 3:
-            
             n1 = random.randint(2, 6)
             n2 = random.randint(3, 9)
             n3 = random.randint(10, 40)
             self.captcha_pergunta = f"Pico de voltagem. Resolva rápido: {DOS_VERMELHO}({n1} * {n2}) + {n3}{DOS_AMARELO}."
             self.captcha_resposta = str((n1 * n2) + n3)
-            
+
         else:
-            
             chars = ["#", "@", "%", "&", "$"]
             alvo = random.choice(chars)
             sequencia = "".join(random.choices(chars, k=16))
@@ -149,36 +145,38 @@ class MinigameSeguranca(BaseMinigame):
 
     def _gastar_sistema(self, custo):
         self.usos_sistema_turno += 1
-        
-        
+
         if self.usos_sistema_turno >= 5:
-            self.ui.exibir(f"{DOS_VERMELHO}⚠ FALHA KERNEL: PLACA MÃE DERRETIDA POR SOBRECARGA MANUAL!{RESET}")
+            self.ui.exibir(
+                f"{DOS_VERMELHO}⚠ FALHA KERNEL: PLACA MÃE DERRETIDA POR SOBRECARGA MANUAL!{RESET}"
+            )
             self.ui.pausar(1.5)
             from views import dar_tela_kernel_panic
+
             dar_tela_kernel_panic(self.jogo)
-            return "morte" 
-            
+            return "morte"
+
         self.energia -= custo
 
     def _rick_na_porta(self):
         return self.rick_pos >= RICK_POS_PORTA
 
     def _processar_avanco_monstro(self, jogo):
-        
+
         ui = self.ui
         god_mode = getattr(jogo, "god_mode", False)
 
-        
         if self.porta_fechada:
             if self.rick_pos == RICK_POS_ATAQUE:
                 self.rick_pos = 0
-                ui.exibir("\n Você ouve batidas na porta enquanto digita, e passos se afastando logo depois.")
+                ui.exibir(
+                    "\n Você ouve batidas na porta enquanto digita, e passos se afastando logo depois."
+                )
             if self._caroline_na_porta():
                 self.caroline_pos = 0
                 self.caroline_caminho = random.choice(["porta", "tubulacao"])
                 ui.exibir("\n Um estrondo na porta. Ela recuou...")
 
-        
         rick_ataque = (self.rick_pos >= RICK_POS_ATAQUE) or (
             self.rick_pos == RICK_POS_PORTA and random.random() < 0.3
         )
@@ -186,7 +184,10 @@ class MinigameSeguranca(BaseMinigame):
             (self.caroline_pos >= CAROLINE_POS_ATAQUE_PORTA)
             or (self.caroline_pos == CAROLINE_POS_PORTA and random.random() < 0.3)
         )
-        carol_duto_ataque = self.caroline_caminho == "tubulacao" and self.caroline_pos >= CAROLINE_POS_ATAQUE_DUTO
+        carol_duto_ataque = (
+            self.caroline_caminho == "tubulacao"
+            and self.caroline_pos >= CAROLINE_POS_ATAQUE_DUTO
+        )
         jon_ataque = self.jon_pos >= JON_POS_ATAQUE
 
         invasao = (
@@ -198,25 +199,29 @@ class MinigameSeguranca(BaseMinigame):
 
         if invasao:
             if god_mode:
-                ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] Um animatrônico entra na sala... mas você o encara. Ele pede desculpas e sai de fininho.{RESET}")
+                ui.exibir(
+                    f"\n{DOS_AMARELO}[GOD MODE] Um animatrônico entra na sala... mas você o encara. Ele pede desculpas e sai de fininho.{RESET}"
+                )
                 self.rick_pos = 0
                 self.caroline_pos = 0
                 self.jon_pos = 0
             else:
-                ui.exibir("\n Distraído com o override, você não percebe a sombra até ser tarde demais.")
+                ui.exibir(
+                    "\n Distraído com o override, você não percebe a sombra até ser tarde demais."
+                )
                 ui.exibir("@@JUMPSCARE@@")
                 ui.pausar(2)
                 return "morte"
 
-        
         self._mover_animatronicos(ui)
 
         return "continuar"
 
     def _caroline_na_porta(self):
-        return self.caroline_caminho == "porta" and self.caroline_pos >= CAROLINE_POS_PORTA
+        return (
+            self.caroline_caminho == "porta" and self.caroline_pos >= CAROLINE_POS_PORTA
+        )
 
-    
     def imprimir_status(self):
         self.ui.limpar()
 
@@ -248,11 +253,14 @@ class MinigameSeguranca(BaseMinigame):
         else:
             hora_disp = f"0{(self.turno * 15) // 60}:{(self.turno * 15) % 60:02d}"
 
-        texto_energia = "∞" if getattr(self.jogo, 'god_mode', False) else f"{self.energia}%"
+        texto_energia = (
+            "∞" if getattr(self.jogo, "god_mode", False) else f"{self.energia}%"
+        )
 
-        if self.energia < 15 and not getattr(self.jogo, 'god_mode', False):
+        if self.energia < 15 and not getattr(self.jogo, "god_mode", False):
             try:
                 from villas_boas.utils import corromper_texto
+
                 texto_energia = corromper_texto(texto_energia, intensidade=0.6)
                 hora_disp = corromper_texto(hora_disp, intensidade=0.4)
             except ImportError:
@@ -260,7 +268,12 @@ class MinigameSeguranca(BaseMinigame):
 
         self.ui.exibir(bug(f"RELOGIO: {hora_disp}", chance_bug))
         self.ui.exibir(bug(f"ENERGIA: {texto_energia}", chance_bug))
-        self.ui.exibir(bug(f"PORTA CENTRAL: {'Fechada' if self.porta_fechada else 'Aberta'}", chance_bug))
+        self.ui.exibir(
+            bug(
+                f"PORTA CENTRAL: {'Fechada' if self.porta_fechada else 'Aberta'}",
+                chance_bug,
+            )
+        )
 
         erros = []
         if self.erro_camera:
@@ -269,17 +282,29 @@ class MinigameSeguranca(BaseMinigame):
             erros.append("RELÓGIO")
         if self.erro_deteccao:
             erros.append("DETECÇÃO")
-        self.ui.exibir(f"ERROS ATIVOS: {', '.join(erros)}" if erros else bug("ERROS: Nenhum", chance_bug))
+        self.ui.exibir(
+            f"ERROS ATIVOS: {', '.join(erros)}"
+            if erros
+            else bug("ERROS: Nenhum", chance_bug)
+        )
 
         if self.turnos_gerador_ativo > 0:
-            self.ui.exibir(f"{DOS_VERDE}Gerador reserva: Ativo({self.turnos_gerador_ativo} turnos restantes){RESET}")
+            self.ui.exibir(
+                f"{DOS_VERDE}Gerador reserva: Ativo({self.turnos_gerador_ativo} turnos restantes){RESET}"
+            )
         elif not self.gerador_reserva_usado:
             self.ui.exibir(f"{DOS_AMARELO}Gerador Reserva: Disponível{RESET}")
 
         if self.alberto_troll:
             self.ui.exibir("\n[MENSAGEM]: ERRO CRÍTICO! FECHAR PORTA AGORA!")
         if self.indio_janela and not self.erro_deteccao:
-            self.ui.exibir("\n" + bug("Você sente como se algo estivesse te olhando pelo vidro...", chance_bug))
+            self.ui.exibir(
+                "\n"
+                + bug(
+                    "Você sente como se algo estivesse te olhando pelo vidro...",
+                    chance_bug,
+                )
+            )
 
         self.ui.exibir(
             "\nAção (ouvir | cameras | ver tubulacao | iluminar tubulacao | "
@@ -288,29 +313,33 @@ class MinigameSeguranca(BaseMinigame):
         )
 
         if self.captcha_ativo:
-            self.ui.buffer.append("@@LOW_POWER@@") 
-            self.ui.exibir(f"\n{DOS_AMARELO}================ OVERRIDE MANUAL REQUERIDO ================{RESET}")
+            self.ui.buffer.append("@@LOW_POWER@@")
+            self.ui.exibir(
+                f"\n{DOS_AMARELO}================ OVERRIDE MANUAL REQUERIDO ================{RESET}"
+            )
             self.ui.exibir(f"{DOS_AMARELO}{self.captcha_pergunta}{RESET}")
-            self.ui.exibir(f"{DOS_AMARELO}==========================================================={RESET}")
+            self.ui.exibir(
+                f"{DOS_AMARELO}==========================================================={RESET}"
+            )
             self.ui.exibir("\n[Digite a resposta para continuar]")
-            return 
+            return
 
-    
     def processar_turno(self, acao, jogo):
-        
+
         ui = self.ui
-        
+
         acao_norm = acao.lower().strip()
         god_mode = getattr(jogo, "god_mode", False)
 
-       
         if getattr(self, "captcha_ativo", False):
-            
             if acao_norm == getattr(self, "captcha_resposta", ""):
-                ui.exibir(f"\n{DOS_VERDE}OVERRIDE ACEITO. Protocolos de segurança validados.{RESET}")
-                ui.exibir(f"{DOS_VERDE}Sistema {self.captcha_alvo.upper()} reiniciado e operacional.{RESET}")
+                ui.exibir(
+                    f"\n{DOS_VERDE}OVERRIDE ACEITO. Protocolos de segurança validados.{RESET}"
+                )
+                ui.exibir(
+                    f"{DOS_VERDE}Sistema {self.captcha_alvo.upper()} reiniciado e operacional.{RESET}"
+                )
 
-                
                 if self.captcha_alvo == "camera":
                     self.erro_camera = False
                 elif self.captcha_alvo == "deteccao":
@@ -319,38 +348,40 @@ class MinigameSeguranca(BaseMinigame):
                     self.erro_relogio = False
                 ui.pausar(1.5)
             else:
-               
                 ui.buffer.append("@@GLITCH_LUZ@@")
-                ui.exibir(f"\n{DOS_VERMELHO}ACESSO NEGADO. Assinatura de erro detectada no input.{RESET}")
-                ui.exibir(f"{DOS_VERMELHO}Reboot abortado. A falha de firewall drenou energia do sistema.{RESET}")
+                ui.exibir(
+                    f"\n{DOS_VERMELHO}ACESSO NEGADO. Assinatura de erro detectada no input.{RESET}"
+                )
+                ui.exibir(
+                    f"{DOS_VERMELHO}Reboot abortado. A falha de firewall drenou energia do sistema.{RESET}"
+                )
                 ui.pausar(1.5)
-                
+
                 self.energia = max(0, self.energia - 1)
-                
-            
+
             self.captcha_ativo = False
             self.captcha_alvo = None
-            
-            
+
             return self._processar_avanco_monstro(jogo)
 
-        
         if acao_norm in ("pular noite", "pular", "set time 06:00") and god_mode:
             ui.exibir(f"\n{DOS_AMARELO}[GOD MODE ATIVADO]{RESET}")
-            ui.exibir(f"{DOS_AMARELO}As leis da física se contorcem. O tempo acelera artificialmente.{RESET}")
-            ui.exibir(f"{DOS_AMARELO}Os ponteiros do relógio digital giram freneticamente até parar às 06:00.{RESET}")
-            
-            
-            turno_final_val = getattr(self, 'TURNO_FINAL', 36)
+            ui.exibir(
+                f"{DOS_AMARELO}As leis da física se contorcem. O tempo acelera artificialmente.{RESET}"
+            )
+            ui.exibir(
+                f"{DOS_AMARELO}Os ponteiros do relógio digital giram freneticamente até parar às 06:00.{RESET}"
+            )
+
+            turno_final_val = getattr(self, "TURNO_FINAL", 36)
             self.turno = turno_final_val
             return self._checar_fim_de_noite(jogo)
 
-        turno_passou = False 
-        
+        turno_passou = False
+
         acao_valida = True
         custos = self._custos_turno()
-        
-        
+
         if acao_norm == "fechar porta":
             self._acao_fechar_porta(ui, custos)
 
@@ -366,13 +397,14 @@ class MinigameSeguranca(BaseMinigame):
         elif acao_norm == "ligar gerador":
             turno_passou, self.turno = self._acao_ligar_gerador(ui, self.turno)
 
-       
         elif acao_norm in ("consertar camera", "consertar câmera"):
             if not self.erro_camera:
-                ui.exibir(f"{DOS_AMARELO}Diagnóstico: O sistema de câmeras já está operacional e transmitindo.{RESET}")
+                ui.exibir(
+                    f"{DOS_AMARELO}Diagnóstico: O sistema de câmeras já está operacional e transmitindo.{RESET}"
+                )
                 return "continuar"
             else:
-                ui.exibir("@@BSOD@@") 
+                ui.exibir("@@BSOD@@")
                 ui.pausar(2.5)
                 self._gerar_captcha()
                 self.captcha_ativo = True
@@ -381,10 +413,12 @@ class MinigameSeguranca(BaseMinigame):
 
         elif acao_norm in ("consertar deteccao", "consertar detecção"):
             if not self.erro_deteccao:
-                ui.exibir(f"{DOS_AMARELO}Diagnóstico: O sistema de detecção (radar) já está operando normalmente.{RESET}")
+                ui.exibir(
+                    f"{DOS_AMARELO}Diagnóstico: O sistema de detecção (radar) já está operando normalmente.{RESET}"
+                )
                 return "continuar"
             else:
-                ui.exibir("@@BSOD@@") 
+                ui.exibir("@@BSOD@@")
                 ui.pausar(2.5)
                 self._gerar_captcha()
                 self.captcha_ativo = True
@@ -393,10 +427,12 @@ class MinigameSeguranca(BaseMinigame):
 
         elif acao_norm in ("consertar relogio", "consertar relógio"):
             if not self.erro_relogio:
-                ui.exibir(f"{DOS_AMARELO}Diagnóstico: O relógio já está sincronizado corretamente.{RESET}")
+                ui.exibir(
+                    f"{DOS_AMARELO}Diagnóstico: O relógio já está sincronizado corretamente.{RESET}"
+                )
                 return "continuar"
             else:
-                ui.exibir("@@BSOD@@") 
+                ui.exibir("@@BSOD@@")
                 ui.pausar(2.5)
                 self._gerar_captcha()
                 self.captcha_ativo = True
@@ -413,26 +449,26 @@ class MinigameSeguranca(BaseMinigame):
             self._acao_ver_tubulacao(ui, custos)
 
         elif acao_norm in ("esperar", "aguardar"):
-            ui.exibir(f"{DOS_BRANCO}Você prende a respiração, recua da mesa e deixa os minutos se arrastarem no escuro...{RESET}")
+            ui.exibir(
+                f"{DOS_BRANCO}Você prende a respiração, recua da mesa e deixa os minutos se arrastarem no escuro...{RESET}"
+            )
             turno_passou = True
             self.turno += 1
-            
+
             self.alberto_troll = False
 
         else:
-            ui.exibir(f"{DOS_VERMELHO}Erro de Sintaxe: Comando inválido ou periférico não reconhecido pelo terminal.{RESET}")
+            ui.exibir(
+                f"{DOS_VERMELHO}Erro de Sintaxe: Comando inválido ou periférico não reconhecido pelo terminal.{RESET}"
+            )
             acao_valida = False
 
-       
         if acao_valida and acao_norm not in ("esperar", "aguardar"):
-            
             self._chance_interferencia(ui)
 
-            
             if getattr(self, "porta_fechada", False):
                 self._checar_recuo_na_porta(ui)
 
-        
         ui.pausar(1.5)
 
         if acao_valida:
@@ -440,24 +476,25 @@ class MinigameSeguranca(BaseMinigame):
 
         ui.pausar(2.0)
 
-        
         if turno_passou:
             resultado = self._resolver_fim_de_turno(ui, jogo, god_mode)
             if resultado is not None:
-              
                 return resultado
 
-        turno_final_val = getattr(self, 'TURNO_FINAL', 24)
-        
+        turno_final_val = getattr(self, "TURNO_FINAL", 24)
+
         if self.turno >= turno_final_val:
             ui.limpar()
             ui.animar(f"{DOS_VERDE}06:00 AM{RESET}", 0.1, jogo=jogo)
-            ui.animar(f"{DOS_BRANCO}Os sistemas entram em modo de espera diurno. Você sobreviveu.{RESET}", 0.05, jogo=jogo)
+            ui.animar(
+                f"{DOS_BRANCO}Os sistemas entram em modo de espera diurno. Você sobreviveu.{RESET}",
+                0.05,
+                jogo=jogo,
+            )
             ui.pausar(2)
             jogo.noite_vencida = True
             return "vitoria_seguranca"
 
-    
     def _acao_fechar_porta(self, ui, custos):
         custo = custos["motor"]
         if self.apagao > 0 or self.energia <= custo:
@@ -467,7 +504,9 @@ class MinigameSeguranca(BaseMinigame):
         else:
             self.porta_fechada = True
             self.energia -= custo
-            ui.exibir(f"@@PORTA@@A pesada porta de metal desce com um estrondo. (-{custo}% Energia)")
+            ui.exibir(
+                f"@@PORTA@@A pesada porta de metal desce com um estrondo. (-{custo}% Energia)"
+            )
 
             if self.alberto_troll:
                 ui.exibir("\n Como você é tão tolo? Hahahaha")
@@ -484,14 +523,18 @@ class MinigameSeguranca(BaseMinigame):
         else:
             self.porta_fechada = False
             self.energia -= custo
-            ui.exibir(f"@@PORTA@@A porta de metal se ergue lentamente. (-{custo}% Energia)")
+            ui.exibir(
+                f"@@PORTA@@A porta de metal se ergue lentamente. (-{custo}% Energia)"
+            )
 
     def _acao_iluminar_tubulacao(self, ui, custos):
         custo = custos["info_pesado"]
         if self.apagao > 0 or self.energia <= custo:
             ui.exibir("Sem força nas luzes.")
         elif self._sistema_sobrecarregado():
-            ui.exibir(f"{DOS_VERMELHO} [SISTEMA SOBRECARREGADO]: Muitas requisições simultâneas. Hardware travado{RESET}")
+            ui.exibir(
+                f"{DOS_VERMELHO} [SISTEMA SOBRECARREGADO]: Muitas requisições simultâneas. Hardware travado{RESET}"
+            )
             self.energia -= custo
         else:
             self._gastar_sistema(custo)
@@ -499,7 +542,10 @@ class MinigameSeguranca(BaseMinigame):
             if self.jon_pos >= JON_POS_SAINDO_DUTO:
                 self.jon_pos = 0
                 ui.exibir("Jon recua apressado pela tubulação")
-            if self.caroline_caminho == "tubulacao" and self.caroline_pos >= CAROLINE_POS_DUTO_FUGA:
+            if (
+                self.caroline_caminho == "tubulacao"
+                and self.caroline_pos >= CAROLINE_POS_DUTO_FUGA
+            ):
                 self.caroline_pos = 0
                 self.caroline_caminho = random.choice(["porta", "tubulacao"])
                 ui.exibir("A Caroline fugiu do duto")
@@ -507,7 +553,7 @@ class MinigameSeguranca(BaseMinigame):
     def _chance_interferencia(self, ui):
         if random.random() > CHANCE_INTERFERENCIA_MOV:
             return
-            
+
         quem = random.choice(["rick", "jon", "caroline"])
         if quem == "rick":
             self.rick_pos += 1
@@ -515,12 +561,15 @@ class MinigameSeguranca(BaseMinigame):
             self.jon_pos += 1
         else:
             self.caroline_pos += 1
-            
-        ui.exibir(f"\n@@PASSO@@{DOS_VERMELHO}Você ouve um ruído metálico se aproximando enquanto mexe no sistema.{RESET}")
-        
-        
+
+        ui.exibir(
+            f"\n@@PASSO@@{DOS_VERMELHO}Você ouve um ruído metálico se aproximando enquanto mexe no sistema.{RESET}"
+        )
+
         if self.turno >= TURNO_CRITICO and random.random() < 0.3:
-            ui.exibir(f"{DOS_VERMELHO}O som de uma respiração ofegante ecoa através das saídas de ar da sua sala...{RESET}")
+            ui.exibir(
+                f"{DOS_VERMELHO}O som de uma respiração ofegante ecoa através das saídas de ar da sua sala...{RESET}"
+            )
 
     def _acao_olhar_vidro(self, ui):
         if self.indio_janela:
@@ -577,7 +626,9 @@ class MinigameSeguranca(BaseMinigame):
             ui.exibir("Tarde demais, o sistema principal já foi totalmente desligado")
             return False, turno
         if self.gerador_reserva_usado:
-            ui.exibir("O combustivel do gerador reserva já foi queimado, ele só pode ser usado uma vez")
+            ui.exibir(
+                "O combustivel do gerador reserva já foi queimado, ele só pode ser usado uma vez"
+            )
             return False, turno
 
         ui.exibir(
@@ -601,7 +652,9 @@ class MinigameSeguranca(BaseMinigame):
         elif self.energia <= custo:
             ui.exibir("Sistema de áudio offline (Bateria fraca).")
         elif self._sistema_sobrecarregado():
-            ui.exibir(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Placa de áudio em curto. Passe o turno para resfriar!{RESET}")
+            ui.exibir(
+                f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Placa de áudio em curto. Passe o turno para resfriar!{RESET}"
+            )
             self.energia -= custo
         else:
             self._gastar_sistema(custo)
@@ -611,12 +664,17 @@ class MinigameSeguranca(BaseMinigame):
                 ui.exibir("@@PASSO@@ Passos metálicos pesados são ouvidos do corredor")
                 ouviu = True
             if self.jon_pos >= JON_POS_SAINDO_DUTO or (
-                self.caroline_caminho == "tubulacao" and self.caroline_pos >= CAROLINE_POS_PORTA
+                self.caroline_caminho == "tubulacao"
+                and self.caroline_pos >= CAROLINE_POS_PORTA
             ):
-                ui.exibir("@@PASSO@@ Você escuta arranhões e batidas vindo da tubulação")
+                ui.exibir(
+                    "@@PASSO@@ Você escuta arranhões e batidas vindo da tubulação"
+                )
                 ouviu = True
             if not ouviu:
-                ui.exibir("Apenas o zumbido dos fios elétricos e da lâmpada quase apagada.")
+                ui.exibir(
+                    "Apenas o zumbido dos fios elétricos e da lâmpada quase apagada."
+                )
 
     def _acao_cameras(self, ui, custos):
         custo = custos["info_leve"]
@@ -625,7 +683,9 @@ class MinigameSeguranca(BaseMinigame):
         elif self.energia <= custo:
             ui.exibir("Câmeras offline (Bateria fraca).")
         elif self._sistema_sobrecarregado():
-            ui.exibir(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Monitor superaquecido. A tela exibe apenas estática!{RESET}")
+            ui.exibir(
+                f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Monitor superaquecido. A tela exibe apenas estática!{RESET}"
+            )
             self.energia -= custo
         else:
             self._gastar_sistema(custo)
@@ -659,19 +719,21 @@ class MinigameSeguranca(BaseMinigame):
         elif self.energia <= custo:
             ui.exibir("Sensores offline (Bateria fraca).")
         elif self._sistema_sobrecarregado():
-            ui.exibir(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Painel de detecção travado!{RESET}")
+            ui.exibir(
+                f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Painel de detecção travado!{RESET}"
+            )
             self.energia -= custo
         else:
             self._gastar_sistema(custo)
             ui.exibir(f"(-{custo}% Energia)")
             if self.jon_pos >= JON_POS_VISIVEL_CAMERA or (
-                self.caroline_caminho == "tubulacao" and self.caroline_pos >= CAROLINE_POS_DUTO_VISIVEL
+                self.caroline_caminho == "tubulacao"
+                and self.caroline_pos >= CAROLINE_POS_DUTO_VISIVEL
             ):
                 ui.exibir("⭙ Sensor fica vermelho, há algo nos dutos ⭙")
             else:
                 ui.exibir("◉ Sensor não detecta nada")
 
-    
     def _chance_interferencia(self, ui):
         if random.random() > CHANCE_INTERFERENCIA_MOV:
             return
@@ -682,13 +744,18 @@ class MinigameSeguranca(BaseMinigame):
             self.jon_pos += 1
         else:
             self.caroline_pos += 1
-        ui.exibir(f"\n@@PASSO@@{DOS_VERMELHO}Você ouve um ruído metálico se aproximando enquanto mexe no sistema.{RESET}")
+        ui.exibir(
+            f"\n@@PASSO@@{DOS_VERMELHO}Você ouve um ruído metálico se aproximando enquanto mexe no sistema.{RESET}"
+        )
 
     def _checar_recuo_na_porta(self, ui):
         if self.rick_pos >= RICK_POS_ATAQUE:
             self.rick_pos = 0
             ui.exibir(f"\n{DOS_AMARELO} ALGO SOCA A PORTA COM VIOLÊNCIA E RECUA{RESET}")
-        if self.caroline_caminho == "porta" and self.caroline_pos >= CAROLINE_POS_ATAQUE_PORTA:
+        if (
+            self.caroline_caminho == "porta"
+            and self.caroline_pos >= CAROLINE_POS_ATAQUE_PORTA
+        ):
             self.caroline_pos = 0
             self.caroline_caminho = random.choice(["porta", "tubulacao"])
             ui.exibir(f"\n{DOS_AMARELO} Um estrondo na porta. Ela recuou...{RESET}")
@@ -696,18 +763,28 @@ class MinigameSeguranca(BaseMinigame):
     def _evento_ambiente_aleatorio(self, ui):
         chance_evento = random.randint(1, 100)
         if chance_evento <= 3:
-            ui.exibir(f"\n{DOS_AMARELO} Toc.. Toc.. Você escuta batidas fracas na janela, você não sabe se há algo ali, o vidro está muito sujo.{RESET}")
+            ui.exibir(
+                f"\n{DOS_AMARELO} Toc.. Toc.. Você escuta batidas fracas na janela, você não sabe se há algo ali, o vidro está muito sujo.{RESET}"
+            )
         elif chance_evento <= 7:
-            ui.exibir(f"\n{DOS_AMARELO} Você escuta ruidos vindo da ventilação... Parece que algo está arranhando o aluminio. {RESET}")
+            ui.exibir(
+                f"\n{DOS_AMARELO} Você escuta ruidos vindo da ventilação... Parece que algo está arranhando o aluminio. {RESET}"
+            )
         elif chance_evento <= 9:
-            ui.exibir(f"\n{DOS_VERMELHO} 'Rogerio'... Você escuta algo chamar seu nome vindo do fundo do corredor.{RESET}")
+            ui.exibir(
+                f"\n{DOS_VERMELHO} 'Rogerio'... Você escuta algo chamar seu nome vindo do fundo do corredor.{RESET}"
+            )
         elif chance_evento <= 10:
-            ui.exibir(f"\n{DOS_VERMELHO} Pelo canto do seu olho, você jura ter visto algo acenando da janela, você não sabe se é algo real ou não.{RESET}")
+            ui.exibir(
+                f"\n{DOS_VERMELHO} Pelo canto do seu olho, você jura ter visto algo acenando da janela, você não sabe se é algo real ou não.{RESET}"
+            )
         elif chance_evento <= 12:
-            ui.exibir(f"\n{DOS_VERMELHO} Você jura ter visto algo na ventilação... Será que é coisa da sua cabeça?{RESET}")
+            ui.exibir(
+                f"\n{DOS_VERMELHO} Você jura ter visto algo na ventilação... Será que é coisa da sua cabeça?{RESET}"
+            )
 
     def _resolver_fim_de_turno(self, ui, jogo, god_mode):
-        
+
         self.usos_sistema_turno = 0
 
         if self.turnos_gerador_ativo > 0:
@@ -720,16 +797,24 @@ class MinigameSeguranca(BaseMinigame):
                 )
 
         if self.turno == TURNO_INICIO_CALOR:
-            ui.exibir(f"\n{DOS_AMARELO} [SISTEMA] O antigo gerador está superaquecendo, cada acão custará mais energia a partir de agora.{RESET}")
+            ui.exibir(
+                f"\n{DOS_AMARELO} [SISTEMA] O antigo gerador está superaquecendo, cada acão custará mais energia a partir de agora.{RESET}"
+            )
         elif self.turno == TURNO_CRITICO:
-            ui.exibir(f"\n {DOS_AMARELO} [SISTEMA] [AVISO CRITICO!!!] O gerador superaqueceu! Geradores reservas ligados, dreno de energia aumentou!{RESET}")
+            ui.exibir(
+                f"\n {DOS_AMARELO} [SISTEMA] [AVISO CRITICO!!!] O gerador superaqueceu! Geradores reservas ligados, dreno de energia aumentou!{RESET}"
+            )
 
         if self.porta_fechada and self.energia > 0:
             self.energia -= CUSTO_PORTA
-            ui.exibir(f" A pesada porta de metal consome energia contínua... (-{CUSTO_PORTA}% Energia)")
+            ui.exibir(
+                f" A pesada porta de metal consome energia contínua... (-{CUSTO_PORTA}% Energia)"
+            )
 
         if self.energia <= 0 and self.apagao == 0 and not god_mode:
-            ui.exibir("\n [ ENERGIA ESGOTADA ] Tudo fica escuro. @@PORTA@@A porta abre sozinha...")
+            ui.exibir(
+                "\n [ ENERGIA ESGOTADA ] Tudo fica escuro. @@PORTA@@A porta abre sozinha..."
+            )
             self.porta_fechada = False
             self.apagao = 1
             ui.pausar(2)
@@ -737,11 +822,15 @@ class MinigameSeguranca(BaseMinigame):
         if self.porta_fechada:
             if self.rick_pos == RICK_POS_ATAQUE:
                 self.rick_pos = 0
-                ui.exibir("\n Você escuta batidas na porta, e passos para fora do corredor logo depois.")
+                ui.exibir(
+                    "\n Você escuta batidas na porta, e passos para fora do corredor logo depois."
+                )
             if self._caroline_na_porta():
                 self.caroline_pos = 0
                 self.caroline_caminho = random.choice(["porta", "tubulacao"])
-                ui.exibir("\n Você escuta um estrondo na porta, e depois passos apressados para a sala de jantar.")
+                ui.exibir(
+                    "\n Você escuta um estrondo na porta, e depois passos apressados para a sala de jantar."
+                )
 
         rick_ataque = (self.rick_pos >= RICK_POS_ATAQUE) or (
             self.rick_pos == RICK_POS_PORTA and random.random() < 0.3
@@ -750,7 +839,10 @@ class MinigameSeguranca(BaseMinigame):
             (self.caroline_pos >= CAROLINE_POS_ATAQUE_PORTA)
             or (self.caroline_pos == CAROLINE_POS_PORTA and random.random() < 0.3)
         )
-        carol_duto_ataque = self.caroline_caminho == "tubulacao" and self.caroline_pos >= CAROLINE_POS_ATAQUE_DUTO
+        carol_duto_ataque = (
+            self.caroline_caminho == "tubulacao"
+            and self.caroline_pos >= CAROLINE_POS_ATAQUE_DUTO
+        )
         jon_ataque = self.jon_pos >= JON_POS_ATAQUE
 
         invasao = (
@@ -761,7 +853,9 @@ class MinigameSeguranca(BaseMinigame):
         )
         if invasao:
             if god_mode:
-                ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] Um animatrônico entra na sala... mas você o encara. Ele pede desculpas e sai de fininho.{RESET}")
+                ui.exibir(
+                    f"\n{DOS_AMARELO}[GOD MODE] Um animatrônico entra na sala... mas você o encara. Ele pede desculpas e sai de fininho.{RESET}"
+                )
                 self.rick_pos = 0
                 self.caroline_pos = 0
                 self.jon_pos = 0
@@ -779,7 +873,11 @@ class MinigameSeguranca(BaseMinigame):
         return "continuar"
 
     def _mover_animatronicos(self, ui):
-        if self.rick_pos == RICK_POS_PORTA and not self.porta_fechada and random.random() < CHANCE_RICK_RECUAR:
+        if (
+            self.rick_pos == RICK_POS_PORTA
+            and not self.porta_fechada
+            and random.random() < CHANCE_RICK_RECUAR
+        ):
             self.rick_pos = 1
             ui.exibir(" Ouve passos pesados a se afastar da porta")
         else:
@@ -797,15 +895,21 @@ class MinigameSeguranca(BaseMinigame):
         else:
             self.jon_pos = min(JON_POS_ATAQUE, self.jon_pos + random.choice([0, 1, 2]))
 
-        self.caroline_pos = min(CAROLINE_POS_ATAQUE_PORTA, self.caroline_pos + random.choice([0, 1, 2, 3]))
+        self.caroline_pos = min(
+            CAROLINE_POS_ATAQUE_PORTA, self.caroline_pos + random.choice([0, 1, 2, 3])
+        )
 
     def _atualizar_eventos_passivos(self, jogo):
-        if self.turno >= TURNO_INICIO_CALOR and (self.turno >= 20 or random.randint(1, 100) > 100 - CHANCE_INDIO_JANELA):
+        if self.turno >= TURNO_INICIO_CALOR and (
+            self.turno >= 20 or random.randint(1, 100) > 100 - CHANCE_INDIO_JANELA
+        ):
             self.indio_janela = True
         else:
             self.indio_janela = False
 
-        if random.randint(1, 100) > 100 - CHANCE_ALBERTO_TROLL and not getattr(jogo, "alberto_desativado", False):
+        if random.randint(1, 100) > 100 - CHANCE_ALBERTO_TROLL and not getattr(
+            jogo, "alberto_desativado", False
+        ):
             self.alberto_troll = True
 
     def _checar_fim_de_noite(self, jogo):
@@ -814,15 +918,25 @@ class MinigameSeguranca(BaseMinigame):
 
         ui = self.ui
         ui.limpar()
-        
-        
-        ui.animar("Você se sente aliviado quando a luz do sol começa a invadir a janela do restaurante, e o relógio marca pontualmente '06:00' ", 0.03, DOS_BRANCO, jogo)
-        ui.pausar(2)
-        ui.animar("O sol começa a nascer. A energia retorna aos poucos.", 0.03, DOS_BRANCO, jogo)
-        ui.animar("A porta da sala destranca.", 0.03, DOS_BRANCO, jogo)
-        
 
-        jogo.mapa["sala de jantar"]["descrição"] = "A luz da manhã invade as janelas sujas."
+        ui.animar(
+            "Você se sente aliviado quando a luz do sol começa a invadir a janela do restaurante, e o relógio marca pontualmente '06:00' ",
+            0.03,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.pausar(2)
+        ui.animar(
+            "O sol começa a nascer. A energia retorna aos poucos.",
+            0.03,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar("A porta da sala destranca.", 0.03, DOS_BRANCO, jogo)
+
+        jogo.mapa["sala de jantar"]["descrição"] = (
+            "A luz da manhã invade as janelas sujas."
+        )
         jogo.mapa["hall de entrada"]["descrição"] = "O hall está iluminado."
         jogo.mapa["balcão"]["descrição"] = "A claridade revela o mofo nos doces."
         jogo.mapa["entrada"]["descrição"] = "As luzes não piscam mais."
@@ -832,6 +946,7 @@ class MinigameSeguranca(BaseMinigame):
             ui.pausar(2)
             try:
                 from data import ARTE_RADAR
+
                 radar = ARTE_RADAR
             except (ImportError, AttributeError):
                 radar = "   .---.\n /   |   \\\n|----O----|\n \\   |   /\n   '---'"
@@ -839,7 +954,9 @@ class MinigameSeguranca(BaseMinigame):
             ui.animar("\nVocê saca o dispositivo.", 0.03, DOS_AMARELO, jogo)
             ui.exibir(f"{DOS_VERDE}{radar}{RESET}")
             ui.pausar(1)
-            ui.animar("[DISPOSITIVO]: PRESENÇA ULTERIOR DETECTADA.", 0.03, DOS_VERDE, jogo)
+            ui.animar(
+                "[DISPOSITIVO]: PRESENÇA ULTERIOR DETECTADA.", 0.03, DOS_VERDE, jogo
+            )
             ui.animar("Ela ainda está aqui...\n", 0.04, DOS_AMARELO, jogo)
             ui.pausar(3)
 

@@ -229,7 +229,8 @@ ARTE_ENTRADA = r"""
 `'.'"^  ^` "^ "^|"|^'"' `^`-.^~'
 """
 
-ARTE_FINAL_MEDIOCRE = r"""
+ARTE_FINAL_MEDIOCRE = (
+    r"""
                                  * .    .    .     +     .  * .     .  *
 .   * . .   * .    .   .        *     .
        __________    * .    *   . sinto sua falta.    +  .   *  .   
@@ -237,9 +238,11 @@ ARTE_FINAL_MEDIOCRE = r"""
      / /____||_____\\__       *   .      *    +     .
     | "~      7        `'.
     (_ .--. ========.--. =|
-    `"( () )"""""""( () )"`         
+    `"( () )"""
+    """"( () )"`         
 ……………….'--'.........'--'.............................................
 """
+)
 
 ARTE_FINAL_NEUTRO = r"""
  *    .  *       .            *
@@ -332,14 +335,36 @@ _ia_cfg = BALANCE_CFG.get("barulho_e_ia", {})
 _exp_cfg = BALANCE_CFG.get("exploracao", {})
 
 # Constantes de Inventário e Status
-MAX_INVENTARIO = int(os.environ.get("MAX_INVENTARIO", _inv_cfg.get("max_inicial", _constantes_legadas.get("max_inventario", 3))))
+MAX_INVENTARIO = int(
+    os.environ.get(
+        "MAX_INVENTARIO",
+        _inv_cfg.get("max_inicial", _constantes_legadas.get("max_inventario", 3)),
+    )
+)
 SLOTS_POR_BOLSA = int(_inv_cfg.get("slots_por_bolsa", 3))
 META_ACUMULADOR = int(_inv_cfg.get("meta_conquista_acumulador", 9))
 
-VIDA_NORMAL = int(os.environ.get("VIDA_NORMAL", _status_cfg.get("vida_normal", _constantes_legadas.get("vida_normal", 3))))
-VIDA_PESADELO = int(os.environ.get("VIDA_PESADELO", _status_cfg.get("vida_pesadelo", _constantes_legadas.get("vida_pesadelo", 2))))
+VIDA_NORMAL = int(
+    os.environ.get(
+        "VIDA_NORMAL",
+        _status_cfg.get("vida_normal", _constantes_legadas.get("vida_normal", 3)),
+    )
+)
+VIDA_PESADELO = int(
+    os.environ.get(
+        "VIDA_PESADELO",
+        _status_cfg.get("vida_pesadelo", _constantes_legadas.get("vida_pesadelo", 2)),
+    )
+)
 VIDA_GOD_MODE = int(_status_cfg.get("vida_god_mode", 9999))
-TURNOS_BATERIA = int(os.environ.get("TURNOS_BATERIA", _status_cfg.get("turnos_bateria", _constantes_legadas.get("turnos_bateria", 12))))
+TURNOS_BATERIA = int(
+    os.environ.get(
+        "TURNOS_BATERIA",
+        _status_cfg.get(
+            "turnos_bateria", _constantes_legadas.get("turnos_bateria", 12)
+        ),
+    )
+)
 TURNOS_LUZ_INICIAL = int(_status_cfg.get("turnos_luz_inicial", 3))
 ISQUEIRO_TURNOS_BONUS = int(_status_cfg.get("isqueiro_turnos_bonus", 2))
 ISQUEIRO_LIMITE_LUZ = int(_status_cfg.get("isqueiro_limite_luz_uso", 2))
@@ -363,7 +388,12 @@ LIMITE_BARULHO_FANTASMA = int(_ia_cfg.get("limite_barulho_desafio_fantasma", 50)
 # Constantes de Exploração
 CHANCE_TROPECO_ESCURO_PCT = int(_exp_cfg.get("chance_tropeco_escuro_pct", 10))
 CHANCE_EVENTO_ALEATORIO = float(_exp_cfg.get("chance_evento_aleatorio", 0.25))
-COFRE_SENHA = str(os.environ.get("COFRE_SENHA", _exp_cfg.get("cofre_senha", _constantes_legadas.get("cofre_senha", "1994"))))
+COFRE_SENHA = str(
+    os.environ.get(
+        "COFRE_SENHA",
+        _exp_cfg.get("cofre_senha", _constantes_legadas.get("cofre_senha", "1994")),
+    )
+)
 MAX_TENTATIVAS_COFRE = int(_exp_cfg.get("max_tentativas_cofre", 3))
 TEMPO_SPEEDRUN_VERDADEIRO = float(_exp_cfg.get("tempo_speedrun_verdadeiro_seg", 360.0))
 TEMPO_SPEEDRUN_NEUTRO = float(_exp_cfg.get("tempo_speedrun_neutro_seg", 300.0))

@@ -116,7 +116,7 @@ class GameState(BaseModel):
     estado_atual: str = GameStateEnum.MENU.value
     god_mode: bool = False
     dev_mode: bool = False
-    dev_usado: bool = False  
+    dev_usado: bool = False
     dev_radar: bool = True
     dev_ia: bool = False
     erros_consecutivos: int = Field(default=0)
@@ -182,7 +182,9 @@ class GameState(BaseModel):
     def obter_hp_maximo(self) -> int:
         if self.god_mode:
             return VIDA_GOD_MODE
-        return VIDA_PESADELO if self.dificuldade_escolhida == "PESADELO" else VIDA_NORMAL
+        return (
+            VIDA_PESADELO if self.dificuldade_escolhida == "PESADELO" else VIDA_NORMAL
+        )
 
     def tem_espaco_inventario(self) -> bool:
         return self.god_mode or len(self.inventario) < self.obter_limite_inventario()
@@ -334,14 +336,19 @@ class GameState(BaseModel):
 
         if self.ai_estado == "PATRULHA":
             vizinhos = [
-                v for k, v in self.mapa.get(self.ai_sala, {}).items()
+                v
+                for k, v in self.mapa.get(self.ai_sala, {}).items()
                 if isinstance(v, str) and v in self.mapa and k not in chaves_nao_saida
             ]
             if random.random() > CHANCE_MOVER_PATRULHA and vizinhos:
                 self.ai_sala = random.choice(vizinhos)
 
         elif self.ai_estado in ["ALERTA", "CACA"]:
-            destino = self.sala_atual if self.ai_estado == "CACA" else (self.ai_alvo or self.sala_atual)
+            destino = (
+                self.sala_atual
+                if self.ai_estado == "CACA"
+                else (self.ai_alvo or self.sala_atual)
+            )
             caminho = self.calcular_caminho_bfs(self.ai_sala, destino)
             if len(caminho) > 1:
                 self.ai_sala = caminho[1]

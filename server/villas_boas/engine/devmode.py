@@ -12,11 +12,12 @@ Regras de segurança do modo:
     * a telemetria ignora partidas em modo dev
     * o modo é desligado ao reiniciar depois de um fim de jogo
 """
+
 import os
 from collections import Counter
 
-from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
-from data import descricoes_itens, VIDA_NORMAL, TURNOS_BATERIA
+from data import TURNOS_BATERIA, VIDA_NORMAL, descricoes_itens
+from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
 from villas_boas.utils import encontrar_melhor_match
 
 CODIGO_PADRAO = "sudo admin 1982"
@@ -30,16 +31,24 @@ NAO_TRATADO = 0
 TRATADO = 1
 TRATADO_MUDOU_SALA = 2  # o chamador deve checar finais e redesenhar a sala
 
-_SEM_ITEM_NO_TUDO = {"fios cortados"}  # muda o rumo da história: só via 'gerar fios cortados'
+_SEM_ITEM_NO_TUDO = {
+    "fios cortados"
+}  # muda o rumo da história: só via 'gerar fios cortados'
 
 
 # ---------------------------------------------------------------- ativação
 def modo_dev_habilitado():
-    return os.environ.get("DEV_MODE_ENABLED", "1").strip().lower() not in ("0", "false", "no", "off")
+    return os.environ.get("DEV_MODE_ENABLED", "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
 
 
 def _codigo_de_ativacao():
     from villas_boas.actions.parser import normalizar
+
     return normalizar(os.environ.get("DEV_MODE_CODE") or CODIGO_PADRAO)
 
 
@@ -68,14 +77,19 @@ def ativar(jogo, vindo_do_menu):
 
     if vindo_do_menu:
         import time
+
         ui.limpar()
         jogo.dificuldade_escolhida = DIFICULDADE_DEV
         jogo.fast_mode = True
         jogo.estado_atual = "JOGO"
         jogo.tempo_inicio = time.time()
 
-    ui.exibir(f"{DOS_VERDE}[sudo] acesso root concedido. MODO DESENVOLVEDOR ATIVO.{RESET}")
-    ui.exibir(f"{DOS_AMARELO}Vida, luz e itens infinitos. Perseguidor congelado (use 'dev ia on' para soltá-lo).{RESET}")
+    ui.exibir(
+        f"{DOS_VERDE}[sudo] acesso root concedido. MODO DESENVOLVEDOR ATIVO.{RESET}"
+    )
+    ui.exibir(
+        f"{DOS_AMARELO}Vida, luz e itens infinitos. Perseguidor congelado (use 'dev ia on' para soltá-lo).{RESET}"
+    )
     ui.exibir(f"{DOS_BRANCO}Digite 'dev' para ver todos os comandos.{RESET}")
     ui.exibir(f"{DOS_VERMELHO}Esta partida não entra no leaderboard.{RESET}")
 
@@ -92,7 +106,9 @@ def desativar(jogo):
     jogo.energia_max_noite = 100
     if jogo.dificuldade_escolhida == DIFICULDADE_DEV:
         jogo.dificuldade_escolhida = "NORMAL"
-    ui.exibir(f"{DOS_AMARELO}[DEV] Modo desenvolvedor desligado. Vida e bateria voltaram ao normal.{RESET}")
+    ui.exibir(
+        f"{DOS_AMARELO}[DEV] Modo desenvolvedor desligado. Vida e bateria voltaram ao normal.{RESET}"
+    )
     ui.exibir(f"{DOS_VERMELHO}(esta partida continua fora do leaderboard)")
 
 
@@ -107,6 +123,7 @@ def resetar(jogo):
 # ------------------------------------------------------------------- radar
 def _bfs(jogo, origem, destino):
     from villas_boas.engine.core import calcular_caminho_bfs
+
     return calcular_caminho_bfs(jogo.mapa, origem, destino)
 
 
@@ -134,7 +151,9 @@ def montar_radar(jogo):
     else:
         onde = f"{jogo.ai_sala} ({dist} sala{'s' if dist != 1 else ''} de distância)"
 
-    linhas.append(f"{cor}[RADAR] Perseguidor: {onde} | estado: {jogo.ai_estado} | IA: {ia_txt}{RESET}")
+    linhas.append(
+        f"{cor}[RADAR] Perseguidor: {onde} | estado: {jogo.ai_estado} | IA: {ia_txt}{RESET}"
+    )
     if caminho and len(caminho) > 1:
         linhas.append(f"{DOS_BRANCO}        rota: {' > '.join(caminho)}{RESET}")
     linhas.append(f"{DOS_BRANCO}        barulho: {jogo.nivel_barulho}%{RESET}")
@@ -143,7 +162,9 @@ def montar_radar(jogo):
         c2 = _bfs(jogo, jogo.sala_atual, jogo.posicao_perseguidor)
         d2 = len(c2) - 1 if c2 else None
         d2_txt = "sem rota" if d2 is None else f"{d2} sala(s)"
-        linhas.append(f"{_cor_distancia(d2)}[RADAR] Ela (PESADELO): {jogo.posicao_perseguidor} ({d2_txt}){RESET}")
+        linhas.append(
+            f"{_cor_distancia(d2)}[RADAR] Ela (PESADELO): {jogo.posicao_perseguidor} ({d2_txt}){RESET}"
+        )
     elif jogo.dificuldade_escolhida == "NORMAL" and getattr(jogo, "dev_ia", False):
         linhas.append(
             f"{DOS_BRANCO}[RADAR] Cronômetro do corredor: {jogo.turnos_mesma_sala}/{jogo.turnos_perseguidor_morte} turnos parado{RESET}"
@@ -188,7 +209,6 @@ def _restaurar_itens(jogo, snap):
 
 def pos_turno(jogo, snap):
     """Roda depois de cada comando normal do jogo, com o modo dev ligado."""
-    ui = jogo.ui_handler
     if snap is not None:
         _restaurar_itens(jogo, snap)
 
@@ -200,9 +220,14 @@ def pos_turno(jogo, snap):
     if jogo.estado_atual == "COMBATE_ANIMATRONICO":
         _interceptar_perseguidor(jogo)
         from views import imprimir_contexto_sala
+
         imprimir_contexto_sala(jogo)
 
-    if getattr(jogo, "dev_radar", True) and jogo.estado_atual == "JOGO" and jogo.sala_atual in jogo.mapa:
+    if (
+        getattr(jogo, "dev_radar", True)
+        and jogo.estado_atual == "JOGO"
+        and jogo.sala_atual in jogo.mapa
+    ):
         imprimir_radar(jogo)
 
 
@@ -220,7 +245,9 @@ def _interceptar_perseguidor(jogo):
     jogo.ai_sala = longe
     jogo.ai_estado = "PATRULHA"
     jogo.nivel_barulho = 0
-    ui.exibir(f"{DOS_AMARELO}[DEV] O perseguidor te alcançou, mas o modo dev te protegeu. Ele recuou para: {longe}.{RESET}")
+    ui.exibir(
+        f"{DOS_AMARELO}[DEV] O perseguidor te alcançou, mas o modo dev te protegeu. Ele recuou para: {longe}.{RESET}"
+    )
 
 
 # ------------------------------------------------------------- comandos
@@ -234,12 +261,16 @@ def _sala_por_nome(jogo, termo):
 def _cmd_tp(jogo, args, estado):
     ui = jogo.ui_handler
     if not args:
-        ui.exibir(f"{DOS_AMARELO}Uso: tp <sala>  |  tp ia  (vai até o perseguidor){RESET}")
+        ui.exibir(
+            f"{DOS_AMARELO}Uso: tp <sala>  |  tp ia  (vai até o perseguidor){RESET}"
+        )
         ui.exibir(f"{DOS_BRANCO}Salas: {', '.join(jogo.mapa.keys())}{RESET}")
         return TRATADO
     destino = _sala_por_nome(jogo, " ".join(args))
     if not destino:
-        ui.exibir(f"{DOS_VERMELHO}[DEV] Sala '{' '.join(args)}' não existe. Digite 'tp' para listar.{RESET}")
+        ui.exibir(
+            f"{DOS_VERMELHO}[DEV] Sala '{' '.join(args)}' não existe. Digite 'tp' para listar.{RESET}"
+        )
         return TRATADO
     if estado.startswith("MINIGAME"):
         jogo.estado_atual = "JOGO"
@@ -259,21 +290,32 @@ def _cmd_gerar(jogo, args):
     termo = " ".join(args)
 
     if termo in ("tudo", "todos", "all"):
-        novos = [i for i in descricoes_itens if i not in jogo.inventario and i not in _SEM_ITEM_NO_TUDO]
+        novos = [
+            i
+            for i in descricoes_itens
+            if i not in jogo.inventario and i not in _SEM_ITEM_NO_TUDO
+        ]
         jogo.inventario.extend(novos)
-        ui.exibir(f"{DOS_AMARELO}[DEV] {len(novos)} itens adicionados à mochila (exceto 'fios cortados').{RESET}")
+        ui.exibir(
+            f"{DOS_AMARELO}[DEV] {len(novos)} itens adicionados à mochila (exceto 'fios cortados').{RESET}"
+        )
         return TRATADO
 
     if "caroline" in termo or "alma" in termo:  # easter egg original do God Mode
-        ui.exibir(f"{DOS_VERMELHO}[DEV ERRO FATAL] VOCÊ NÃO PODE CRIAR O QUE JÁ ESTÁ MORTO.{RESET}")
+        ui.exibir(
+            f"{DOS_VERMELHO}[DEV ERRO FATAL] VOCÊ NÃO PODE CRIAR O QUE JÁ ESTÁ MORTO.{RESET}"
+        )
         ui.pausar(2)
         from views import dar_tela_kernel_panic
+
         dar_tela_kernel_panic(jogo)
         return TRATADO
 
     item = encontrar_melhor_match(termo, list(descricoes_itens.keys()))
     if not item:
-        ui.exibir(f"{DOS_VERMELHO}[DEV] Item '{termo}' não catalogado. Digite 'gerar' para listar.{RESET}")
+        ui.exibir(
+            f"{DOS_VERMELHO}[DEV] Item '{termo}' não catalogado. Digite 'gerar' para listar.{RESET}"
+        )
         return TRATADO
     jogo.inventario.append(item)
     if item == "fios cortados":
@@ -286,7 +328,9 @@ def _cmd_radar(jogo, args):
     ui = jogo.ui_handler
     if args and args[0] in ("on", "ligar", "off", "desligar"):
         jogo.dev_radar = args[0] in ("on", "ligar")
-        ui.exibir(f"{DOS_AMARELO}[DEV] Radar automático {'LIGADO' if jogo.dev_radar else 'DESLIGADO'}.{RESET}")
+        ui.exibir(
+            f"{DOS_AMARELO}[DEV] Radar automático {'LIGADO' if jogo.dev_radar else 'DESLIGADO'}.{RESET}"
+        )
     if not args or jogo.dev_radar:
         imprimir_radar(jogo)
     return TRATADO
@@ -295,11 +339,17 @@ def _cmd_radar(jogo, args):
 def _cmd_ia(jogo, args):
     ui = jogo.ui_handler
     if not args:
-        ui.exibir(f"{DOS_AMARELO}[DEV] IA do perseguidor: {'ATIVA' if jogo.dev_ia else 'CONGELADA'} | em: {jogo.ai_sala}{RESET}")
-        ui.exibir(f"{DOS_BRANCO}Uso: dev ia on | off | <sala> (move o perseguidor){RESET}")
+        ui.exibir(
+            f"{DOS_AMARELO}[DEV] IA do perseguidor: {'ATIVA' if jogo.dev_ia else 'CONGELADA'} | em: {jogo.ai_sala}{RESET}"
+        )
+        ui.exibir(
+            f"{DOS_BRANCO}Uso: dev ia on | off | <sala> (move o perseguidor){RESET}"
+        )
     elif args[0] in ("on", "ligar"):
         jogo.dev_ia = True
-        ui.exibir(f"{DOS_AMARELO}[DEV] Perseguidor SOLTO. Se te alcançar, ele recua (você não morre).{RESET}")
+        ui.exibir(
+            f"{DOS_AMARELO}[DEV] Perseguidor SOLTO. Se te alcançar, ele recua (você não morre).{RESET}"
+        )
     elif args[0] in ("off", "desligar"):
         jogo.dev_ia = False
         ui.exibir(f"{DOS_AMARELO}[DEV] Perseguidor CONGELADO.{RESET}")
@@ -317,12 +367,16 @@ def _cmd_dificuldade(jogo, args):
     ui = jogo.ui_handler
     opcoes = {"normal": "NORMAL", "pesadelo": "PESADELO", "dev": DIFICULDADE_DEV}
     if not args or args[0] not in opcoes:
-        ui.exibir(f"{DOS_AMARELO}Uso: dev dificuldade normal | pesadelo | dev  (atual: {jogo.dificuldade_escolhida}){RESET}")
+        ui.exibir(
+            f"{DOS_AMARELO}Uso: dev dificuldade normal | pesadelo | dev  (atual: {jogo.dificuldade_escolhida}){RESET}"
+        )
         return TRATADO
     jogo.dificuldade_escolhida = opcoes[args[0]]
     jogo.turnos_mesma_sala = 0
-    ui.exibir(f"{DOS_AMARELO}[DEV] Dificuldade: {jogo.dificuldade_escolhida}. "
-              f"(os perseguidores 'por tempo' só agem com 'dev ia on'){RESET}")
+    ui.exibir(
+        f"{DOS_AMARELO}[DEV] Dificuldade: {jogo.dificuldade_escolhida}. "
+        f"(os perseguidores 'por tempo' só agem com 'dev ia on'){RESET}"
+    )
     return TRATADO
 
 
@@ -335,8 +389,10 @@ def _cmd_status(jogo):
         f"perseguidor: {jogo.ai_sala} ({jogo.ai_estado}, alvo: {jogo.ai_alvo or '-'}) | IA: {'ativa' if jogo.dev_ia else 'congelada'}",
         f"perseguidora (pesadelo): {jogo.posicao_perseguidor}",
         f"inventário ({len(jogo.inventario)}): {', '.join(jogo.inventario) or '-'}",
-        f"flags: noite_vencida={jogo.noite_vencida} amanheceu={jogo.amanheceu} incendio={jogo.incendio} "
-        f"fios_cortados={jogo.fios_cortados_inventario} alberto_desativado={jogo.alberto_desativado}",
+        (
+            f"flags: noite_vencida={jogo.noite_vencida} amanheceu={jogo.amanheceu} incendio={jogo.incendio} "
+            f"fios_cortados={jogo.fios_cortados_inventario} alberto_desativado={jogo.alberto_desativado}"
+        ),
         f"conquistas: {len(jogo.conquistas)} | comandos digitados: {len(jogo.log_comandos)}",
     ]
     for linha in linhas:
@@ -351,8 +407,14 @@ def _cmd_mapa(jogo):
     for nome, sala in jogo.mapa.items():
         if not isinstance(sala, dict):
             continue
-        marca = ("@" if nome == jogo.sala_atual else " ") + ("X" if nome == jogo.ai_sala else " ")
-        saidas = ", ".join(f"{d}→{v}" for d, v in sala.items() if d not in ignorar and isinstance(v, str))
+        marca = ("@" if nome == jogo.sala_atual else " ") + (
+            "X" if nome == jogo.ai_sala else " "
+        )
+        saidas = ", ".join(
+            f"{d}→{v}"
+            for d, v in sala.items()
+            if d not in ignorar and isinstance(v, str)
+        )
         itens = sala.get("itens") or []
         extra = f"  [itens: {', '.join(itens)}]" if itens else ""
         ui.exibir(f"{DOS_BRANCO}{marca} {nome}: {saidas}{extra}{RESET}")
@@ -363,7 +425,10 @@ def _cmd_ajuda(jogo):
     ui = jogo.ui_handler
     ui.exibir(f"{DOS_VERDE}=== COMANDOS DO MODO DEV ==={RESET}")
     ajuda = [
-        ("tp <sala> | tp ia | tp", "teleporta (ia = até o perseguidor; sem argumento lista as salas)"),
+        (
+            "tp <sala> | tp ia | tp",
+            "teleporta (ia = até o perseguidor; sem argumento lista as salas)",
+        ),
         ("gerar <item> | gerar tudo", "cria itens na mochila"),
         ("radar | dev radar on/off", "mostra / liga / desliga o radar automático"),
         ("dev ia on/off/<sala>", "solta, congela ou move o perseguidor"),
@@ -375,7 +440,9 @@ def _cmd_ajuda(jogo):
     ]
     for cmd, desc in ajuda:
         ui.exibir(f"{DOS_AMARELO}{cmd:<42}{DOS_BRANCO}{desc}{RESET}")
-    ui.exibir(f"{DOS_BRANCO}Sempre ligado: vida, luz e itens infinitos (itens usados voltam sozinhos).{RESET}")
+    ui.exibir(
+        f"{DOS_BRANCO}Sempre ligado: vida, luz e itens infinitos (itens usados voltam sozinhos).{RESET}"
+    )
     return TRATADO
 
 
@@ -418,7 +485,9 @@ def processar_comando_dev(comando, jogo, estado):
             jogo.minigame_atual = None
             jogo.sala_atual = "morte"
             return TRATADO_MUDOU_SALA
-        jogo.ui_handler.exibir(f"{DOS_VERMELHO}[DEV] Subcomando '{sub}' desconhecido. Digite 'dev' para ajuda.{RESET}")
+        jogo.ui_handler.exibir(
+            f"{DOS_VERMELHO}[DEV] Subcomando '{sub}' desconhecido. Digite 'dev' para ajuda.{RESET}"
+        )
         return TRATADO
 
     if verbo == "tp":

@@ -52,8 +52,6 @@ def digitar(texto, tempo_base=0.03, cor="", jogo=None):
 
 
 class UIHandler:
-   
-
     def limpar(self):
         limpar_tela()
 

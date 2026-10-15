@@ -1,15 +1,14 @@
-import os
 import logging
+import os
 from logging.handlers import RotatingFileHandler
 
 from flask import send_from_directory
 
-from config import Config
 from app_factory import create_app
 
 app = create_app()
 
-#ola mundo apenas para dar commit
+# ola mundo apenas para dar commit
 
 # logging em arquivo
 
@@ -25,6 +24,7 @@ logging.getLogger().addHandler(file_handler)
 
 
 # rotas estáticas
+
 
 @app.route("/")
 def raiz():
@@ -57,7 +57,6 @@ def page_not_found(e):
 
 
 if __name__ == "__main__":
-    
     port = int(os.environ.get("PORT", "5000"))
-   
+
     app.run(host="0.0.0.0", port=port)

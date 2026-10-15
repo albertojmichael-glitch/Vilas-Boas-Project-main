@@ -61,16 +61,28 @@ def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
     )
 
     ui.animar(
-        f"{DOS_BRANCO}[1] INICIAR: MODO NORMAL (Velocidade MS-DOS Padrão){RESET}", 0.01, DOS_BRANCO, jogo
+        f"{DOS_BRANCO}[1] INICIAR: MODO NORMAL (Velocidade MS-DOS Padrão){RESET}",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
     ui.animar(
-        f"{DOS_AMARELO}[2] INICIAR: MODO NORMAL (Texto Rápido — Sem Delays){RESET}", 0.01, DOS_BRANCO, jogo
+        f"{DOS_AMARELO}[2] INICIAR: MODO NORMAL (Texto Rápido — Sem Delays){RESET}",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
     ui.animar(
-        f"{DOS_VERMELHO}[3] INICIAR: MODO PESADELO (Velocidade MS-DOS Padrão){RESET}", 0.01, DOS_BRANCO, jogo
+        f"{DOS_VERMELHO}[3] INICIAR: MODO PESADELO (Velocidade MS-DOS Padrão){RESET}",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
     ui.animar(
-        f"{DOS_AMARELO}[4] INICIAR: MODO PESADELO (Texto Rápido — Sem Delays){RESET}", 0.01, DOS_BRANCO, jogo
+        f"{DOS_AMARELO}[4] INICIAR: MODO PESADELO (Texto Rápido — Sem Delays){RESET}",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
     ui.animar(
         f"{DOS_AMARELO}[5] INICIAR: MODOS DE DESAFIO{RESET}", 0.01, DOS_BRANCO, jogo
@@ -81,7 +93,10 @@ def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
 
     if tem_autosave:
         ui.animar(
-            f"{DOS_VERDE}[7] CONTINUAR JOGO (Autosave Encontrado){RESET}\n", 0.01, DOS_BRANCO, jogo
+            f"{DOS_VERDE}[7] CONTINUAR JOGO (Autosave Encontrado){RESET}\n",
+            0.01,
+            DOS_BRANCO,
+            jogo,
         )
         ui.animar(
             f"{DOS_VERDE}SELECIONE UMA OPÇÃO (1-7): {RESET}", 0.01, DOS_BRANCO, jogo
@@ -94,71 +109,99 @@ def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
 
 def imprimir_tutorial(ui, jogo=None):
     ui.animar(
-        f"\n{DOS_AMARELO}=================================================={RESET}", 
-        0.005, DOS_BRANCO, jogo
+        f"\n{DOS_AMARELO}=================================================={RESET}",
+        0.005,
+        DOS_BRANCO,
+        jogo,
     )
     ui.animar(
-        f"{DOS_AMARELO}   [ MANUAL DE SOBREVIVÊNCIA DO SISTEMA v1.0 ]    {RESET}", 
-        0.01, DOS_BRANCO, jogo
+        f"{DOS_AMARELO}   [ MANUAL DE SOBREVIVÊNCIA DO SISTEMA v1.0 ]    {RESET}",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
     ui.animar(
-        f"{DOS_AMARELO}=================================================={RESET}", 
-        0.005, DOS_BRANCO, jogo
+        f"{DOS_AMARELO}=================================================={RESET}",
+        0.005,
+        DOS_BRANCO,
+        jogo,
     )
-    
+
     ui.animar(f"{DOS_BRANCO}>> NAVEGAÇÃO:{RESET}", 0.01, DOS_BRANCO, jogo)
     ui.animar(
-        f"   Mova-se usando direções ({DOS_VERDE}ir frente{RESET}, {DOS_VERDE}ir esquerda{RESET})", 
-        0.01, DOS_BRANCO, jogo
+        f"   Mova-se usando direções ({DOS_VERDE}ir frente{RESET}, {DOS_VERDE}ir esquerda{RESET})",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
     ui.animar(
-        f"   ou digite o destino exato: {DOS_VERDE}ir sala de jantar{RESET}.", 
-        0.01, DOS_BRANCO, jogo
+        f"   ou digite o destino exato: {DOS_VERDE}ir sala de jantar{RESET}.",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
-    
+
     ui.animar(f"\n{DOS_BRANCO}>> INTERAÇÃO:{RESET}", 0.01, DOS_BRANCO, jogo)
     ui.animar(
-        f"   Examine os detalhes ao redor com {DOS_VERDE}olhar [objeto]{RESET}.", 
-        0.01, DOS_BRANCO, jogo
+        f"   Examine os detalhes ao redor com {DOS_VERDE}olhar [objeto]{RESET}.",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
     ui.animar(
-        f"   Para interagir, use {DOS_VERDE}pegar [item]{RESET} ou {DOS_VERDE}usar [item]{RESET}.", 
-        0.01, DOS_BRANCO, jogo
+        f"   Para interagir, use {DOS_VERDE}pegar [item]{RESET} ou {DOS_VERDE}usar [item]{RESET}.",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
-    
+
     ui.animar(f"\n{DOS_BRANCO}>> GERENCIAMENTO:{RESET}", 0.01, DOS_BRANCO, jogo)
     ui.animar(
-        f"   Digite {DOS_VERDE}inventario{RESET} (ou apenas {DOS_VERDE}i{RESET}) para checar seus bolsos.", 
-        0.01, DOS_BRANCO, jogo
+        f"   Digite {DOS_VERDE}inventario{RESET} (ou apenas {DOS_VERDE}i{RESET}) para checar seus bolsos.",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
     ui.animar(
-        f"   Dica: Atalhos funcionam. Digite {DOS_VERDE}p chave{RESET} para pegar rápido.", 
-        0.01, DOS_BRANCO, jogo
+        f"   Dica: Atalhos funcionam. Digite {DOS_VERDE}p chave{RESET} para pegar rápido.",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
-    
+
     ui.animar(f"\n{DOS_VERMELHO}>> AVISO DE SEGURANÇA:{RESET}", 0.01, DOS_BRANCO, jogo)
     ui.animar(
-        f"   Tropeçar no escuro ou errar comandos gera {DOS_VERMELHO}barulho{RESET}.", 
-        0.01, DOS_BRANCO, jogo
+        f"   Tropeçar no escuro ou errar comandos gera {DOS_VERMELHO}barulho{RESET}.",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
     ui.animar(
-        f"   Ela escuta. Se precisar fugir de uma sala, digite {DOS_VERDE}correr [direção]{RESET}.", 
-        0.01, DOS_BRANCO, jogo
+        f"   Ela escuta. Se precisar fugir de uma sala, digite {DOS_VERDE}correr [direção]{RESET}.",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
-    
+
     ui.animar(
-        f"\n{DOS_AMARELO}Caso precise, digite {DOS_VERDE}ajuda{DOS_AMARELO} para o guia completo novamente.{RESET}", 
-        0.01, DOS_BRANCO, jogo
+        f"\n{DOS_AMARELO}Caso precise, digite {DOS_VERDE}ajuda{DOS_AMARELO} para o guia completo novamente.{RESET}",
+        0.01,
+        DOS_BRANCO,
+        jogo,
     )
     ui.animar(
-        f"{DOS_AMARELO}=================================================={RESET}\n", 
-        0.005, DOS_BRANCO, jogo
+        f"{DOS_AMARELO}=================================================={RESET}\n",
+        0.005,
+        DOS_BRANCO,
+        jogo,
     )
 
     try:
         from data import ARTE_ENTRADA
+
         ui.animar(f"{DOS_BRANCO}{ARTE_ENTRADA}{RESET}", 0.005, jogo=jogo)
-    except ImportError: pass
+    except ImportError:
+        pass
 
 
 def dar_dica_jon(passo_certo, ui):
@@ -193,16 +236,15 @@ def falar_pianista(acertou, ui, jogo):
             jogo,
         )
 
+
 def dar_tela_kernel_panic(jogo):
     jogo.estado_atual = "FIM"
     ui = jogo.ui_handler
-    
 
     ui.limpar()
-    
-    
+
     ui.buffer.append("@@PANIC@@")
-    
+
     ARTE_PANIC = r"""
     .--.
    |0_0 |     -
@@ -213,23 +255,31 @@ def dar_tela_kernel_panic(jogo):
 \___)=(___/  
 
     """
-    
 
     ui.animar(ARTE_PANIC, 0, DOS_BRANCO, jogo)
-    
-    ui.animar("KERNEL PANIC - NOT SYNCING: Fatal exception in interrupt", 0, DOS_BRANCO, jogo)
-    ui.animar("Hardware CPU 0: corrupted by external psychological entity.", 0, DOS_BRANCO, jogo)
-    ui.animar("Process CAROLINE.SYS (pid: 1982, stackpage=0x00000000)", 0, DOS_BRANCO, jogo)
+
+    ui.animar(
+        "KERNEL PANIC - NOT SYNCING: Fatal exception in interrupt", 0, DOS_BRANCO, jogo
+    )
+    ui.animar(
+        "Hardware CPU 0: corrupted by external psychological entity.",
+        0,
+        DOS_BRANCO,
+        jogo,
+    )
+    ui.animar(
+        "Process CAROLINE.SYS (pid: 1982, stackpage=0x00000000)", 0, DOS_BRANCO, jogo
+    )
     ui.animar("Call Trace:", 0, DOS_BRANCO, jogo)
     ui.animar(" [<c010a245>] show_stack+0x7a/0x90", 0, DOS_BRANCO, jogo)
     ui.animar(" [<c010a3c4>] show_registers+0x15a/0x1dc", 0, DOS_BRANCO, jogo)
     ui.animar(" [<c010c140>] die_if_no_escape+0x12a/0x240", 0, DOS_BRANCO, jogo)
     ui.animar(" [<c0000000>] DO_NOT_LOOK_BEHIND_YOU+0x666/0x666", 0, DOS_BRANCO, jogo)
-    
+
     ui.exibir("\nMemory corruption detected. Dumping physical memory to disk...")
     ui.pausar(2)
     ui.exibir("Dump failed. The soul is too heavy.")
-    
+
     ui.exibir("\nSystem halted. Press F5 to attempt a manual reboot.")
 
 
@@ -260,26 +310,33 @@ def imprimir_contexto_sala(jogo):
     descricao_colorida = sala.get("descrição", "")
 
     intensidade_glitch = 0.0
-    
-    
+
     if jogo.hp <= 1 and not getattr(jogo, "god_mode", False):
         intensidade_glitch += 0.3
-        ui.animar(f"{DOS_VERMELHO}[SISTEMA NEUROLÓGICO COMPROMETIDO]{RESET}", 0.01, DOS_VERMELHO, jogo)
-        
-    
+        ui.animar(
+            f"{DOS_VERMELHO}[SISTEMA NEUROLÓGICO COMPROMETIDO]{RESET}",
+            0.01,
+            DOS_VERMELHO,
+            jogo,
+        )
+
     barulho = getattr(jogo, "nivel_barulho", 0)
     if barulho > 50:
-        
-        intensidade_glitch += (barulho - 50) / 125.0 
+        intensidade_glitch += (barulho - 50) / 125.0
 
-    
     if jogo.turnos_luz <= 0 and not getattr(jogo, "amanheceu", False):
         intensidade_glitch += 0.5
-        ui.animar(f"{DOS_VERMELHO}Sua visão falha na escuridão absoluta...{RESET}", 0.01, DOS_BRANCO, jogo)
+        ui.animar(
+            f"{DOS_VERMELHO}Sua visão falha na escuridão absoluta...{RESET}",
+            0.01,
+            DOS_BRANCO,
+            jogo,
+        )
 
-   
     if intensidade_glitch > 0 and not getattr(jogo, "god_mode", False):
-        descricao_colorida = corromper_texto(descricao_colorida, intensidade=min(0.9, intensidade_glitch))
+        descricao_colorida = corromper_texto(
+            descricao_colorida, intensidade=min(0.9, intensidade_glitch)
+        )
     for inspecionavel in sala.get("inspecionaveis", {}):
         descricao_colorida = descricao_colorida.replace(
             inspecionavel, f"{DOS_AMARELO}{inspecionavel}{RESET}"
@@ -368,16 +425,40 @@ def rodar_final(tipo_final, jogo):
     liberou_deus = False
 
     if tipo_final == "saida":
-        ui.animar("Você empurra as pesadas portas de vidro e foge do restaurante...", 0.08, DOS_AMARELO, jogo)
-        ui.animar("Você acredita que vai conseguir superar tudo isso. Que pode recomeçar uma nova vida...", 0.07, DOS_VERMELHO, jogo)
+        ui.animar(
+            "Você empurra as pesadas portas de vidro e foge do restaurante...",
+            0.08,
+            DOS_AMARELO,
+            jogo,
+        )
+        ui.animar(
+            "Você acredita que vai conseguir superar tudo isso. Que pode recomeçar uma nova vida...",
+            0.07,
+            DOS_VERMELHO,
+            jogo,
+        )
         ui.pausar(1.5)
-        ui.animar("Você entra no seu carro, liga o motor e acelera para longe dali.", 0.08, DOS_BRANCO, jogo)
-        ui.animar("Você quer esquecer dela... Mesmo ela suplicando por ajuda no escuro.", 0.08, DOS_VERMELHO, jogo)
+        ui.animar(
+            "Você entra no seu carro, liga o motor e acelera para longe dali.",
+            0.08,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "Você quer esquecer dela... Mesmo ela suplicando por ajuda no escuro.",
+            0.08,
+            DOS_VERMELHO,
+            jogo,
+        )
         ui.pausar(2)
-        
-        
+
         ui.buffer.append("@@GLITCH_LUZ@@")
-        ui.animar("Você olha pelo retrovisor. Algo se mexe no banco de trás.", 0.05, DOS_VERMELHO, jogo)
+        ui.animar(
+            "Você olha pelo retrovisor. Algo se mexe no banco de trás.",
+            0.05,
+            DOS_VERMELHO,
+            jogo,
+        )
         ui.pausar(1)
         ui.buffer.append("@@JUMPSCARE@@")
         ui.pausar(2)
@@ -385,160 +466,403 @@ def rodar_final(tipo_final, jogo):
 
         try:
             from data import ARTE_FINAL_MEDIOCRE
-            arte_corrigida = ARTE_FINAL_MEDIOCRE.replace(" ", "\u00A0")
+
+            arte_corrigida = ARTE_FINAL_MEDIOCRE.replace(" ", "\u00a0")
 
             ui.animar(f"{DOS_BRANCO}{arte_corrigida}{RESET}", 0.015, jogo=jogo)
-        except ImportError: pass
-        
+        except ImportError:
+            pass
+
         ui.exibir(f"\n{DOS_VERMELHO}[ FINAL MEDÍOCRE: ALGO TE SEGUIU... ]{RESET}")
         liberou_deus = registrar_final("mediocre")
 
     elif tipo_final == "cama":
-        ui.animar("Você deita na cama velha, ignorando o cheiro de mofo...", 0.05, DOS_AMARELO, jogo)
+        ui.animar(
+            "Você deita na cama velha, ignorando o cheiro de mofo...",
+            0.05,
+            DOS_AMARELO,
+            jogo,
+        )
         ui.pausar(1)
         ui.buffer.append("@@LOW_POWER@@")
-        ui.animar("O corredor fica em silêncio. Você sente o trinco da porta girar lentamente...", 0.09, DOS_VERMELHO, jogo)
-        ui.animar("Você finalmente sente ela, o seu cheiro, sua vibração... Seu dispositivo apita...", 0.06, DOS_VERDE, jogo)
+        ui.animar(
+            "O corredor fica em silêncio. Você sente o trinco da porta girar lentamente...",
+            0.09,
+            DOS_VERMELHO,
+            jogo,
+        )
+        ui.animar(
+            "Você finalmente sente ela, o seu cheiro, sua vibração... Seu dispositivo apita...",
+            0.06,
+            DOS_VERDE,
+            jogo,
+        )
         ui.pausar(1.5)
-        
-        ui.animar("PRESENÇA ULTERIOR DETECTADA DENTRO DO QUARTO.", 0.05, DOS_VERMELHO, jogo)
+
+        ui.animar(
+            "PRESENÇA ULTERIOR DETECTADA DENTRO DO QUARTO.", 0.05, DOS_VERMELHO, jogo
+        )
         ui.pausar(2)
         ui.buffer.append("@@BLACKOUT@@")
-        ui.animar("Você fecha os olhos. Pensando em não acordar nunca mais.", 0.10, DOS_BRANCO, jogo)
+        ui.animar(
+            "Você fecha os olhos. Pensando em não acordar nunca mais.",
+            0.10,
+            DOS_BRANCO,
+            jogo,
+        )
         ui.buffer.append("@@JUMPSCARE@@")
-        
+
         ui.exibir(f"\n{DOS_BRANCO}[ FINAL BONS SONHOS ]{RESET}")
         liberou_deus = registrar_final("bons_sonhos")
 
     elif tipo_final == "final_bom":
         ui.limpar()
-        ui.animar(f"{DOS_VERDE} ======================================================================{RESET}", 0.03, jogo=jogo)
-        ui.animar(f"{DOS_VERDE}                             [ FINAL NEUTRO ]                               {RESET}", 0.04, jogo=jogo)
-        ui.animar(f"{DOS_VERDE} ======================================================================{RESET}", 0.03, jogo=jogo)
-        
-        ui.animar("Você acende o isqueiro e ilumina o local. A luz do fogo traz calma...", 0.04, DOS_VERDE, jogo)
-        ui.animar("- Por que não deu certo? O que eu fiz de errado?", 0.05, DOS_AMARELO, jogo)
+        ui.animar(
+            f"{DOS_VERDE} ======================================================================{RESET}",
+            0.03,
+            jogo=jogo,
+        )
+        ui.animar(
+            f"{DOS_VERDE}                             [ FINAL NEUTRO ]                               {RESET}",
+            0.04,
+            jogo=jogo,
+        )
+        ui.animar(
+            f"{DOS_VERDE} ======================================================================{RESET}",
+            0.03,
+            jogo=jogo,
+        )
+
+        ui.animar(
+            "Você acende o isqueiro e ilumina o local. A luz do fogo traz calma...",
+            0.04,
+            DOS_VERDE,
+            jogo,
+        )
+        ui.animar(
+            "- Por que não deu certo? O que eu fiz de errado?", 0.05, DOS_AMARELO, jogo
+        )
         ui.animar("- 'Ainda estou aqui...'", 0.09, DOS_VERMELHO, jogo)
         ui.animar("- Amor? É voce? Mesmo???", 0.05, DOS_AMARELO, jogo)
         ui.animar("- 'Eu espero que ainda seja eu...'", 0.09, DOS_VERMELHO, jogo)
         ui.animar("- 'eu Não SinTo maIS nADA...'", 0.1, DOS_VERMELHO, jogo)
-        ui.animar("- 'Eu não consegui te salvar, me desculpa...'", 0.09, DOS_AMARELO, jogo)
-        ui.animar("- 'Não consegui salvar ninguém, o que eu fiz.'", 0.09, DOS_AMARELO, jogo)
+        ui.animar(
+            "- 'Eu não consegui te salvar, me desculpa...'", 0.09, DOS_AMARELO, jogo
+        )
+        ui.animar(
+            "- 'Não consegui salvar ninguém, o que eu fiz.'", 0.09, DOS_AMARELO, jogo
+        )
         ui.animar("- 'Me ajUde, EU SINTO FALTA DE CASA.'", 0.1, DOS_VERMELHO, jogo)
-        ui.animar("- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas,f eu não posso fazer mais nada.", 0.05, DOS_AMARELO, jogo)
+        ui.animar(
+            "- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas,f eu não posso fazer mais nada.",
+            0.05,
+            DOS_AMARELO,
+            jogo,
+        )
         ui.pausar(2)
         ui.animar("- ... *Caroline abraça Rogério*", 0.09, DOS_VERMELHO, jogo)
         ui.animar("- 'Eu esperO tE eNContrar Lá, meu bem.'", 0.09, DOS_VERMELHO, jogo)
         ui.pausar(1.5)
-        
+
         ui.buffer.append("@@GLITCH_LUZ@@")
         ui.pausar(2)
         ui.buffer.append("@@JUMPSCARE@@")
         ui.pausar(3)
-        ui.animar("Você começa a cuspir sangue. A mão metálica dela atravessou seu estômago.", 0.05, DOS_VERMELHO, jogo)
+        ui.animar(
+            "Você começa a cuspir sangue. A mão metálica dela atravessou seu estômago.",
+            0.05,
+            DOS_VERMELHO,
+            jogo,
+        )
         ui.pausar(1)
         ui.buffer.append("@@LOW_POWER@@")
 
-        
-        
-        ui.animar("Nada mais faz sentido, sua visão começa a tremer, mas pela última vez, você olha nos olhos dela.", 0.04, DOS_VERMELHO, jogo)
+        ui.animar(
+            "Nada mais faz sentido, sua visão começa a tremer, mas pela última vez, você olha nos olhos dela.",
+            0.04,
+            DOS_VERMELHO,
+            jogo,
+        )
         ui.pausar(1.5)
         ui.animar("- 'Me Perdoe por isso.'", 0.09, DOS_VERMELHO, jogo)
         ui.pausar(2)
         ui.buffer.append("@@BLACKOUT@@")
-        
-        ui.animar("Seu corpo é deixado ao chão, e você se junta a todos os outros naquele lugar.", 0.09, DOS_BRANCO, jogo)
+
+        ui.animar(
+            "Seu corpo é deixado ao chão, e você se junta a todos os outros naquele lugar.",
+            0.09,
+            DOS_BRANCO,
+            jogo,
+        )
         ui.pausar(2)
 
         try:
             from data import ARTE_FINAL_NEUTRO
+
             ui.animar(f"{DOS_BRANCO}{ARTE_FINAL_NEUTRO}{RESET}", 0.005, jogo=jogo)
-        except ImportError: pass
+        except ImportError:
+            pass
 
         ui.exibir(f"\n{DOS_BRANCO}[ FINAL NEUTRO: ESCURIDÃO ]{RESET}")
         liberou_deus = registrar_final("bom")
 
     elif tipo_final == "verdadeiro":
         ui.limpar()
-        ui.animar(f"{DOS_VERMELHO}=================================================================={RESET}", 0.02, jogo=jogo)
-        ui.animar(f"{DOS_VERMELHO}                        [ FINAL VERDADEIRO ]                      {RESET}", 0.03, jogo=jogo)
-        ui.animar(f"{DOS_VERMELHO}=================================================================={RESET}\n", 0.02, jogo=jogo)
+        ui.animar(
+            f"{DOS_VERMELHO}=================================================================={RESET}",
+            0.02,
+            jogo=jogo,
+        )
+        ui.animar(
+            f"{DOS_VERMELHO}                        [ FINAL VERDADEIRO ]                      {RESET}",
+            0.03,
+            jogo=jogo,
+        )
+        ui.animar(
+            f"{DOS_VERMELHO}=================================================================={RESET}\n",
+            0.02,
+            jogo=jogo,
+        )
 
         ui.animar("Você acende seu isqueiro...", 0.04, DOS_BRANCO, jogo)
-    
-        ui.buffer.append("@@LOW_POWER@@") 
-        ui.animar("Com a chama ardente, você a joga nas cortinas do hall. O fogo sobe rapidamente.", 0.04, DOS_BRANCO, jogo)
-        ui.animar("Você tosse um pouco com a fumaça. Ao retomar o olhar para o fim da sala, você a vê, esperando.", 0.04, DOS_BRANCO, jogo)
-        ui.animar("O estalo das chamas consome a madeira podre. A fumaça preta e espessa cobre o teto do restaurante.", 0.04, DOS_BRANCO, jogo)
-        ui.animar("O calor é sufocante, mas você não corre para a saída ainda. Você caminha até o centro do hall.\n", 0.04, DOS_BRANCO, jogo)
 
-        ui.animar("Lá está a carcaça de pelúcia rosa, com o metal rangendo e o plástico derretendo.", 0.04, DOS_BRANCO, jogo)
-        ui.animar("Você se aproxima do animatrônico... dela. E encaixa os fios na sua fiação exposta...", 0.05, DOS_BRANCO, jogo)
-        ui.animar("Os LEDs vermelhos piscam fracos. Ela tenta se mover... mas o mecanismo emperra.\n", 0.05, DOS_BRANCO, jogo)
+        ui.buffer.append("@@LOW_POWER@@")
+        ui.animar(
+            "Com a chama ardente, você a joga nas cortinas do hall. O fogo sobe rapidamente.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "Você tosse um pouco com a fumaça. Ao retomar o olhar para o fim da sala, você a vê, esperando.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "O estalo das chamas consome a madeira podre. A fumaça preta e espessa cobre o teto do restaurante.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "O calor é sufocante, mas você não corre para a saída ainda. Você caminha até o centro do hall.\n",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
 
-        ui.animar("- Por que não deu certo? O que eu fiz de errado...?", 0.05, DOS_AMARELO, jogo)
-        ui.animar("Sua voz treme. As lágrimas cortam a fuligem no seu rosto.", 0.04, DOS_BRANCO, jogo)
-        ui.animar("\nUm zumbido eletrônico arranhado sai do alto-falante no peito da carcaça:", 0.04, DOS_BRANCO, jogo)
+        ui.animar(
+            "Lá está a carcaça de pelúcia rosa, com o metal rangendo e o plástico derretendo.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "Você se aproxima do animatrônico... dela. E encaixa os fios na sua fiação exposta...",
+            0.05,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "Os LEDs vermelhos piscam fracos. Ela tenta se mover... mas o mecanismo emperra.\n",
+            0.05,
+            DOS_BRANCO,
+            jogo,
+        )
+
+        ui.animar(
+            "- Por que não deu certo? O que eu fiz de errado...?",
+            0.05,
+            DOS_AMARELO,
+            jogo,
+        )
+        ui.animar(
+            "Sua voz treme. As lágrimas cortam a fuligem no seu rosto.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "\nUm zumbido eletrônico arranhado sai do alto-falante no peito da carcaça:",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
         ui.animar("- '... v-você... fez... dar... certo...'", 0.08, DOS_VERMELHO, jogo)
         ui.animar("- '... R-Rogério...?'", 0.08, DOS_VERMELHO, jogo)
 
         ui.animar("\n- Caro... Caroline? É você?", 0.05, DOS_AMARELO, jogo)
         ui.animar("*(Você abraça a carcaça de pelagem rosa)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("Mesmo com o calor das chamas se espalhando, o metal que te toca é frio e rígido.", 0.04, DOS_BRANCO, jogo)
-        ui.animar("Mas você não solta. Você a segura com toda a força que te resta.", 0.04, DOS_BRANCO, jogo)
+        ui.animar(
+            "Mesmo com o calor das chamas se espalhando, o metal que te toca é frio e rígido.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "Mas você não solta. Você a segura com toda a força que te resta.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
 
-        ui.animar("- Meu corpo ficou em silêncio... O barulho da minha cabeça, simplesmente parou.", 0.07, DOS_VERMELHO, jogo)
-        ui.animar("- A dor nas minhas costas... o ferro rasgando minha pele... sumiu.", 0.07, DOS_VERMELHO, jogo)
+        ui.animar(
+            "- Meu corpo ficou em silêncio... O barulho da minha cabeça, simplesmente parou.",
+            0.07,
+            DOS_VERMELHO,
+            jogo,
+        )
+        ui.animar(
+            "- A dor nas minhas costas... o ferro rasgando minha pele... sumiu.",
+            0.07,
+            DOS_VERMELHO,
+            jogo,
+        )
         ui.animar("- Eu não sinto mais raiva.", 0.07, DOS_VERMELHO, jogo)
 
-        ui.animar("\n- Eu sinto muito, Caroline... Me desculpa por não ter chegado a tempo...", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- Eu... Eu li seus e-mails. Eu tenho te procurado em todo lugar...", 0.05, DOS_AMARELO, jogo)
+        ui.animar(
+            "\n- Eu sinto muito, Caroline... Me desculpa por não ter chegado a tempo...",
+            0.05,
+            DOS_AMARELO,
+            jogo,
+        )
+        ui.animar(
+            "- Eu... Eu li seus e-mails. Eu tenho te procurado em todo lugar...",
+            0.05,
+            DOS_AMARELO,
+            jogo,
+        )
 
         ui.pausar(1)
-        ui.animar("\n*(O fogo se alastra pelo restaurante, aquele lugar maldito vai arder em chamas)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("O crepitar do incêndio abafa os ruídos metálicos dos outros robôs gritando lá no fundo.", 0.04, DOS_BRANCO, jogo)
-        ui.animar("O filtro de luz vermelha dos olhos de plástico dela se apaga para sempre.", 0.04, DOS_BRANCO, jogo)
+        ui.animar(
+            "\n*(O fogo se alastra pelo restaurante, aquele lugar maldito vai arder em chamas)*",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "O crepitar do incêndio abafa os ruídos metálicos dos outros robôs gritando lá no fundo.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "O filtro de luz vermelha dos olhos de plástico dela se apaga para sempre.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
 
-        ui.animar("\nNa penumbra dourada pelas chamas, a voz não vem mais do alto-falante. Ela ecoa suave na sua mente:", 0.04, DOS_BRANCO, jogo)
-        ui.animar("- Não peça desculpas, meu amor... Você veio.", 0.07, DOS_VERMELHO, jogo)
-        ui.animar("- Durante meses no escuro dessa máquina, eu queria fazer 'eles' pagarem pelo que me fizeram...", 0.07, DOS_VERMELHO, jogo)
-        ui.animar("- Mas quando você me abraçou... a escuridão simplesmente evaporou.", 0.07, DOS_VERMELHO, jogo)
+        ui.animar(
+            "\nNa penumbra dourada pelas chamas, a voz não vem mais do alto-falante. Ela ecoa suave na sua mente:",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "- Não peça desculpas, meu amor... Você veio.", 0.07, DOS_VERMELHO, jogo
+        )
+        ui.animar(
+            "- Durante meses no escuro dessa máquina, eu queria fazer 'eles' pagarem pelo que me fizeram...",
+            0.07,
+            DOS_VERMELHO,
+            jogo,
+        )
+        ui.animar(
+            "- Mas quando você me abraçou... a escuridão simplesmente evaporou.",
+            0.07,
+            DOS_VERMELHO,
+            jogo,
+        )
 
-        ui.animar("\n- Não podia te deixar presa aqui, Caroline. Hoje todo esse terror feito de máquinas acaba.", 0.06, DOS_AMARELO, jogo)
-        ui.animar("- A gente ainda vai viver juntos... Pena que seja em outra vida.", 0.05, DOS_AMARELO, jogo)
+        ui.animar(
+            "\n- Não podia te deixar presa aqui, Caroline. Hoje todo esse terror feito de máquinas acaba.",
+            0.06,
+            DOS_AMARELO,
+            jogo,
+        )
+        ui.animar(
+            "- A gente ainda vai viver juntos... Pena que seja em outra vida.",
+            0.05,
+            DOS_AMARELO,
+            jogo,
+        )
 
-        ui.animar("\nUma brisa suave e fresca corta o ar quente do incêndio, envolvendo seu pescoço.", 0.04, DOS_BRANCO, jogo)
+        ui.animar(
+            "\nUma brisa suave e fresca corta o ar quente do incêndio, envolvendo seu pescoço.",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
         ui.animar("- Me sinta pela última vez.", 0.07, DOS_VERMELHO, jogo)
-        ui.animar("\n*(Você sente mãos invisíveis e macias em seus ombros. Toda a dor e a paranoia desaparecem)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("\n- Vai embora agora, viva por nós dois. Eu sempre estarei contigo.", 0.07, DOS_VERMELHO, jogo)
+        ui.animar(
+            "\n*(Você sente mãos invisíveis e macias em seus ombros. Toda a dor e a paranoia desaparecem)*",
+            0.04,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "\n- Vai embora agora, viva por nós dois. Eu sempre estarei contigo.",
+            0.07,
+            DOS_VERMELHO,
+            jogo,
+        )
         ui.animar("- Eu te amo.", 0.06, DOS_AMARELO, jogo)
         ui.animar("- Eu também te amo, amor. Pra sempre.", 0.06, DOS_VERMELHO, jogo)
 
         ui.pausar(2)
-        ui.animar("\n*(O animatrônico cai no chão, a carcaça é consumida pelas chamas enquanto o teto cede)*", 0.05, DOS_BRANCO, jogo)
-        ui.animar(f"\n{DOS_VERDE}[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.{RESET}", 0.05, jogo=jogo)
+        ui.animar(
+            "\n*(O animatrônico cai no chão, a carcaça é consumida pelas chamas enquanto o teto cede)*",
+            0.05,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            f"\n{DOS_VERDE}[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.{RESET}",
+            0.05,
+            jogo=jogo,
+        )
 
         ui.pausar(1.5)
-        
+
         ui.buffer.append("@@NORMAL_POWER@@")
-        ui.animar("\nVocê se levanta e empurra as portas de entrada, saindo para o ar frio da madrugada.", 0.08, DOS_BRANCO, jogo)
-        ui.animar("Pela calçada de Curitiba, você vê a fumaça subindo ao amanhecer. O restaurante virou cinzas.", 0.06, DOS_BRANCO, jogo)
+        ui.animar(
+            "\nVocê se levanta e empurra as portas de entrada, saindo para o ar frio da madrugada.",
+            0.08,
+            DOS_BRANCO,
+            jogo,
+        )
+        ui.animar(
+            "Pela calçada de Curitiba, você vê a fumaça subindo ao amanhecer. O restaurante virou cinzas.",
+            0.06,
+            DOS_BRANCO,
+            jogo,
+        )
 
         try:
             from data import ARTE_FINAL_VERDADEIRO
+
             ui.animar(f"{DOS_BRANCO}{ARTE_FINAL_VERDADEIRO}{RESET}", 0.005, jogo=jogo)
-        except ImportError: pass
+        except ImportError:
+            pass
 
         ui.exibir(f"\n{DOS_VERDE}[ FINAL VERDADEIRO: LIBERTAÇÃO ]{RESET}")
         liberou_deus = registrar_final("verdadeiro")
 
     if liberou_deus:
-        ui.exibir(f"\n{DOS_AMARELO}=================================================={RESET}")
-        ui.animar("VOCÊ DESVENDOU TODAS AS VERDADES DESTA NOITE.", 0.05, DOS_VERMELHO, jogo)
-        ui.exibir(f"{DOS_AMARELO}DIGITE O ANO EM QUE TUDO ACABOU NA TELA DE MENU: {DOS_BRANCO}2007{RESET}")
-        ui.exibir(f"{DOS_AMARELO}=================================================={RESET}")
+        ui.exibir(
+            f"\n{DOS_AMARELO}=================================================={RESET}"
+        )
+        ui.animar(
+            "VOCÊ DESVENDOU TODAS AS VERDADES DESTA NOITE.", 0.05, DOS_VERMELHO, jogo
+        )
+        ui.exibir(
+            f"{DOS_AMARELO}DIGITE O ANO EM QUE TUDO ACABOU NA TELA DE MENU: {DOS_BRANCO}2007{RESET}"
+        )
+        ui.exibir(
+            f"{DOS_AMARELO}=================================================={RESET}"
+        )
 
-
-    
-    ui.buffer.append("@@NORMAL_POWER@@") 
+    ui.buffer.append("@@NORMAL_POWER@@")
     ui.animar("\n=== APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)

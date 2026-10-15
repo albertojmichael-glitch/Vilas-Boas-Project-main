@@ -1,13 +1,15 @@
 import queue
+
 from sqlalchemy.exc import SQLAlchemyError
+
 from extensions import db
 from models import Telemetria
 
-
 fila_telemetria = queue.Queue()
 
+
 def worker_telemetria(app_instance):
-    
+
     while True:
         lote = []
         try:
@@ -19,32 +21,40 @@ def worker_telemetria(app_instance):
                 except queue.Empty:
                     break
         except queue.Empty:
-            pass 
+            pass
 
         if lote:
-           
             with app_instance.app_context():
                 try:
                     db.session.add_all(lote)
                     db.session.commit()
                 except SQLAlchemyError as e:
                     db.session.rollback()
-                    
+
                     db_orig = getattr(e, "orig", None)
                     pg_code = getattr(db_orig, "pgcode", "N/A") if db_orig else "N/A"
-                    
+
                     app_instance.logger.error(
                         "Falha na transação do PostgreSQL",
                         extra={
                             "db_error_type": type(e).__name__,
                             "pg_code": pg_code,
                             "statement": getattr(e, "statement", "N/A"),
-                            "detalhes": str(db_orig) if db_orig else str(e)
-                        }
+                            "detalhes": str(db_orig) if db_orig else str(e),
+                        },
                     )
 
-def registrar_telemetria(evento, sala, dificuldade, detalhes="", jogo=None, sid_sessao=None, permite_telemetria=True):
-    
+
+def registrar_telemetria(
+    evento,
+    sala,
+    dificuldade,
+    detalhes="",
+    jogo=None,
+    sid_sessao=None,
+    permite_telemetria=True,
+):
+
     if not permite_telemetria:
         return
 
@@ -53,7 +63,7 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes="", jogo=None, sid_
         sala=str(sala)[:50],
         dificuldade=str(dificuldade)[:50],
         detalhes=str(detalhes)[:256],
-        sid_sessao=sid_sessao
+        sid_sessao=sid_sessao,
     )
 
     if jogo:

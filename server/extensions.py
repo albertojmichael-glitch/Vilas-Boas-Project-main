@@ -1,13 +1,14 @@
-import os
 import json
 import logging
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+import os
+
+from authlib.integrations.flask_client import OAuth
+from cachetools import TTLCache
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from authlib.integrations.flask_client import OAuth
-from cachetools import TTLCache
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger(__name__)
 
@@ -26,19 +27,26 @@ except ImportError:
 
 from state import GameState
 
+
 class RedisSessionStore:
     def __init__(self, client):
         self.client = client
+
     def __contains__(self, key):
         return self.client.exists(key) > 0
+
     def __getitem__(self, key):
         data = self.client.get(key)
-        if data: return GameState.from_dict(json.loads(data))
+        if data:
+            return GameState.from_dict(json.loads(data))
         raise KeyError(key)
+
     def __setitem__(self, key, value):
         self.client.setex(key, 3600, json.dumps(value.to_dict()))
+
     def __delitem__(self, key):
         self.client.delete(key)
+
 
 REDIS_URL = os.environ.get("REDIS_URL")
 

@@ -1,16 +1,19 @@
+import logging
 import random
 import time
-import logging
-from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
+
+from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
 from villas_boas.engine.minigames.base import BaseMinigame
 
 logger = logging.getLogger(__name__)
+
 
 def pausar(segundos=0):
     try:
         time.sleep(segundos)
     except (OSError, ValueError) as e:
         logger.debug(f"Função de pausa interrompida: {e}")
+
 
 CAVEIRA_ASCII = r'''
                      .ed"""" """$$$$be.
@@ -46,13 +49,12 @@ CAVEIRA_ASCII = r'''
 '''
 
 
-
-#minigame minotauro
+# minigame minotauro
 
 
 BATERIA_INICIAL = 30
-CHANCE_PADRAO_SPRINT = 60         
-DISTANCIA_PERIGO = 1              
+CHANCE_PADRAO_SPRINT = 60
+DISTANCIA_PERIGO = 1
 
 
 GRID_MIN_X = -2
@@ -102,30 +104,30 @@ MSGS_COLISAO_MONSTRO = [
     "⚠ VOCÊ SENTE O CHÃO TREMER PERTO DEMAIS DE VOCÊ⚠",
 ]
 
+
 def _sortear(lista):
     return random.choice(lista)
 
+
 def desenhar_radar_ascii(px, py, mx, my, fios_cortados, armadilhas, glitch=False):
     distancia = abs(px - mx) + abs(py - my)
-    monstro_visivel = (distancia <= 1)
-    
+    monstro_visivel = distancia <= 1
+
     borda = DOS_VERDE
     reset = RESET
-    
-    
+
     largura_grid = (GRID_MAX_X - GRID_MIN_X) + 1
     linha_borda = f"{borda}  +" + "=======+" * largura_grid + f"{reset}"
-    
+
     linhas = [linha_borda]
-    
+
     for y in range(GRID_MAX_Y, GRID_MIN_Y - 1, -1):
         miolo1 = f"{borda}  /{reset}"
         miolo2 = f"{borda}  /{reset}"
-        
+
         for x in range(GRID_MIN_X, GRID_MAX_X + 1):
             char = " "
             if x == px and y == py:
-                
                 char = f"{DOS_BRANCO}@{reset}"
 
             elif (glitch and (abs(x - px) + abs(y - py) == 1)) or (
@@ -140,46 +142,61 @@ def desenhar_radar_ascii(px, py, mx, my, fios_cortados, armadilhas, glitch=False
                 char = f"{DOS_AMARELO}F{reset}"
 
             elif x == POS_SAIDA_X and y == POS_SAIDA_Y:
-                char = f"{DOS_VERDE}S{reset}"         
-                
+                char = f"{DOS_VERDE}S{reset}"
+
             miolo1 += f"   {char}   {borda}/{reset}"
             miolo2 += f"       {borda}/{reset}"
-            
+
         linhas.append(miolo1)
         linhas.append(miolo2)
         linhas.append(linha_borda)
-        
+
     return "\n".join(linhas)
+
 
 class MinigameMinotauro(BaseMinigame):
     def __init__(self, jogo):
-        self.px, self.py = POS_SAIDA_X, POS_SAIDA_Y 
-        self.mx, self.my = random.choice([GRID_MIN_X, 0, GRID_MAX_X]), random.choice([2, 3]) 
+        self.px, self.py = POS_SAIDA_X, POS_SAIDA_Y
+        self.mx, self.my = (
+            random.choice([GRID_MIN_X, 0, GRID_MAX_X]),
+            random.choice([2, 3]),
+        )
         self.tesoura_chao = True
         self.fios_cortados = False
-        
-        
-        chance_raw = getattr(jogo, 'chance_sprint_minotauro', CHANCE_PADRAO_SPRINT)
-        self.chance_sprint = chance_raw / 100.0
-        
-        self.bateria = 9999 if getattr(jogo, 'god_mode', False) else BATERIA_INICIAL
 
-        
-        locais_validos = [(x, y) for x in range(GRID_MIN_X, GRID_MAX_X + 1) for y in range(GRID_MIN_Y, GRID_MAX_Y + 1) 
-                          if (x, y) not in [(POS_SAIDA_X, POS_SAIDA_Y), (POS_FUSIVEL_X, POS_FUSIVEL_Y)]]
+        chance_raw = getattr(jogo, "chance_sprint_minotauro", CHANCE_PADRAO_SPRINT)
+        self.chance_sprint = chance_raw / 100.0
+
+        self.bateria = 9999 if getattr(jogo, "god_mode", False) else BATERIA_INICIAL
+
+        locais_validos = [
+            (x, y)
+            for x in range(GRID_MIN_X, GRID_MAX_X + 1)
+            for y in range(GRID_MIN_Y, GRID_MAX_Y + 1)
+            if (x, y)
+            not in [(POS_SAIDA_X, POS_SAIDA_Y), (POS_FUSIVEL_X, POS_FUSIVEL_Y)]
+        ]
         self.armadilhas = random.sample(locais_validos, 4)
 
-        
-        self.ui = getattr(jogo, 'ui_handler', getattr(jogo, 'ui', None))
-        if not self.ui or not hasattr(self.ui, 'exibir'):
+        self.ui = getattr(jogo, "ui_handler", getattr(jogo, "ui", None))
+        if not self.ui or not hasattr(self.ui, "exibir"):
+
             class DummyUI:
-                def exibir(self, *args, **kwargs): pass
-                def animar(self, *args, **kwargs): pass
-                def pausar(self, *args, **kwargs): pass
+                def exibir(self, *args, **kwargs):
+                    pass
+
+                def animar(self, *args, **kwargs):
+                    pass
+
+                def pausar(self, *args, **kwargs):
+                    pass
+
             self.ui = DummyUI()
-        
-        self.ui.exibir("\n" + "="*50)
-        self.ui.exibir("Você entra na Sala de Energia... e a pesada porta de metal bate atrás de você.")
+
+        self.ui.exibir("\n" + "=" * 50)
+        self.ui.exibir(
+            "Você entra na Sala de Energia... e a pesada porta de metal bate atrás de você."
+        )
         pausar(2)
         self.ui.exibir("Você escuta uma respiração pesada.")
         self.ui.exibir("Ele está aqui.")
@@ -187,69 +204,89 @@ class MinigameMinotauro(BaseMinigame):
 
     def imprimir_status(self):
         self.ui.limpar()
-        
-        
+
         distancia = abs(self.px - self.mx) + abs(self.py - self.my)
         teve_glitch = False
         if distancia == DISTANCIA_PERIGO and random.random() < 0.2:
             teve_glitch = True
-        
-       
-        radar_visual = desenhar_radar_ascii(self.px, self.py, self.mx, self.my, self.fios_cortados, self.armadilhas, glitch=teve_glitch)
+
+        radar_visual = desenhar_radar_ascii(
+            self.px,
+            self.py,
+            self.mx,
+            self.my,
+            self.fios_cortados,
+            self.armadilhas,
+            glitch=teve_glitch,
+        )
         self.ui.exibir(radar_visual)
-        
-        
-        self.ui.exibir("\n" + "-"*30)
+
+        self.ui.exibir("\n" + "-" * 30)
         texto_bat = "∞" if self.bateria > 100 else str(self.bateria)
         self.ui.exibir(f" Bateria da Lanterna: {texto_bat} turnos restantes")
-        
-        
-        if distancia > DISTANCIA_PERIGO: 
+
+        if distancia > DISTANCIA_PERIGO:
             self.ui.animar("[v] O radar não detecta nada próximo. Silêncio.")
         elif distancia == DISTANCIA_PERIGO:
             if teve_glitch:
                 self.ui.exibir(f"{DOS_VERMELHO}{_sortear(MSGS_ESTATICA)}{RESET}")
             else:
-                if self.mx < self.px: self.ui.animar(f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_ESQUERDA)}{RESET}")
-                elif self.mx > self.px: self.ui.animar(f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_DIREITA)}{RESET}")
-                elif self.my > self.py: self.ui.animar(f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_FRENTE)}{RESET}")
-                elif self.my < self.py: self.ui.animar(f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_TRAS)}{RESET}")
+                if self.mx < self.px:
+                    self.ui.animar(
+                        f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_ESQUERDA)}{RESET}"
+                    )
+                elif self.mx > self.px:
+                    self.ui.animar(
+                        f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_DIREITA)}{RESET}"
+                    )
+                elif self.my > self.py:
+                    self.ui.animar(
+                        f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_FRENTE)}{RESET}"
+                    )
+                elif self.my < self.py:
+                    self.ui.animar(f"{DOS_VERMELHO}{_sortear(MSGS_PERIGO_TRAS)}{RESET}")
 
-        
-        opcoes = "ir frente (f) | ir trás (a) | ir esquerda (e) | ir direita (d) | esperar"
-    
+        opcoes = (
+            "ir frente (f) | ir trás (a) | ir esquerda (e) | ir direita (d) | esperar"
+        )
 
-        if self.px == POS_FUSIVEL_X and self.py == POS_FUSIVEL_Y and not self.fios_cortados:
-            self.ui.exibir(f"\n{DOS_AMARELO} ↯ Você está de frente para a caixa de fusíveis!{RESET}")
+        if (
+            self.px == POS_FUSIVEL_X
+            and self.py == POS_FUSIVEL_Y
+            and not self.fios_cortados
+        ):
+            self.ui.exibir(
+                f"\n{DOS_AMARELO} ↯ Você está de frente para a caixa de fusíveis!{RESET}"
+            )
             if self.tesoura_chao:
                 self.ui.animar(" ✂ Há uma tesoura caída no chão.")
                 opcoes += " | pegar tesoura"
             opcoes += " | cortar fios"
-            
+
         if self.fios_cortados:
-            self.ui.exibir(f"\n{DOS_VERMELHO} ↯ FIOS CORTADOS! A SALA ESTÁ DESMORONANDO! FUJA PARA A SAÍDA (S)!{RESET}")
+            self.ui.exibir(
+                f"\n{DOS_VERMELHO} ↯ FIOS CORTADOS! A SALA ESTÁ DESMORONANDO! FUJA PARA A SAÍDA (S)!{RESET}"
+            )
             if self.px == POS_SAIDA_X and self.py == POS_SAIDA_Y:
                 self.ui.exibir(f"{DOS_VERDE} ⍍ Você chegou na porta de entrada!{RESET}")
                 opcoes += " | sair"
-                
+
         self.ui.exibir(f"\n[{opcoes}]")
 
     def _dar_passo(self, alvo_x, alvo_y, chance_erro=0.0):
-        
+
         if random.random() < chance_erro:
-            
             dx = random.choice([-1, 0, 1])
             dy = random.choice([-1, 0, 1])
-            if dx == 0 and dy == 0: 
-                dy = 1 
+            if dx == 0 and dy == 0:
+                dy = 1
             self.mx += dx
             self.my += dy
             return
 
-        
         dif_x = alvo_x - self.mx
         dif_y = alvo_y - self.my
-        
+
         pode_mover_x = dif_x != 0
         pode_mover_y = dif_y != 0
 
@@ -268,160 +305,215 @@ class MinigameMinotauro(BaseMinigame):
         chance_erro = 0.25
         acao_norm = acao_jogador.lower().strip()
 
-       
         if acao_norm == "esperar":
-            chance_erro = 0.75 
-            
-        
+            chance_erro = 0.75
+
         distancia_inicial = abs(self.px - self.mx) + abs(self.py - self.my)
         if acao_norm in ["pegar tesoura", "cortar fios"] and distancia_inicial <= 2:
-            
-            chance_erro = 0.90 
+            chance_erro = 0.90
 
-        
         self._dar_passo(self.px, self.py, chance_erro)
-        
-        
+
         distancia_atual = abs(self.px - self.mx) + abs(self.py - self.my)
         if distancia_atual > 1 and random.random() < self.chance_sprint:
-           
             self._dar_passo(self.px, self.py, chance_erro / 2.0)
-            
-        
-        self.mx = max(GRID_MIN_X, min(GRID_MAX_X, self.mx)) 
+
+        self.mx = max(GRID_MIN_X, min(GRID_MAX_X, self.mx))
         self.my = max(GRID_MIN_Y, min(GRID_MAX_Y, self.my))
 
-    def _resolver_colisao(self, jogo, dist_ui, px_old, py_old, mx_old, my_old, quem_moveu="jogador"):
-       
+    def _resolver_colisao(
+        self, jogo, dist_ui, px_old, py_old, mx_old, my_old, quem_moveu="jogador"
+    ):
+
         if self.px == self.mx and self.py == self.my:
             if dist_ui > DISTANCIA_PERIGO:
-                
                 if quem_moveu == "jogador":
-                    self.ui.exibir(f"\n{DOS_VERMELHO}{_sortear(MSGS_COLISAO_JOGADOR)}{RESET}")
+                    self.ui.exibir(
+                        f"\n{DOS_VERMELHO}{_sortear(MSGS_COLISAO_JOGADOR)}{RESET}"
+                    )
                     self.px, self.py = px_old, py_old
                 else:
-                    self.ui.exibir(f"\n{DOS_VERMELHO}{_sortear(MSGS_COLISAO_MONSTRO)}{RESET}")
+                    self.ui.exibir(
+                        f"\n{DOS_VERMELHO}{_sortear(MSGS_COLISAO_MONSTRO)}{RESET}"
+                    )
                     self.mx, self.my = mx_old, my_old
                 self.ui.pausar(2)
                 return "continuar"
             else:
-                
-                if getattr(jogo, 'god_mode', False):
-                    self.ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] O Minotauro tenta te atacar, mas é repelido por um escudo de energia! Ele desiste e foge.{RESET}")
+                if getattr(jogo, "god_mode", False):
+                    self.ui.exibir(
+                        f"\n{DOS_AMARELO}[GOD MODE] O Minotauro tenta te atacar, mas é repelido por um escudo de energia! Ele desiste e foge.{RESET}"
+                    )
                     self.ui.pausar(1.5)
                     return "vitoria_minotauro"
                 else:
                     if quem_moveu == "jogador":
-                        self.ui.exibir("\n Você andou direto para as mãos do monstro no escuro...")
+                        self.ui.exibir(
+                            "\n Você andou direto para as mãos do monstro no escuro..."
+                        )
                     else:
-                        self.ui.exibir(f"\n{DOS_VERMELHO} ☠ O Minotauro te encontrou no escuro. Mãos frias de metal te rasgam por inteiro ☠{RESET}")
+                        self.ui.exibir(
+                            f"\n{DOS_VERMELHO} ☠ O Minotauro te encontrou no escuro. Mãos frias de metal te rasgam por inteiro ☠{RESET}"
+                        )
                     self.ui.exibir("@@JUMPSCARE@@")
                     self.ui.pausar(1.5)
                     if quem_moveu == "jogador":
-                        self.ui.exibir("\n No vazio, você morre sozinho, sem poder salvar ninguém. ")
+                        self.ui.exibir(
+                            "\n No vazio, você morre sozinho, sem poder salvar ninguém. "
+                        )
                     return "morte"
         return None
 
     def _processar_investigacao(self, acao, jogo):
-      
-        if acao not in ["celular quebrado", "ver celular quebrado", "olhar celular quebrado", "examinar celular quebrado", "investigar celular quebrado", "celular"]:
+
+        if acao not in [
+            "celular quebrado",
+            "ver celular quebrado",
+            "olhar celular quebrado",
+            "examinar celular quebrado",
+            "investigar celular quebrado",
+            "celular",
+        ]:
             return None
 
         if self.px == POS_FUSIVEL_X and self.py == POS_FUSIVEL_Y:
-            desc = jogo.mapa.get("sala de energia", {}).get("inspecionaveis", {}).get("celular quebrado", "Parece ser dela...")
+            desc = (
+                jogo.mapa.get("sala de energia", {})
+                .get("inspecionaveis", {})
+                .get("celular quebrado", "Parece ser dela...")
+            )
             self.ui.exibir(f"\n{DOS_AMARELO}🔎 {desc}{RESET}")
         else:
-            self.ui.exibir("O celular quebrado está no fundo da sala (na parede central).")
+            self.ui.exibir(
+                "O celular quebrado está no fundo da sala (na parede central)."
+            )
         return "continuar"
 
     def _processar_god_mode_ataque(self, acao, jogo):
-        
-        if acao in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False):
-            self.ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{RESET}")
-            self.ui.exibir(f"{DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{RESET}")
+
+        if acao in ["atacar", "bater", "chutar", "lutar"] and getattr(
+            jogo, "god_mode", False
+        ):
+            self.ui.exibir(
+                f"{DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{RESET}"
+            )
+            self.ui.exibir(
+                f"{DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{RESET}"
+            )
             self.ui.pausar(1.5)
             return "vitoria_minotauro"
         return None
 
     def _processar_movimento_e_acoes(self, acao, jogo):
-      
+
         ui = self.ui
         turno_gasto = False
-        
+
         acao_norm = acao.strip().lower()
 
-        
         if acao_norm in ["ir esquerda", "e"]:
-            if self.px > GRID_MIN_X: self.px -= 1
-            else: ui.exibir("Você bate a cara na parede...")
-            turno_gasto = True 
+            if self.px > GRID_MIN_X:
+                self.px -= 1
+            else:
+                ui.exibir("Você bate a cara na parede...")
+            turno_gasto = True
         elif acao_norm in ["ir direita", "d"]:
-            if self.px < GRID_MAX_X: self.px += 1
-            else: ui.exibir("Você bate a cara na parede...")
+            if self.px < GRID_MAX_X:
+                self.px += 1
+            else:
+                ui.exibir("Você bate a cara na parede...")
             turno_gasto = True
         elif acao_norm in ["ir frente", "f"]:
-            if self.py < GRID_MAX_Y: self.py += 1
-            else: ui.exibir("Você bateu na parede do fundo...")
+            if self.py < GRID_MAX_Y:
+                self.py += 1
+            else:
+                ui.exibir("Você bateu na parede do fundo...")
             turno_gasto = True
         elif acao_norm in ["ir trás", "ir tras", "ir atrás", "ir atras", "a"]:
-            if self.py > GRID_MIN_Y: self.py -= 1
-            else: ui.exibir("Você bate as costas na porta de metal. Ela não abre...")
+            if self.py > GRID_MIN_Y:
+                self.py -= 1
+            else:
+                ui.exibir("Você bate as costas na porta de metal. Ela não abre...")
             turno_gasto = True
-        elif acao_norm == "esperar": 
+        elif acao_norm == "esperar":
             ui.exibir("Você fica imóvel aguardando...")
             turno_gasto = True
         elif acao_norm == "pegar tesoura":
-            if self.px == POS_FUSIVEL_X and self.py == POS_FUSIVEL_Y and self.tesoura_chao:
+            if (
+                self.px == POS_FUSIVEL_X
+                and self.py == POS_FUSIVEL_Y
+                and self.tesoura_chao
+            ):
                 jogo.inventario.append("tesoura")
                 self.tesoura_chao = False
-                ui.exibir(" ✂ Você derruba a tesoura sem querer, fazendo um barulho, mas guarda na sua bolsa")
+                ui.exibir(
+                    " ✂ Você derruba a tesoura sem querer, fazendo um barulho, mas guarda na sua bolsa"
+                )
                 turno_gasto = True
-            else: 
+            else:
                 ui.exibir("Não tem tesoura aqui.")
         elif acao_norm == "cortar fios":
-            if self.px == POS_FUSIVEL_X and self.py == POS_FUSIVEL_Y and not self.fios_cortados:
+            if (
+                self.px == POS_FUSIVEL_X
+                and self.py == POS_FUSIVEL_Y
+                and not self.fios_cortados
+            ):
                 if "tesoura" in jogo.inventario:
-                    ui.exibir(f"\n{DOS_VERMELHO}Você corta os fios principais. Faíscas voam no seu rosto, mas não causam queimaduras.{RESET}")
-                    ui.exibir(f"{DOS_VERMELHO} ✂ Sua tesoura quebra com a força do choque elétrico{RESET}")
+                    ui.exibir(
+                        f"\n{DOS_VERMELHO}Você corta os fios principais. Faíscas voam no seu rosto, mas não causam queimaduras.{RESET}"
+                    )
+                    ui.exibir(
+                        f"{DOS_VERMELHO} ✂ Sua tesoura quebra com a força do choque elétrico{RESET}"
+                    )
                     ui.exibir(f"{DOS_VERMELHO}Ele sabe onde você está.{RESET}")
                     ui.exibir(f"{DOS_VERMELHO}CORRA DE VOLTA PARA A PORTA{RESET}")
-                    
+
                     jogo.inventario.remove("tesoura")
                     jogo.inventario.append("tesoura quebrada")
                     jogo.inventario.append("fios cortados")
-                    ui.exibir(f"{DOS_AMARELO}Você guarda os 'fios cortados' na mochila.{RESET}")
-                    
+                    ui.exibir(
+                        f"{DOS_AMARELO}Você guarda os 'fios cortados' na mochila.{RESET}"
+                    )
+
                     self.fios_cortados = True
                     jogo.fios_cortados_inventario = True
                     turno_gasto = True
-                else: 
-                    ui.exibir("Você precisa de uma tesoura inteira para cortar os fios.")
+                else:
+                    ui.exibir(
+                        "Você precisa de uma tesoura inteira para cortar os fios."
+                    )
                     turno_gasto = True
-            else: 
+            else:
                 ui.exibir("Não há mais fios aqui.")
                 turno_gasto = True
         elif acao_norm == "sair":
             if self.px == POS_SAIDA_X and self.py == POS_SAIDA_Y:
                 if self.fios_cortados and "fios cortados" in jogo.inventario:
-                    ui.exibir(f"\n{DOS_VERDE}Você se joga contra a maçaneta, abre a porta e a tranca com toda a força! Você sobreviveu!{RESET}")
+                    ui.exibir(
+                        f"\n{DOS_VERDE}Você se joga contra a maçaneta, abre a porta e a tranca com toda a força! Você sobreviveu!{RESET}"
+                    )
                     ui.pausar(1.5)
                     return "vitoria_minotauro"
                 else:
-                    ui.exibir("Você está na porta de saída. Você precisa cortar e pegar os fios elétricos.")
+                    ui.exibir(
+                        "Você está na porta de saída. Você precisa cortar e pegar os fios elétricos."
+                    )
                     turno_gasto = True
             else:
                 ui.exibir("A porta de saída não fica aqui. Tente voltar para trás.")
-        else: 
-            
-            ui.exibir(f"{DOS_AMARELO}Comando não reconhecido no escuro. Você gasta segundos tropeçando...{RESET}")
-            turno_gasto = True 
+        else:
+            ui.exibir(
+                f"{DOS_AMARELO}Comando não reconhecido no escuro. Você gasta segundos tropeçando...{RESET}"
+            )
+            turno_gasto = True
 
-        
         if turno_gasto and (self.px, self.py) in self.armadilhas:
             self.armadilhas.remove((self.px, self.py))
             self.bateria -= 3
             ui.buffer.append("@@GLITCH_LUZ@@")
-            ui.exibir(f"\n{DOS_VERMELHO}Você pisou em fios eletricos. A lanterna pisca e perde muita energia.{RESET}")
+            ui.exibir(
+                f"\n{DOS_VERMELHO}Você pisou em fios eletricos. A lanterna pisca e perde muita energia.{RESET}"
+            )
             ui.pausar(1.5)
 
         return turno_gasto
@@ -442,33 +534,40 @@ class MinigameMinotauro(BaseMinigame):
         mx_old, my_old = self.mx, self.my
 
         resultado_acao = self._processar_movimento_e_acoes(acao, jogo)
-        
+
         if resultado_acao in ("vitoria_minotauro",):
             return resultado_acao
 
         turno_gasto = bool(resultado_acao)
 
-        
-        resultado_colisao = self._resolver_colisao(jogo, dist_ui, px_old, py_old, mx_old, my_old, quem_moveu="jogador")
-        if resultado_colisao: return resultado_colisao
+        resultado_colisao = self._resolver_colisao(
+            jogo, dist_ui, px_old, py_old, mx_old, my_old, quem_moveu="jogador"
+        )
+        if resultado_colisao:
+            return resultado_colisao
 
         if turno_gasto:
-            if not getattr(jogo, 'god_mode', False):
+            if not getattr(jogo, "god_mode", False):
                 self.bateria -= 1
                 if self.bateria <= 0:
-                    ui.exibir("\n A sua lanterna apaga, você entra em desespero e bate na bateria fazendo barulho.")
+                    ui.exibir(
+                        "\n A sua lanterna apaga, você entra em desespero e bate na bateria fazendo barulho."
+                    )
                     ui.pausar(2)
                     ui.buffer.append("@@JUMPSCARE@@")
                     ui.pausar(2)
-                    ui.exibir("\n Você sente uma mão atravessando seu estômago por trás, não há nada a se fazer.")
+                    ui.exibir(
+                        "\n Você sente uma mão atravessando seu estômago por trás, não há nada a se fazer."
+                    )
                     return "morte"
-                
+
             mx_old, my_old = self.mx, self.my
             self.mover_minotauro(acao)
-                
-            
-            resultado_colisao = self._resolver_colisao(jogo, dist_ui, px_old, py_old, mx_old, my_old, quem_moveu="monstro")
-            if resultado_colisao: return resultado_colisao
-                
+
+            resultado_colisao = self._resolver_colisao(
+                jogo, dist_ui, px_old, py_old, mx_old, my_old, quem_moveu="monstro"
+            )
+            if resultado_colisao:
+                return resultado_colisao
+
         return "continuar"
-        
