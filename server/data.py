@@ -303,6 +303,7 @@ ARTE_PELUCIA = r"""
 
 BASE_DIR = Path(__file__).parent
 JSON_PATH = BASE_DIR / "data" / "game_data.json"
+BALANCE_PATH = BASE_DIR / "data" / "balance_config.json"
 
 try:
     with open(JSON_PATH, "r", encoding="utf-8") as f:
@@ -311,21 +312,58 @@ except FileNotFoundError:
     print(f"ERRO FATAL: Arquivo de dados não encontrado em {JSON_PATH}")
     _dados = {"mapa_original": {}, "descricoes_itens": {}}
 except json.JSONDecodeError as e:
-    print(f"ERRO FATAL: JSON malformado. Verifique a sintaxe: {e}")
+    print(f"ERRO FATAL: JSON malformado em game_data.json: {e}")
     _dados = {"mapa_original": {}, "descricoes_itens": {}}
 
+try:
+    with open(BALANCE_PATH, "r", encoding="utf-8") as f:
+        BALANCE_CFG = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    BALANCE_CFG = {}
 
 MAPA_ORIGINAL = _dados.get("mapa_original", {})
 descricoes_itens = _dados.get("descricoes_itens", {})
-
-
-_constantes = _dados.get("constantes", {})
-
-
-MAX_INVENTARIO = int(os.environ.get("MAX_INVENTARIO", _constantes.get("max_inventario", 3)))
-COFRE_SENHA = str(os.environ.get("COFRE_SENHA", _constantes.get("cofre_senha", "1994")))
-
-VIDA_NORMAL = int(os.environ.get("VIDA_NORMAL", _constantes.get("vida_normal", 3)))
-VIDA_PESADELO = int(os.environ.get("VIDA_PESADELO", _constantes.get("vida_pesadelo", 2)))
-TURNOS_BATERIA = int(os.environ.get("TURNOS_BATERIA", _constantes.get("turnos_bateria", 12)))
 EVENTOS_ALEATORIOS = _dados.get("eventos_aleatorios", [])
+
+_constantes_legadas = _dados.get("constantes", {})
+_inv_cfg = BALANCE_CFG.get("inventario", {})
+_status_cfg = BALANCE_CFG.get("status_jogador", {})
+_ia_cfg = BALANCE_CFG.get("barulho_e_ia", {})
+_exp_cfg = BALANCE_CFG.get("exploracao", {})
+
+# Constantes de Inventário e Status
+MAX_INVENTARIO = int(os.environ.get("MAX_INVENTARIO", _inv_cfg.get("max_inicial", _constantes_legadas.get("max_inventario", 3))))
+SLOTS_POR_BOLSA = int(_inv_cfg.get("slots_por_bolsa", 3))
+META_ACUMULADOR = int(_inv_cfg.get("meta_conquista_acumulador", 9))
+
+VIDA_NORMAL = int(os.environ.get("VIDA_NORMAL", _status_cfg.get("vida_normal", _constantes_legadas.get("vida_normal", 3))))
+VIDA_PESADELO = int(os.environ.get("VIDA_PESADELO", _status_cfg.get("vida_pesadelo", _constantes_legadas.get("vida_pesadelo", 2))))
+VIDA_GOD_MODE = int(_status_cfg.get("vida_god_mode", 9999))
+TURNOS_BATERIA = int(os.environ.get("TURNOS_BATERIA", _status_cfg.get("turnos_bateria", _constantes_legadas.get("turnos_bateria", 12))))
+TURNOS_LUZ_INICIAL = int(_status_cfg.get("turnos_luz_inicial", 3))
+ISQUEIRO_TURNOS_BONUS = int(_status_cfg.get("isqueiro_turnos_bonus", 2))
+ISQUEIRO_LIMITE_LUZ = int(_status_cfg.get("isqueiro_limite_luz_uso", 2))
+ISQUEIRO_BARULHO = int(_status_cfg.get("isqueiro_barulho_extra", 10))
+
+# Constantes de Barulho e IA
+REDUCAO_BARULHO_TURNO = int(_ia_cfg.get("reducao_passiva_turno", 5))
+LIMIAR_CACA = int(_ia_cfg.get("limiar_caca", 80))
+LIMIAR_ALERTA = int(_ia_cfg.get("limiar_alerta", 50))
+CHANCE_MOVER_PATRULHA = float(_ia_cfg.get("chance_mover_patrulha", 0.5))
+BARULHO_CORRER = int(_ia_cfg.get("barulho_correr", 100))
+TURNOS_ENJOADO_CORRER = int(_ia_cfg.get("turnos_enjoado_correr", 2))
+CHANCE_PERDER_ITEM_CORRER = float(_ia_cfg.get("chance_perder_item_correr", 0.25))
+BARULHO_IR_ABRIR = int(_ia_cfg.get("barulho_ir_abrir", 15))
+REDUCAO_OLHAR_ESPERAR = int(_ia_cfg.get("reducao_olhar_esperar", 10))
+BARULHO_ACAO_COMUM = int(_ia_cfg.get("barulho_acao_comum", 5))
+BARULHO_ERROS_CONSECUTIVOS = int(_ia_cfg.get("barulho_erros_consecutivos", 30))
+LIMITE_ERROS_DICA = int(_ia_cfg.get("limite_erros_dica", 3))
+LIMITE_BARULHO_FANTASMA = int(_ia_cfg.get("limite_barulho_desafio_fantasma", 50))
+
+# Constantes de Exploração
+CHANCE_TROPECO_ESCURO_PCT = int(_exp_cfg.get("chance_tropeco_escuro_pct", 10))
+CHANCE_EVENTO_ALEATORIO = float(_exp_cfg.get("chance_evento_aleatorio", 0.25))
+COFRE_SENHA = str(os.environ.get("COFRE_SENHA", _exp_cfg.get("cofre_senha", _constantes_legadas.get("cofre_senha", "1994"))))
+MAX_TENTATIVAS_COFRE = int(_exp_cfg.get("max_tentativas_cofre", 3))
+TEMPO_SPEEDRUN_VERDADEIRO = float(_exp_cfg.get("tempo_speedrun_verdadeiro_seg", 360.0))
+TEMPO_SPEEDRUN_NEUTRO = float(_exp_cfg.get("tempo_speedrun_neutro_seg", 300.0))

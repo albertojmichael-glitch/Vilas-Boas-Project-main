@@ -4,7 +4,7 @@ from villas_boas.utils import extrair_argumentos, encontrar_melhor_match
 
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, default_ui
 
-from data import EVENTOS_ALEATORIOS
+from data import EVENTOS_ALEATORIOS, CHANCE_TROPECO_ESCURO_PCT, CHANCE_EVENTO_ALEATORIO
 
 
 def cmd_ir(comando, jogo, mapa):
@@ -65,18 +65,23 @@ def cmd_ir(comando, jogo, mapa):
     ui.limpar()
     jogo.turnos_mesma_sala = 0
 
-    if jogo.turnos_luz <= 0 and not getattr(jogo, 'god_mode', False) and getattr(jogo, 'dificuldade_escolhida', '') != 'DESAFIO_BREU' and random.randint(1, 100) <= 10:
+    if (
+        jogo.turnos_luz <= 0
+        and not getattr(jogo, 'god_mode', False)
+        and getattr(jogo, 'dificuldade_escolhida', '') != 'DESAFIO_BREU'
+        and random.randint(1, 100) <= CHANCE_TROPECO_ESCURO_PCT
+    ):
         ui.exibir("\n No escuro, você perde a noção da direção, e acaba tropeçando no proprio pé, e cai no chão")
-        jogo.hp -= 1
+        morreu = jogo.aplicar_dano(1)
         ui.exibir(f" Você se machucou na queda. (HP: {jogo.hp})")
         ui.pausar(2)
-        if jogo.hp <= 0:
+        if morreu:
             ui.exibir("\n Você cai no chão e quebra sua perna, você não consegue mais andar, e escuta barulhos vindo na sua direção")
             ui.pausar(2)
-            jogo.sala_atual = "morte"
         return True
 
     jogo.sala_atual = destino
+
 
     if EVENTOS_ALEATORIOS and random.random() < 0.25:
         evento = random.choice(EVENTOS_ALEATORIOS)

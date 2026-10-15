@@ -27,11 +27,10 @@ def auth_google_callback():
         if not jogo:
             logger.warning("OAuth concluído, mas o jogo sumiu.")
             return redirect(f"{current_app.config.get('FRONTEND_URL')}/?leaderboard=falha_sessao")
-            
-        if getattr(jogo, "tempo_total_segundos", 0) > 0:
+
+        if getattr(jogo, "tempo_total_segundos", 0) > 0 and not getattr(jogo, "dev_usado", False):
             email_jogador = user_info.get("email")
-            
-            
+               
             jogador = Jogador.query.filter_by(email=email_jogador).first()
             
             if jogador:

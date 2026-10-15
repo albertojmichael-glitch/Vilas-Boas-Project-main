@@ -56,14 +56,63 @@ def encontrar_melhor_match(termo, lista_opcoes, cutoff=0.70):
     sugestoes = difflib.get_close_matches(termo, lista_opcoes, n=1, cutoff=cutoff)
     return sugestoes[0] if sugestoes else None
 
+def processar_perseguidores_por_tempo(jogo, ui):
+    """Perseguidores 'por tempo': cronômetro do modo NORMAL e a perseguidora do PESADELO."""
+    salas_seguras_ia = ["saida", "cama", "final_bom", "morte", "tubo de ventilação", "01"]
+
+    if jogo.dificuldade_escolhida == "NORMAL":
+        if jogo.sala_atual not in salas_seguras_ia:
+            jogo.turnos_mesma_sala += 1
+            if jogo.turnos_mesma_sala == jogo.turnos_perseguidor_aviso:
+                ui.exibir(f"\n{DOS_AMARELO}Você escuta ruídos metálicos pesados ecoando no corredor próximo...{RESET}")
+            elif jogo.turnos_mesma_sala == jogo.turnos_perseguidor_morte:
+                ui.exibir("\n" + "=" * 50 + f"\n{DOS_VERMELHO}Você ficou muito tempo parado. Algo entrou na sua sala...\n{RESET}" + "=" * 50)
+                if getattr(jogo, "dev_mode", False):
+                    ui.exibir(f"{DOS_AMARELO}[DEV] Cronômetro do corredor zerado: você seria morto aqui. Reiniciado.{RESET}")
+                    jogo.turnos_mesma_sala = 0
+                else:
+                    ui.pausar(4)
+                    jogo.sala_atual = "morte"
+        else:
+            jogo.turnos_mesma_sala = 0
+
+    elif jogo.dificuldade_escolhida == "PESADELO" and jogo.posicao_perseguidor != "morte" and jogo.sala_atual not in salas_seguras_ia:
+        sala_monstro = jogo.mapa.get(jogo.posicao_perseguidor, {})
+        conexoes = [
+            v for k, v in sala_monstro.items()
+            if k not in ["descrição", "itens", "inspecionaveis"]
+            and v in jogo.mapa
+            and v not in salas_seguras_ia 
+        ]
+        if conexoes and random.random() < 0.40:
+            jogo.posicao_perseguidor = random.choice(conexoes)
+
+        if jogo.posicao_perseguidor == jogo.sala_atual and getattr(jogo, "dev_mode", False):
+            ui.exibir(f"{DOS_AMARELO}[DEV] 'Ela' te encontrou em {jogo.sala_atual}: você seria morto. Ela recuou.{RESET}")
+            jogo.posicao_perseguidor = "palco"
+        elif jogo.posicao_perseguidor == jogo.sala_atual:
+            ui.exibir("\n" + "=" * 50)
+            ui.exibir(f"{DOS_VERMELHO}A porta quebra. Ela te encontrou{RESET}")
+            ui.pausar(3)
+            jogo.sala_atual = "morte"
+        else:
+            sala_jog_dados = jogo.mapa.get(jogo.sala_atual, {})
+            conexoes_jogador = [
+                v for k, v in sala_jog_dados.items()
+                if k not in ["descrição", "itens", "inspecionaveis"] and isinstance(v, str)
+            ]
+            if jogo.posicao_perseguidor in conexoes_jogador:
+                ui.exibir(f"\n{DOS_AMARELO}O chão vibra. Você ouve passos de metal maciço na sala ao lado...{RESET}")
+
 def atualizar_eventos_de_tempo(jogo):
     ui = jogo.ui_handler or default_ui
 
     if getattr(jogo, "god_mode", False):
         jogo.hp = 9999
         jogo.turnos_luz = 9999
+        if getattr(jogo, "dev_ia", False):
+            processar_perseguidores_por_tempo(jogo, ui)
         return
-
     
     salas_iluminadas = ["sala de fliperamas", "hall de entrada", "sala de refrigeração", "01", "balcão", "mesas de jantar"]
 
@@ -120,7 +169,7 @@ def atualizar_eventos_de_tempo(jogo):
         jogo.turnos_enjoado -= 1
 
    
-    salas_seguras_ia = ["saida", "cama", "final_bom", "morte", "tubo de ventilação", "01"]
+    salas_seguras_ia = processar_perseguidores_por_tempo(jogo, ui)
 
     if jogo.dificuldade_escolhida == "NORMAL":
         

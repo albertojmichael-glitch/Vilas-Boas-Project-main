@@ -37,3 +37,19 @@ def test_processar_comando_combate_morte(jogo_mock, mapa_mock):
     
     assert jogo_mock.estado_atual == "FIM"
     assert jogo_mock.sala_atual == "morte"
+
+def test_regras_puras_headless():
+    jogo = GameState()  # Usa HeadlessUIHandler automaticamente
+    jogo.configurar_dificuldade("PESADELO", fast_mode=True)
+    assert jogo.hp == 2
+
+    # Testa limite de inventário e bolsas sem UI
+    assert jogo.obter_limite_inventario() == 3
+    jogo.equipar_bolsa()
+    assert jogo.obter_limite_inventario() == 6
+
+    # Testa progressão pura da IA
+    jogo.estado_atual = "JOGO"
+    jogo.alterar_barulho(85)
+    relatorio = jogo.avancar_ia_perseguidor()
+    assert relatorio["ai_estado"] == "CACA"

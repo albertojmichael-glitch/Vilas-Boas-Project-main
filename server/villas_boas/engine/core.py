@@ -7,6 +7,7 @@ import time
 from villas_boas.actions import processar_comando
 from villas_boas.actions.parser import normalizar
 from villas_boas.utils import CONQUISTAS_DB
+from villas_boas.engine import devmode
 
 from villas_boas.engine.minigames.seguranca import MinigameSeguranca
 from villas_boas.engine.minigames.minotauro import MinigameMinotauro
@@ -16,7 +17,11 @@ from villas_boas.utils import extrair_argumentos, atualizar_eventos_de_tempo
 
 from data import (
     MAX_INVENTARIO, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, MAPA_ORIGINAL,
-    ARTE_PASTA, ARTE_DISQUETE, ARTE_RADAR, VIDA_NORMAL, VIDA_PESADELO
+    ARTE_PASTA, ARTE_DISQUETE, ARTE_RADAR, VIDA_NORMAL, VIDA_PESADELO,
+    COFRE_SENHA, MAX_TENTATIVAS_COFRE, BARULHO_CORRER, TURNOS_ENJOADO_CORRER,
+    CHANCE_PERDER_ITEM_CORRER, BARULHO_IR_ABRIR, REDUCAO_OLHAR_ESPERAR,
+    BARULHO_ACAO_COMUM, LIMITE_BARULHO_FANTASMA, TEMPO_SPEEDRUN_VERDADEIRO,
+    TEMPO_SPEEDRUN_NEUTRO, BARULHO_ERROS_CONSECUTIVOS, LIMITE_ERROS_DICA
 )
 
 from views import (
@@ -36,34 +41,14 @@ logger = logging.getLogger(__name__)
 
 
 def calcular_caminho_bfs(mapa, inicio, destino):
-    
-    if inicio not in mapa or destino not in mapa:
-        return []
-    fila = [[inicio]]
-    visitados = {inicio}
-    while fila:
-        caminho = fila.pop(0)
-        sala = caminho[-1]
-        if sala == destino:
-            return caminho
-
-        for direcao, vizinho in mapa[sala].items():
-            if (
-                isinstance(vizinho, str)
-                and vizinho in mapa
-                and vizinho not in visitados
-                and direcao not in ["descrição", "itens", "inspecionaveis", "energia"]
-            ):
-                visitados.add(vizinho)
-                novo_caminho = list(caminho)
-                novo_caminho.append(vizinho)
-                fila.append(novo_caminho)
-    return []
+    jogo_temp = type("Temp", (), {"mapa": mapa})()
+    from state import GameState
+    return GameState.calcular_caminho_bfs(jogo_temp, inicio, destino)
 
 
 def processar_ia_inimigo(jogo):
-
-    if getattr(jogo, 'god_mode', False) or jogo.estado_atual != "JOGO":
+    god_congela_ia = getattr(jogo, 'god_mode', False) and not getattr(jogo, 'dev_ia', False)
+    if god_congela_ia or jogo.estado_atual != "JOGO":
         return
 
     if jogo.nivel_barulho > 0:
@@ -190,13 +175,15 @@ def imprimir_painel_cofre(jogo, primeira_vez=False):
 
 
 def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
-    """Enfileira um evento de telemetria. Só funciona dentro de uma requisição web
-    (precisa da sessão para saber o sid e se o jogador autorizou a coleta)."""
+    
     try:
         from flask import has_request_context, session
         from services.telemetry_service import registrar_telemetria
 
-        if not has_request_context():  # modo CLI: não há worker consumindo a fila
+        if getattr(jogo, "dev_usado", False):  
+            return
+
+        if not has_request_context():  
             return
         registrar_telemetria(
             evento,
@@ -214,49 +201,46 @@ def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
 
 
 def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
-    """Aplica os efeitos de barulho/IA depois que um comando gastou turno."""
+   
     ui = jogo.ui_handler
 
     if comando_correu:
-        jogo.nivel_barulho = 100
+        jogo.nivel_barulho = BARULHO_CORRER
         jogo.ai_alvo = jogo.sala_atual
-        jogo.turnos_enjoado = 2
+        jogo.turnos_enjoado = TURNOS_ENJOADO_CORRER
 
-        if jogo.inventario and len(jogo.inventario) > 0 and random.random() <= 0.25:
+        if jogo.inventario and random.random() <= CHANCE_PERDER_ITEM_CORRER:
             item_perdido = random.choice(jogo.inventario)
             jogo.inventario.remove(item_perdido)
 
             sala_atual = jogo.mapa.get(jogo.sala_atual, {})
-            if "itens" not in sala_atual:
-                sala_atual["itens"] = []
-            sala_atual["itens"].append(item_perdido)
+            sala_atual.setdefault("itens", []).append(item_perdido)
 
             ui.buffer.append(
                 f"@@TYPE@@vermelho@@15@@Você corre desesperado. No pânico, "
                 f"você tropeça e deixa cair seu(sua) {item_perdido.upper()}!"
             )
         else:
-            ui.buffer.append("@@TYPE@@vermelho@@15@@Você foge correndo! Você deixa tudo para trás num piscar de olhos")
+            ui.buffer.append("@@TYPE@@vermelho@@15@@Você foge correndo. Você deixa tudo para trás num piscar de olhos")
 
         ui.buffer.append("@@TYPE@@amarelo@@10@@O animatrônico te perde de vista enquanto corre.")
 
     elif comando.startswith(("ir ", "abrir ")):
-        jogo.nivel_barulho = min(100, jogo.nivel_barulho + 15)
+        jogo.alterar_barulho(BARULHO_IR_ABRIR)
     elif comando in ["olhar", "inventario", "esperar"]:
-        jogo.nivel_barulho = max(0, jogo.nivel_barulho - 10)
+        jogo.alterar_barulho(-REDUCAO_OLHAR_ESPERAR)
     else:
-        jogo.nivel_barulho = min(100, jogo.nivel_barulho + 5)
+        jogo.alterar_barulho(BARULHO_ACAO_COMUM)
 
     if not comando_correu:
         processar_ia_inimigo(jogo)
     
-    if getattr(jogo, "dificuldade_escolhida", "") == "DESAFIO_FANTASMA" and jogo.nivel_barulho > 50:
+    if getattr(jogo, "dificuldade_escolhida", "") == "DESAFIO_FANTASMA" and jogo.nivel_barulho > LIMITE_BARULHO_FANTASMA:
         ui.buffer.append("@@JUMPSCARE@@")
         ui.exibir(f"\n{DOS_VERMELHO}Você quebrou o silêncio. Eles ouviram.{RESET}")
         ui.pausar(1.5)
         jogo.sala_atual = "morte"
         jogo.estado_atual = "FIM"
-
 
 
 def desbloquear_conquista(jogo, id_conquista):
@@ -330,10 +314,35 @@ def verificar_final_de_jogo(jogo):
 
     return False
 
-
 def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save=None):
+    
+    comando = normalizar(comando_bruto)
+    estado_antes = jogo.estado_atual
+
+    if devmode.eh_codigo_de_ativacao(comando) and estado_antes in devmode.ESTADOS_ATIVACAO:
+        devmode.ativar(jogo, vindo_do_menu=(estado_antes == "MENU"))
+        if estado_antes == "MENU":
+            imprimir_contexto_sala(jogo)
+        return
+
+    if getattr(jogo, "dev_mode", False):
+        resultado = devmode.processar_comando_dev(comando, jogo, estado_antes)
+        if resultado != devmode.NAO_TRATADO:
+            if resultado == devmode.TRATADO_MUDOU_SALA:
+                if not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
+                    imprimir_contexto_sala(jogo)
+            return
+        snapshot = devmode.tirar_snapshot(jogo)
+        snapshot = devmode.tirar_snapshot(jogo)
+        _processar_fluxo_jogo_normal(comando_bruto, jogo, tem_save, callback_load_save)
+        if getattr(jogo, "dev_mode", False) and estado_antes != "FIM":
+            devmode.pos_turno(jogo, snapshot)
+        return
+
+def _processar_fluxo_jogo_normal(comando_bruto, jogo, tem_save=False, callback_load_save=None):
     comando = normalizar(comando_bruto)
     ui = jogo.ui_handler
+    estado_antes = jogo.estado_atual
 
     
     if comando.startswith("tp ") and getattr(jogo, 'god_mode', False) and "MINIGAME" in getattr(jogo, "estado_atual", ""):
@@ -363,6 +372,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.amanheceu = False
             jogo.alberto_desativado = False
             jogo.god_mode = False
+            devmode.resetar(jogo)
             jogo.turnos_luz = 0
             jogo.fast_mode = False
             jogo.dificuldade_escolhida = "NORMAL"
@@ -637,36 +647,37 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 1: Em que ano a nossa música parou para sempre?{RESET}")
 
         else:
-            gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
+            jogador_correu = False
+            comando_para_executar = comando_bruto
 
-            if not gastou_turno:
-                
-                jogador_correu = False
+            if comando.startswith("correr "):
+                direcao = comando.replace("correr ", "").strip()
+                mapa_direcoes = {"f": "frente", "t": "atrás", "e": "esquerda", "d": "direita"}
+                if direcao in mapa_direcoes:
+                    direcao = mapa_direcoes[direcao]
 
-                if comando.startswith("correr "):
-                    direcao = comando.replace("correr ", "").strip()
-                    mapa_direcoes = {"f": "frente", "t": "atrás", "e": "esquerda", "d": "direita"}
-                    if direcao in mapa_direcoes:
-                        direcao = mapa_direcoes[direcao]
-                        
-                    comando_bruto = f"ir {direcao}"
-                    comando = comando_bruto
-                    jogador_correu = True
+                comando_para_executar = f"ir {direcao}"
+                comando = comando_para_executar
+                jogador_correu = True
+                if jogo.estado_atual == "COMBATE_ANIMATRONICO":
+                    jogo.estado_atual = "JOGO"
 
-                gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
+            gastou_turno = processar_comando(comando_para_executar, jogo, jogo.mapa)
 
-                if gastou_turno:
-                    atualizar_eventos_de_tempo(jogo)
-                    jogo.erros_consecutivos = 0
-                    aplicar_efeitos_pos_turno(jogo, comando, jogador_correu)
-                else:
-                    if jogo.erros_consecutivos >= 3:
-                        jogo.nivel_barulho = min(100, jogo.nivel_barulho + 30)
-                        jogo.ai_alvo = jogo.sala_atual
-                        ui.animar("Seus tropeços no escuro estão chamando muita atenção...", 0.03, DOS_AMARELO, jogo)
-            else:
+            if gastou_turno:
                 atualizar_eventos_de_tempo(jogo)
                 jogo.erros_consecutivos = 0
+                if jogo.estado_atual == "JOGO" and gastou_turno != "olhar":
+                    aplicar_efeitos_pos_turno(jogo, comando, jogador_correu)
+            else:
+                if jogador_correu and estado_antes == "COMBATE_ANIMATRONICO":
+                    jogo.estado_atual = "COMBATE_ANIMATRONICO"
+
+                if jogo.erros_consecutivos >= 3:
+                    jogo.nivel_barulho = min(100, jogo.nivel_barulho + 30)
+                    jogo.ai_alvo = jogo.sala_atual
+                    ui.animar("Seus tropeços no escuro estão chamando muita atenção...", 0.03, DOS_AMARELO, jogo)
+                    jogo.erros_consecutivos = 0  
 
             if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
                 jogo.sala_atual = "01"
@@ -675,7 +686,6 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             if jogo.estado_atual == "FIM" and getattr(jogo, 'incendio', False):
                 registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro", jogo)
                 
-                # Final Verdadeiro 
                 desbloquear_conquista(jogo, "final_verdadeiro")
                 if jogo.dificuldade_escolhida == "PESADELO":
                     desbloquear_conquista(jogo, "pesadelo_verdadeiro")
@@ -685,12 +695,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 rodar_final("verdadeiro", jogo)
                 return
 
-            # conquista acumulador
             if len(jogo.inventario) >= 9:
                 desbloquear_conquista(jogo, "acumulador")
-            
 
-            
             if not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
                 imprimir_contexto_sala(jogo)
         

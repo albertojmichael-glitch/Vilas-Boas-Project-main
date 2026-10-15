@@ -20,30 +20,20 @@ def cmd_pegar(comando, jogo, mapa):
         
     item = match_item
 
-    
     if item == "bolsa":
-        jogo.bolsas_coletadas = getattr(jogo, "bolsas_coletadas", 0) + 1
+        jogo.equipar_bolsa()
         itens_chao.remove("bolsa")
         ui.exibir(f"{DOS_VERDE}Você equipou a bolsa! Seu limite de inventário aumentou permanentemente (+3 slots).{RESET}")
         return True
 
-    
-    qtd_bolsas = getattr(jogo, "bolsas_coletadas", 0)
-    limite_atual = MAX_INVENTARIO + (qtd_bolsas * 3)
-
-    
-    if len(jogo.inventario) >= limite_atual and not getattr(jogo, "god_mode", False):
+    if not jogo.adicionar_item_inventario(item):
         ui.exibir(f"{DOS_VERMELHO}Sua mochila está cheia! Você precisa largar algo antes.{RESET}")
         return False
 
-    
-    jogo.inventario.append(item)
     itens_chao.remove(item)
     ui.exibir(f"{DOS_VERDE}Você pegou: {item}{RESET}")
 
-    qtd_bolsas = getattr(jogo, "bolsas_coletadas", 0)
-    limite_atual = 3 + (qtd_bolsas * 3)
-    if limite_atual == 9 and len(jogo.inventario) == 9:
+    if jogo.atingiu_meta_acumulador():
         from villas_boas.engine.core import desbloquear_conquista
         desbloquear_conquista(jogo, "acumulador")
         
@@ -80,32 +70,19 @@ def _usar_lanterna(jogo, mapa, item):
 
 def _usar_isqueiro(jogo, mapa, item):
     ui = jogo.ui_handler
-    
-    
     try:
         from data import ARTE_ISQUEIRO
         ui.animar(f"{DOS_AMARELO}{ARTE_ISQUEIRO}{RESET}", 0.015, jogo=jogo)
-    except ImportError: 
+    except ImportError:
         pass
-        
-    
-    if getattr(jogo, "turnos_luz", 0) > 2:
-        ui.exibir(f"{DOS_AMARELO}Você acende o isqueiro, mas a sua lanterna já ilumina o local muito bem.{RESET}")
-        return False 
-        
-    
-    ui.exibir(f"{DOS_AMARELO}Você risca a pedra do isqueiro. Uma chama tremeluzente ilumina as sombras.{RESET}")
-    ui.exibir(f"{DOS_VERDE}A luz fraca permite enxergar o chão, mas o gás parece que vai durar pouco (2 turnos).{RESET}")
-    
-    
-    jogo.turnos_luz += 2 
-    
-    
-    jogo.nivel_barulho = min(100, getattr(jogo, "nivel_barulho", 0) + 10)
-    
-    
-    return True
 
+    if not jogo.acender_isqueiro():
+        ui.exibir(f"{DOS_AMARELO}Você acende o isqueiro, mas a sua lanterna já ilumina o local muito bem.{RESET}")
+        return False
+
+    ui.exibir(f"{DOS_AMARELO}Você risca a pedra do isqueiro. Uma chama tremeluzente ilumina as sombras.{RESET}")
+    ui.exibir(f"{DOS_VERDE}A luz fraca permite enxergar o chão, mas o gás parece que vai durar pouco.{RESET}")
+    return True
 
 def _usar_chave_dos_fundos(jogo, mapa, item):
     ui = jogo.ui_handler
@@ -128,19 +105,14 @@ def _usar_chave_dos_fundos(jogo, mapa, item):
 
 def _usar_bateria_nova(jogo, mapa, item):
     ui = jogo.ui_handler
+    status = jogo.recarregar_lanterna()
 
-    if getattr(jogo, 'dificuldade_escolhida', '') == 'DESAFIO_BREU':
+    if status == "quebrada_breu":
         ui.exibir("\nVocê tenta colocar a bateria nova, mas a sua lanterna está permanentemente quebrada.")
-        if "bateria nova" in jogo.inventario:
-            jogo.inventario.remove("bateria nova")
         return True
-    
-    ui.exibir(
-        f"{DOS_VERDE}Você abre a parte inferior da lanterna e insere a bateria nova.{RESET}"
-    )
+
+    ui.exibir(f"{DOS_VERDE}Você abre a parte inferior da lanterna e insere a bateria nova.{RESET}")
     ui.exibir(f"{DOS_AMARELO}A luz da lanterna fica forte e ofuscante!{RESET}")
-    jogo.turnos_luz = TURNOS_BATERIA
-    jogo.inventario.remove("bateria nova")
     return True
 
 
@@ -233,30 +205,15 @@ def _usar_tabua_pequena_de_madeira(jogo, mapa, item):
 
 def _usar_cura(jogo, mapa, item):
     ui = jogo.ui_handler
-    
-    
-    hp_maximo = 2 if jogo.dificuldade_escolhida == "PESADELO" else 3
-    if getattr(jogo, "god_mode", False):
-        hp_maximo = 9999
-
-    
-    if jogo.hp >= hp_maximo:
-        ui.exibir(f"Você já está se sentindo bem. Melhor guardar isso para depois.")
+    if not jogo.curar(item, 1):
+        ui.exibir("Você já está se sentindo bem. Melhor guardar isso para depois.")
         return False
 
-    
-    jogo.hp += 1
-    jogo.inventario.remove(item)
-
-    
     if item == "remedio":
-        ui.exibir(f"{DOS_VERDE}Você engole o relaxante muscular vencido. Seus músculos destravam e a dor diminui (+1 HP).{RESET}")
+        ui.exibir(f"{DOS_VERDE}Você engole o relaxante muscular vencido. Seus músculos perdem o estresse e a dor diminui (+1 HP).{RESET}")
     elif item == "doce":
         ui.exibir(f"{DOS_VERDE}Você mastiga o doce velho. O pico de açúcar te dá um pouco mais de resistência (+1 HP).{RESET}")
-    
     return True
-
-
 
 _USAR_HANDLERS = {
     "lanterna": _usar_lanterna,
