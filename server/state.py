@@ -112,7 +112,7 @@ class GameState(BaseModel):
     turnos_fuga: int = 5
     isqueiro_usos: int = 3
     posicao_perseguidor: str = "palco"
-    estado_atual: str = GameStateEnum.MENU.value
+    estado_atual: str = GameStateEnum.AGUARDANDO_DIR.value
     god_mode: bool = False
     dev_mode: bool = False
     dev_usado: bool = False

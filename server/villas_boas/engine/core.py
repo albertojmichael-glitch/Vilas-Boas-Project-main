@@ -20,7 +20,7 @@ from data import (
     VIDA_NORMAL,
     VIDA_PESADELO,
 )
-from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
+from ui import DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, DOS_AMARELO, RESET
 from views import (
     dar_dica_jon,
     dar_tela_de_morte,
@@ -179,7 +179,7 @@ def imprimir_painel_cofre(jogo, primeira_vez=False):
             f"{DOS_BRANCO}O cofre de ferro possui um teclado numérico antigo, gasto pelo tempo.{RESET}"
         )
         ui.exibir(
-            f"{DOS_AMARELO}Gravado a canivete embaixo do teclado, quatro frases soltas:{RESET}"
+            f"{DOS_BRANCO}Gravado a canivete embaixo do teclado, quatro frases soltas:{RESET}"
         )
         ui.exibir(gerar_charada_cofre(jogo))
 
@@ -241,7 +241,7 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
                 f"você tropeça e deixa cair seu(sua) {item_perdido.upper()}!"
             )
         else:
-            ui.buffer.append("@@TYPE@@vermelho@@15@@Você foge correndo. Você deixa tudo para trás.")
+            ui.buffer.append("@@TYPE@@vermelho@@15@@Você foge correndo! Você deixa tudo para trás num piscar de olhos")
 
         ui.buffer.append("@@TYPE@@amarelo@@10@@O animatrônico te perde de vista enquanto corre.")
 
