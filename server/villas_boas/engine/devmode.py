@@ -209,6 +209,7 @@ def _restaurar_itens(jogo, snap):
 
 def pos_turno(jogo, snap):
     """Roda depois de cada comando normal do jogo, com o modo dev ligado."""
+    ui = jogo.ui_handler
     if snap is not None:
         _restaurar_itens(jogo, snap)
 
@@ -217,17 +218,13 @@ def pos_turno(jogo, snap):
     jogo.turnos_enjoado = 0
     jogo.turnos_no_escuro = 0
 
-    if jogo.estado_atual == "COMBATE_ANIMATRONICO":
+    # Condição expandida: intercepta tanto se o combate acionar quanto se estiverem na mesma sala
+    if jogo.estado_atual == "COMBATE_ANIMATRONICO" or jogo.ai_sala == jogo.sala_atual:
         _interceptar_perseguidor(jogo)
         from views import imprimir_contexto_sala
-
         imprimir_contexto_sala(jogo)
 
-    if (
-        getattr(jogo, "dev_radar", True)
-        and jogo.estado_atual == "JOGO"
-        and jogo.sala_atual in jogo.mapa
-    ):
+    if getattr(jogo, "dev_radar", True) and jogo.estado_atual == "JOGO" and jogo.sala_atual in jogo.mapa:
         imprimir_radar(jogo)
 
 
@@ -241,14 +238,12 @@ def _interceptar_perseguidor(jogo):
         caminho = _bfs(jogo, jogo.sala_atual, sala)
         if caminho and len(caminho) > maior:
             longe, maior = sala, len(caminho)
+    
     jogo.estado_atual = "JOGO"
     jogo.ai_sala = longe
     jogo.ai_estado = "PATRULHA"
     jogo.nivel_barulho = 0
-    ui.exibir(
-        f"{DOS_AMARELO}[DEV] O perseguidor te alcançou, mas o modo dev te protegeu. Ele recuou para: {longe}.{RESET}"
-    )
-
+    ui.exibir(f"{DOS_AMARELO}[DEV] O perseguidor te alcançou, mas o modo dev te protegeu. Ele recuou para: {longe}.{RESET}")
 
 # ------------------------------------------------------------- comandos
 def _sala_por_nome(jogo, termo):
