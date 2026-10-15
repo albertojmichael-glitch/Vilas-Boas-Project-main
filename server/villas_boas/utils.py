@@ -223,70 +223,45 @@ def atualizar_eventos_de_tempo(jogo):
 
     if getattr(jogo, "amanheceu", False) or jogo.sala_atual in salas_iluminadas:
         jogo.turnos_no_escuro = 0
-
     else:
         if jogo.turnos_luz > 0:
             jogo.turnos_luz -= 1
             jogo.turnos_no_escuro = 0
-
             if jogo.turnos_luz == 2:
                 ui.buffer.append("@@GLITCH_LUZ@@")
-                ui.exibir(
-                    f"\n{DOS_AMARELO}Sua lanterna dá uma leve piscada. A luz está enfraquecendo...{RESET}"
-                )
-
+                ui.exibir(f"\n{DOS_AMARELO}Sua lanterna dá uma leve piscada. A luz está enfraquecendo...{RESET}")
             elif jogo.turnos_luz == 1:
                 ui.buffer.append("@@GLITCH_LUZ@@")
-                ui.exibir(
-                    f"\n{DOS_VERMELHO}A luz da lanterna falha quase que totalmente. Vai apagar a qualquer momento.{RESET}"
-                )
-
+                ui.exibir(f"\n{DOS_VERMELHO}A luz da lanterna falha quase que totalmente. Vai apagar a qualquer momento.{RESET}")
             elif jogo.turnos_luz == 0:
-                ui.exibir(
-                    f"\n{DOS_VERMELHO}A escuridão volta a dominar... Sua fonte de luz se apagou{RESET}"
-                )
+                ui.exibir(f"\n{DOS_VERMELHO}A escuridão volta a dominar... Sua fonte de luz se apagou{RESET}")
                 ui.pausar(1.5)
         else:
             jogo.turnos_no_escuro += 1
-
             if jogo.turnos_no_escuro == 1:
-                ui.exibir(
-                    f"\n{DOS_AMARELO}As sombras parecem se mexer nos cantos da sua visão...{RESET}"
-                )
+                ui.exibir(f"\n{DOS_AMARELO}As sombras parecem se mexer nos cantos da sua visão...{RESET}")
             elif jogo.turnos_no_escuro == 3:
                 jogo.nivel_barulho = 100
                 jogo.ai_alvo = jogo.sala_atual
-                ui.exibir(
-                    f"\n{DOS_VERMELHO}No escuro absoluto, você entra em pânico e esbarra nos móveis. O barulho ecoa pelo corredor!{RESET}"
-                )
+                ui.exibir(f"\n{DOS_VERMELHO}No escuro absoluto, você entra em pânico e esbarra nos móveis. O barulho ecoa pelo corredor!{RESET}")
             elif jogo.turnos_no_escuro >= 5:
                 jogo.hp -= 1
                 jogo.turnos_no_escuro = 0
                 if jogo.hp > 0:
-                    ui.exibir(
-                        f"\n{DOS_VERMELHO}Você tenta andar no escuro, tropeça violentamente e se machuca! (-1 HP){RESET}"
-                    )
+                    ui.exibir(f"\n{DOS_VERMELHO}Você tenta andar no escuro, tropeça violentamente e se machuca! (-1 HP){RESET}")
                 else:
-                    ui.exibir(
-                        f"\n{DOS_VERMELHO}Você cai de mau jeito no escuro e bate a cabeça. Você não consegue mais levantar...{RESET}"
-                    )
+                    ui.exibir(f"\n{DOS_VERMELHO}Você cai de mau jeito no escuro e bate a cabeça. Você não consegue mais levantar...{RESET}")
                     jogo.sala_atual = "morte"
 
     if getattr(jogo, "incendio", False):
         jogo.turnos_fuga -= 1
-        ui.exibir(
-            f"\n{DOS_VERMELHO}O RESTAURANTE ESTÁ DESMORONANDO ({jogo.turnos_fuga} turnos para fugir){RESET}"
-        )
+        ui.exibir(f"\n{DOS_VERMELHO}O RESTAURANTE ESTÁ DESMORONANDO ({jogo.turnos_fuga} turnos para fugir){RESET}")
         if jogo.turnos_fuga <= 0:
-            ui.exibir(
-                f"\n{DOS_VERMELHO}O teto desaba sobre você. O fogo consome o que restou.{RESET}"
-            )
+            ui.exibir(f"\n{DOS_VERMELHO}O teto desaba sobre você. O fogo consome o que restou.{RESET}")
             jogo.sala_atual = "morte"
 
     if jogo.turnos_enjoado > 0:
-        ui.exibir(
-            f"\n{DOS_AMARELO}Você está enjoado e com tontura... Seus olhos embaçam.{RESET}"
-        )
+        ui.exibir(f"\n{DOS_AMARELO}Você está enjoado e com tontura... Seus olhos embaçam.{RESET}")
         if (
             jogo.turnos_luz > 0
             and not getattr(jogo, "amanheceu", False)
@@ -295,61 +270,7 @@ def atualizar_eventos_de_tempo(jogo):
             jogo.turnos_luz -= 1
         jogo.turnos_enjoado -= 1
 
-    salas_seguras_ia = processar_perseguidores_por_tempo(jogo, ui)
-
-    if jogo.dificuldade_escolhida == "NORMAL":
-        if jogo.sala_atual not in salas_seguras_ia:
-            jogo.turnos_mesma_sala += 1
-            if jogo.turnos_mesma_sala == jogo.turnos_perseguidor_aviso:
-                ui.exibir(
-                    f"\n{DOS_AMARELO}Você escuta ruídos metálicos pesados ecoando no corredor próximo...{RESET}"
-                )
-            elif jogo.turnos_mesma_sala == jogo.turnos_perseguidor_morte:
-                ui.exibir(
-                    "\n"
-                    + "=" * 50
-                    + f"\n{DOS_VERMELHO}Você ficou muito tempo parado. Algo entrou na sua sala...\n{RESET}"
-                    + "=" * 50
-                )
-                ui.pausar(4)
-                jogo.sala_atual = "morte"
-        else:
-            jogo.turnos_mesma_sala = 0
-
-    elif (
-        jogo.dificuldade_escolhida == "PESADELO"
-        and jogo.posicao_perseguidor != "morte"
-        and jogo.sala_atual not in salas_seguras_ia
-    ):
-        sala_monstro = jogo.mapa.get(jogo.posicao_perseguidor, {})
-
-        conexoes = [
-            v
-            for k, v in sala_monstro.items()
-            if k not in ["descrição", "itens", "inspecionaveis"]
-            and v in jogo.mapa
-            and v not in salas_seguras_ia
-        ]
-        if conexoes and random.random() < 0.40:
-            jogo.posicao_perseguidor = random.choice(conexoes)
-
-        if jogo.posicao_perseguidor == jogo.sala_atual:
-            ui.exibir("\n" + "=" * 50)
-            ui.exibir(f"{DOS_VERMELHO}A porta quebra. Ela te encontrou{RESET}")
-            ui.pausar(3)
-            jogo.sala_atual = "morte"
-        else:
-            sala_jog_dados = jogo.mapa.get(jogo.sala_atual, {})
-            conexoes_jogador = [
-                v
-                for k, v in sala_jog_dados.items()
-                if k not in ["descrição", "itens", "inspecionaveis"]
-                and isinstance(v, str)
-            ]
-            if jogo.posicao_perseguidor in conexoes_jogador:
-                ui.exibir(
-                    f"\n{DOS_AMARELO}O chão vibra. Você ouve passos de metal maciço na sala ao lado...{RESET}"
-                )
+    processar_perseguidores_por_tempo(jogo, ui)
 
 
 def corromper_texto(texto, intensidade=0.5):

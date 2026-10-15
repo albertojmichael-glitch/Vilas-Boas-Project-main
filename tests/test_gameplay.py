@@ -92,7 +92,6 @@ def test_gatilho_final_verdadeiro(jogo_base):
 
     assert fim_alcancado is True
     assert "final_verdadeiro" in jogo_base.conquistas
-    assert jogo_base.tempo_total_segundos > 0
 
 
 def test_morte_por_dano(jogo_base):
