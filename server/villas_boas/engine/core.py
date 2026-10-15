@@ -145,10 +145,6 @@ ARTE_COFRE_TENSO = r"""
  \__________________________/
 """
 
-
-MAX_TENTATIVAS_COFRE = 3
-
-
 _PISTAS_COFRE = [
     "[1º dígito] Um único ponto de luz acende sozinho na unidade, o primeiro som da noite.",
     "[2º e 3º dígitos] Nove marcas de unha, em 2 vezes, na fileira da lateral do metal.",
@@ -196,10 +192,8 @@ def imprimir_painel_cofre(jogo, primeira_vez=False):
 
 
 def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
-
     try:
         from flask import has_request_context, session
-
         from services.telemetry_service import registrar_telemetria
 
         if getattr(jogo, "dev_usado", False):
@@ -384,10 +378,10 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     if getattr(jogo, "dev_mode", False):
         resultado = devmode.processar_comando_dev(comando, jogo, estado_antes)
         if resultado != devmode.NAO_TRATADO:
-            if resultado == devmode.TRATADO_MUDOU_SALA:
-                if not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
-                    imprimir_contexto_sala(jogo)
+            if resultado == devmode.TRATADO_MUDOU_SALA and not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
+                imprimir_contexto_sala(jogo)
             return
+        
         snapshot = devmode.tirar_snapshot(jogo)
         snapshot = devmode.tirar_snapshot(jogo)
         _processar_fluxo_jogo_normal(comando_bruto, jogo, tem_save, callback_load_save)

@@ -274,7 +274,7 @@ class GameState(BaseModel):
     def resetar_para_novo_jogo(self) -> None:
         try:
             self.mapa = copy.deepcopy(MAPA_ORIGINAL)
-        except Exception as e:
+        except (TypeError, ValueError) as e:
             logger.error(f"Erro ao restaurar MAPA_ORIGINAL: {e}")
 
         self.estado_atual = GameStateEnum.AGUARDANDO_DIR.value

@@ -17,7 +17,7 @@ def test_iniciar_jogo_cria_sessao(cliente):
     assert "linhas" in dados
     assert dados["estado"]["sala"] == "SISTEMA"
 
-def test_fluxo_comando_basico(cliente):
+def test_fluxo_comando_basico(app_ctx, cliente):
     
     cliente.get('/iniciar')
     

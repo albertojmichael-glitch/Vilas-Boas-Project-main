@@ -60,7 +60,6 @@ def test_inventario_aumenta_com_bolsa(jogo_base):
     jogo_base.mapa["entrada"]["itens"] = ["papel"]
     
     
-    from villas_boas.actions.parser import processar_comando
     processar_comando("pegar papel", jogo_base, jogo_base.mapa)
     
     

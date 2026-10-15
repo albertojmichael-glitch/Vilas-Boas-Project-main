@@ -1,0 +1,61 @@
+--- server/villas_boas/actions/parser.py
++++ server/villas_boas/actions/parser.py
+@@ -33,6 +33,28 @@ def encontrar_melhor_match(palavra_digitada, lista_opcoes, limite=0.6):
+     return matches[0] if matches else None
+ 
+ 
++# Atalhos de direção: 'f' == 'ir frente' etc. (também usado pelo core para calcular o barulho do turno)
++ATALHOS_DIRECAO = {
++    "f": "ir frente",
++    "frente": "ir frente",
++    "n": "ir frente",
++    "norte": "ir frente",
++    "t": "ir atrás",
++    "tras": "ir atrás",
++    "atras": "ir atrás",
++    "atrás": "ir atrás",
++    "s": "ir atrás",
++    "sul": "ir atrás",
++    "e": "ir esquerda",
++    "esquerda": "ir esquerda",
++    "w": "ir esquerda",
++    "oeste": "ir esquerda",
++    "d": "ir direita",
++    "direita": "ir direita",
++    "leste": "ir direita",
++}
++
++
+ def processar_comando(comando, jogo, mapa):
+     ui = jogo.ui_handler
+     comando = comando.strip()
+@@ -71,27 +93,8 @@ def processar_comando(comando, jogo, mapa):
+         jogo.estado_atual = "JOGO"
+         return "olhar"
+ 
+-    mapa_direcoes = {
+-        "f": "ir frente",
+-        "frente": "ir frente",
+-        "n": "ir frente",
+-        "norte": "ir frente",
+-        "t": "ir atrás",
+-        "tras": "ir atrás",
+-        "atras": "ir atrás",
+-        "atrás": "ir atrás",
+-        "s": "ir atrás",
+-        "sul": "ir atrás",
+-        "e": "ir esquerda",
+-        "esquerda": "ir esquerda",
+-        "w": "ir esquerda",
+-        "oeste": "ir esquerda",
+-        "d": "ir direita",
+-        "direita": "ir direita",
+-        "leste": "ir direita",
+-    }
+-    if comando.lower() in mapa_direcoes:
+-        comando = mapa_direcoes[comando.lower()]
++    if comando.lower() in ATALHOS_DIRECAO:
++        comando = ATALHOS_DIRECAO[comando.lower()]
+ 
+     if comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"]:
+         if jogo.sala_atual == "01":
