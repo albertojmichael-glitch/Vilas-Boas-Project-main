@@ -33,7 +33,7 @@ from views import (
 
 logger = logging.getLogger(__name__)
 
-SALAS_TERMINAIS = ("morte", "saida", "cama", "final_bom")
+SALAS_TERMINAIS = {"morte", "saida", "cama", "final_bom"}
 CHAVES_NAO_SAIDA = {"descrição", "itens", "inspecionaveis", "energia", "cofre_important", "cadeira"}
 SALAS_SEGURAS_PATRULHA = SALAS_TERMINAIS | {"01", "sala de energia", "tubo de ventilação"}
 
