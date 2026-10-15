@@ -217,6 +217,8 @@ def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
 def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
     """Aplica os efeitos de barulho/IA depois que um comando gastou turno."""
     from data import BARULHO_CORRER, TURNOS_ENJOADO_CORRER, CHANCE_PERDER_ITEM_CORRER, BARULHO_IR_ABRIR, REDUCAO_OLHAR_ESPERAR, BARULHO_ACAO_COMUM
+    import random
+    from ui import DOS_VERMELHO, DOS_AMARELO, RESET
     
     ui = jogo.ui_handler
 
@@ -239,7 +241,7 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
                 f"você tropeça e deixa cair seu(sua) {item_perdido.upper()}!"
             )
         else:
-            ui.buffer.append("@@TYPE@@vermelho@@15@@Você foge correndo! Você deixa tudo para trás num piscar de olhos")
+            ui.buffer.append("@@TYPE@@vermelho@@15@@Você foge correndo. Você deixa tudo para trás.")
 
         ui.buffer.append("@@TYPE@@amarelo@@10@@O animatrônico te perde de vista enquanto corre.")
 
