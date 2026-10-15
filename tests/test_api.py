@@ -1,11 +1,11 @@
-def test_ping(cliente):
+def test_ping(app_ctx, cliente):
 
     resposta = cliente.get("/ping")
     assert resposta.status_code == 200
     assert b"Estou vivo!" in resposta.data
 
 
-def test_iniciar_jogo_cria_sessao(cliente):
+def test_iniciar_jogo_cria_sessao(app_ctx, cliente):
 
     resposta = cliente.get("/iniciar")
 
@@ -32,7 +32,7 @@ def test_fluxo_comando_basico(app_ctx, cliente):
     assert "COMMAND  COM" in texto_terminal
 
 
-def test_comando_invalido_seguranca(cliente):
+def test_comando_invalido_seguranca(app_ctx, cliente):
 
     cliente.get("/iniciar")
 

@@ -215,7 +215,9 @@ def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
 
 
 def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
-
+    """Aplica os efeitos de barulho/IA depois que um comando gastou turno."""
+    from data import BARULHO_CORRER, TURNOS_ENJOADO_CORRER, CHANCE_PERDER_ITEM_CORRER, BARULHO_IR_ABRIR, REDUCAO_OLHAR_ESPERAR, BARULHO_ACAO_COMUM
+    
     ui = jogo.ui_handler
 
     if comando_correu:
@@ -223,40 +225,35 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
         jogo.ai_alvo = jogo.sala_atual
         jogo.turnos_enjoado = TURNOS_ENJOADO_CORRER
 
-        if jogo.inventario and random.random() <= CHANCE_PERDER_ITEM_CORRER:
+        if jogo.inventario and len(jogo.inventario) > 0 and random.random() <= CHANCE_PERDER_ITEM_CORRER:
             item_perdido = random.choice(jogo.inventario)
             jogo.inventario.remove(item_perdido)
 
             sala_atual = jogo.mapa.get(jogo.sala_atual, {})
-            sala_atual.setdefault("itens", []).append(item_perdido)
+            if "itens" not in sala_atual:
+                sala_atual["itens"] = []
+            sala_atual["itens"].append(item_perdido)
 
             ui.buffer.append(
                 f"@@TYPE@@vermelho@@15@@Você corre desesperado. No pânico, "
                 f"você tropeça e deixa cair seu(sua) {item_perdido.upper()}!"
             )
         else:
-            ui.buffer.append(
-                "@@TYPE@@vermelho@@15@@Você foge correndo. Você deixa tudo para trás num piscar de olhos"
-            )
+            ui.buffer.append("@@TYPE@@vermelho@@15@@Você foge correndo! Você deixa tudo para trás num piscar de olhos")
 
-        ui.buffer.append(
-            "@@TYPE@@amarelo@@10@@O animatrônico te perde de vista enquanto corre."
-        )
+        ui.buffer.append("@@TYPE@@amarelo@@10@@O animatrônico te perde de vista enquanto corre.")
 
     elif comando.startswith(("ir ", "abrir ")):
-        jogo.alterar_barulho(BARULHO_IR_ABRIR)
+        jogo.nivel_barulho = min(100, jogo.nivel_barulho + BARULHO_IR_ABRIR)
     elif comando in ["olhar", "inventario", "esperar"]:
-        jogo.alterar_barulho(-REDUCAO_OLHAR_ESPERAR)
+        jogo.nivel_barulho = max(0, jogo.nivel_barulho - REDUCAO_OLHAR_ESPERAR)
     else:
-        jogo.alterar_barulho(BARULHO_ACAO_COMUM)
+        jogo.nivel_barulho = min(100, jogo.nivel_barulho + BARULHO_ACAO_COMUM)
 
     if not comando_correu:
         processar_ia_inimigo(jogo)
-
-    if (
-        getattr(jogo, "dificuldade_escolhida", "") == "DESAFIO_FANTASMA"
-        and jogo.nivel_barulho > LIMITE_BARULHO_FANTASMA
-    ):
+    
+    if getattr(jogo, "dificuldade_escolhida", "") == "DESAFIO_FANTASMA" and jogo.nivel_barulho > 50:
         ui.buffer.append("@@JUMPSCARE@@")
         ui.exibir(f"\n{DOS_VERMELHO}Você quebrou o silêncio. Eles ouviram.{RESET}")
         ui.pausar(1.5)
