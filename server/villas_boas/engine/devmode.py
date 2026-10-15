@@ -209,7 +209,6 @@ def _restaurar_itens(jogo, snap):
 
 def pos_turno(jogo, snap):
     """Roda depois de cada comando normal do jogo, com o modo dev ligado."""
-    ui = jogo.ui_handler
     if snap is not None:
         _restaurar_itens(jogo, snap)
 
