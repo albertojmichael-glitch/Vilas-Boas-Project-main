@@ -4,12 +4,11 @@ import json
 import logging
 import uuid
 
-from cryptography.fernet import Fernet, InvalidToken
-from sqlalchemy.exc import SQLAlchemyError
-
 from config import Config
+from cryptography.fernet import Fernet, InvalidToken
 from extensions import db
 from models import SaveJogo
+from sqlalchemy.exc import SQLAlchemyError
 from state import GameState
 
 logger = logging.getLogger(__name__)

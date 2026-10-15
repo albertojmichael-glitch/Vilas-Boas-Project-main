@@ -2,9 +2,8 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 
-from flask import send_from_directory
-
 from app_factory import create_app
+from flask import send_from_directory
 
 app = create_app()
 

@@ -1,12 +1,11 @@
 import logging
 
-from flask import Blueprint, jsonify, request
-from sqlalchemy import func
-from sqlalchemy.exc import SQLAlchemyError
-
 from extensions import db, limiter
+from flask import Blueprint, jsonify, request
 from models import Jogador, SaveJogo, Telemetria
 from security import requer_admin
+from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 
 logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")

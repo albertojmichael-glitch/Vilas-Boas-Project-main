@@ -378,10 +378,14 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     if getattr(jogo, "dev_mode", False):
         resultado = devmode.processar_comando_dev(comando, jogo, estado_antes)
         if resultado != devmode.NAO_TRATADO:
-            if resultado == devmode.TRATADO_MUDOU_SALA and not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
+            if (
+                resultado == devmode.TRATADO_MUDOU_SALA
+                and not verificar_final_de_jogo(jogo)
+                and jogo.estado_atual == "JOGO"
+            ):
                 imprimir_contexto_sala(jogo)
             return
-        
+
         snapshot = devmode.tirar_snapshot(jogo)
         snapshot = devmode.tirar_snapshot(jogo)
         _processar_fluxo_jogo_normal(comando_bruto, jogo, tem_save, callback_load_save)

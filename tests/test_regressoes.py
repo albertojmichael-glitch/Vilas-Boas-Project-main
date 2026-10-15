@@ -2,7 +2,7 @@ import uuid
 
 from extensions import db
 from models import Compartilhamento, SaveJogo
-from services.save_service import to_uuid, salvar_save_web, save_existe, CIPHER_SUITE
+from services.save_service import CIPHER_SUITE, salvar_save_web, save_existe, to_uuid
 from state import GameState
 
 
@@ -34,7 +34,9 @@ def test_share_com_save_corrompido_nao_gera_500_nao_tratado(app_ctx, cliente):
     share = Compartilhamento(original_sid=str(sid), expires_at=9e12)
     db.session.add(share)
     db.session.commit()
-    assert cliente.get(f"/share/{share.share_token}").status_code == 500  # tratado, com mensagem
+    assert (
+        cliente.get(f"/share/{share.share_token}").status_code == 500
+    )  # tratado, com mensagem
 
 
 def test_share_feliz_cria_novo_save_e_redireciona(app_ctx, cliente):
@@ -51,12 +53,15 @@ def test_share_feliz_cria_novo_save_e_redireciona(app_ctx, cliente):
 def test_telemetria_chega_na_fila_dentro_de_requisicao(app_ctx):
     from services import telemetry_service as ts
     from villas_boas.engine.core import registrar_telemetria_segura
+
     while not ts.fila_telemetria.empty():
         ts.fila_telemetria.get_nowait()
     sid = str(uuid.uuid4())
     from app import app
+
     with app.test_request_context():
         from flask import session
+
         session["sid"] = sid
         session["permite_telemetria"] = True
         registrar_telemetria_segura("MORTE", "cozinha", "NORMAL", "teste", GameState())
@@ -67,11 +72,14 @@ def test_telemetria_chega_na_fila_dentro_de_requisicao(app_ctx):
 def test_telemetria_respeita_opt_out(app_ctx):
     from services import telemetry_service as ts
     from villas_boas.engine.core import registrar_telemetria_segura
+
     while not ts.fila_telemetria.empty():
         ts.fila_telemetria.get_nowait()
     from app import app
+
     with app.test_request_context():
         from flask import session
+
         session["permite_telemetria"] = False
         registrar_telemetria_segura("MORTE", "cozinha", "NORMAL", "teste", GameState())
     assert ts.fila_telemetria.empty()

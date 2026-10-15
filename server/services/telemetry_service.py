@@ -1,9 +1,8 @@
 import queue
 
-from sqlalchemy.exc import SQLAlchemyError
-
 from extensions import db
 from models import Telemetria
+from sqlalchemy.exc import SQLAlchemyError
 
 fila_telemetria = queue.Queue()
 

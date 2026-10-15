@@ -1,9 +1,7 @@
 import pytest
-
 from state import GameState
-from villas_boas.engine import devmode
-from villas_boas.engine.core import processar_fluxo_jogo
 from villas_boas.engine import core
+from villas_boas.engine.core import processar_fluxo_jogo
 
 CODIGO = "sudo admin 1982"
 
@@ -96,7 +94,11 @@ def test_radar_mostra_sala_do_perseguidor(jogo_dev):
     jogo_dev.sala_atual, jogo_dev.ai_sala = "entrada", "sala de jantar"
     processar_fluxo_jogo("radar", jogo_dev)
     t = jogo_dev.ui_handler.texto
-    assert "sala de jantar" in t and "1 sala de distância" in t and "entrada > sala de jantar" in t
+    assert (
+        "sala de jantar" in t
+        and "1 sala de distância" in t
+        and "entrada > sala de jantar" in t
+    )
 
 
 def test_radar_automatico_apos_cada_turno_e_desligavel(jogo_dev):
@@ -133,8 +135,14 @@ def test_vida_e_luz_infinitas(jogo_dev):
 
 def test_perseguidor_solto_nao_mata(jogo_dev):
     processar_fluxo_jogo("dev ia on", jogo_dev)
-    jogo_dev.sala_atual, jogo_dev.ai_sala, jogo_dev.nivel_barulho = "entrada", "sala de jantar", 100
-    processar_fluxo_jogo("ir frente", jogo_dev)  # anda até a sala do perseguidor: ele alcança no mesmo turno
+    jogo_dev.sala_atual, jogo_dev.ai_sala, jogo_dev.nivel_barulho = (
+        "entrada",
+        "sala de jantar",
+        100,
+    )
+    processar_fluxo_jogo(
+        "ir frente", jogo_dev
+    )  # anda até a sala do perseguidor: ele alcança no mesmo turno
     t = jogo_dev.ui_handler.texto
     assert "o modo dev te protegeu" in t
     assert jogo_dev.estado_atual == "JOGO" and jogo_dev.sala_atual != "morte"
@@ -188,8 +196,10 @@ def test_save_carrega_com_flags_dev(jogo_dev):
 def test_partida_dev_fica_fora_do_leaderboard_e_telemetria(jogo_dev, monkeypatch):
     chamadas = []
     import services.telemetry_service as ts
+
     monkeypatch.setattr(ts, "registrar_telemetria", lambda *a, **k: chamadas.append(1))
     from app import app
+
     with app.test_request_context():
         core.registrar_telemetria_segura("MORTE", "x", "NORMAL", "t", jogo_dev)
     assert chamadas == []

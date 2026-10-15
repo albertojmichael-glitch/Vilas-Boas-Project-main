@@ -4,6 +4,7 @@ import time
 import uuid
 
 from cryptography.fernet import InvalidToken
+from extensions import MEMORIA_SESSOES, db, limiter
 from flask import (
     Blueprint,
     current_app,
@@ -13,10 +14,8 @@ from flask import (
     send_from_directory,
     session,
 )
-from pydantic import ValidationError
-
-from extensions import MEMORIA_SESSOES, db, limiter
 from models import Compartilhamento, SaveJogo
+from pydantic import ValidationError
 from routes.helpers import (
     ComandoRequest,
     WebUIHandler,

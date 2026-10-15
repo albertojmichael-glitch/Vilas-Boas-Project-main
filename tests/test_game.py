@@ -1,26 +1,25 @@
-#olamundo
-import pytest
-import os
-import json
-from unittest.mock import patch
+# olamundo
 from state import GameState
 from villas_boas.actions import processar_comando
-from villas_boas.utils import encontrar_melhor_match
 from villas_boas.engine import MinigameMinotauro, MinigameSeguranca
+from villas_boas.utils import encontrar_melhor_match
 
 
 class DummyUI:
     def __init__(self):
         self.buffer = []
+
     def exibir(self, texto):
         self.buffer.append(texto)
+
     def limpar(self):
         pass
+
     def pausar(self, *args):
         pass
+
     def animar(self, texto, *args, **kwargs):
         self.buffer.append(texto)
-
 
 
 def test_fuzzy_matching_itens():
@@ -30,14 +29,16 @@ def test_fuzzy_matching_itens():
     assert encontrar_melhor_match("bateria", opcoes) == "bateria nova"
     assert encontrar_melhor_match("pudim", opcoes) is None
 
+
 def test_alias_movimentacao(jogo_base):
-   
+
     jogo_base.sala_atual = "entrada"
     processar_comando("ir frente", jogo_base, jogo_base.mapa)
     assert jogo_base.sala_atual == "sala de jantar"
 
+
 def test_inventario_cheio_sem_bolsa(jogo_base):
-    
+
     jogo_base.inventario = ["item1", "item2", "item3"]
     jogo_base.sala_atual = "entrada"
     jogo_base.mapa["entrada"]["itens"] = ["papel"]
@@ -47,27 +48,24 @@ def test_inventario_cheio_sem_bolsa(jogo_base):
     output = " ".join(jogo_base.ui_handler.buffer)
     assert "Sua mochila está cheia" in output
 
+
 def test_inventario_aumenta_com_bolsa(jogo_base):
-    
-    
-    jogo_base.inventario = ["item1", "item2", "item3"] 
-    
-    
-    jogo_base.bolsas_coletadas = 1 
-    
-    
+
+    jogo_base.inventario = ["item1", "item2", "item3"]
+
+    jogo_base.bolsas_coletadas = 1
+
     jogo_base.sala_atual = "entrada"
     jogo_base.mapa["entrada"]["itens"] = ["papel"]
-    
-    
+
     processar_comando("pegar papel", jogo_base, jogo_base.mapa)
-    
-    
+
     assert "papel" in jogo_base.inventario
     assert len(jogo_base.inventario) == 4
 
+
 def test_transicao_morte_animatronico(jogo_base):
-    
+
     jogo_base.estado_atual = "COMBATE_ANIMATRONICO"
     jogo_base.god_mode = False
     gastou_turno = processar_comando("bater", jogo_base, jogo_base.mapa)
@@ -75,8 +73,9 @@ def test_transicao_morte_animatronico(jogo_base):
     assert jogo_base.sala_atual == "morte"
     assert jogo_base.estado_atual == "FIM"
 
+
 def test_vitoria_animatronico_god_mode(jogo_base):
-    
+
     jogo_base.estado_atual = "COMBATE_ANIMATRONICO"
     jogo_base.god_mode = True
     processar_comando("bater", jogo_base, jogo_base.mapa)
@@ -84,16 +83,18 @@ def test_vitoria_animatronico_god_mode(jogo_base):
     assert jogo_base.estado_atual == "JOGO"
     assert jogo_base.posicao_perseguidor == "longe"
 
+
 def test_minotauro_derrota_escuro(jogo_base):
-   
+
     minigame = MinigameMinotauro(jogo_base)
     minigame.px, minigame.py = 0, 1
     minigame.mx, minigame.my = 0, 1
     resultado = minigame.processar_turno("esperar", jogo_base)
     assert resultado == "morte"
 
+
 def test_seguranca_energia_esgotada(jogo_base):
- 
+
     minigame = MinigameSeguranca(jogo_base)
     minigame.energia = 2
     minigame.porta_fechada = False
@@ -102,9 +103,11 @@ def test_seguranca_energia_esgotada(jogo_base):
     output = " ".join(jogo_base.ui_handler.buffer)
     assert "Sem energia" in output
 
+
 def test_salvar_e_carregar_autosave(jogo_base, tmp_path):
-   
+
     import state
+
     caminho_original = state.AUTOSAVE_FILE
     state.AUTOSAVE_FILE = tmp_path / "test_save.json"
     jogo_base.sala_atual = "01"

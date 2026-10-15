@@ -7,8 +7,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field, PrivateAttr
-
 from data import (
     BALANCE_CFG,
     CHANCE_MOVER_PATRULHA,
@@ -28,6 +26,7 @@ from data import (
     VIDA_NORMAL,
     VIDA_PESADELO,
 )
+from pydantic import BaseModel, Field, PrivateAttr
 
 logger = logging.getLogger(__name__)
 

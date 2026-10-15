@@ -5,7 +5,6 @@ import uuid
 
 from flask import jsonify, session
 from pydantic import BaseModel, Field, field_validator
-
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET, UIHandler
 
 logger = logging.getLogger(__name__)

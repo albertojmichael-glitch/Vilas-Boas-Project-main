@@ -1,9 +1,8 @@
 import time
 import uuid
 
-from sqlalchemy import JSON, Index, func
-
 from extensions import db
+from sqlalchemy import JSON, Index, func
 
 
 class Jogador(db.Model):
