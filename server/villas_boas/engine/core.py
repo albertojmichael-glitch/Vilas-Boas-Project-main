@@ -1,225 +1,61 @@
+import random
 import copy
 import logging
-import random
 import time
 
+from villas_boas.actions import processar_comando
+from villas_boas.actions.parser import normalizar, ATALHOS_DIRECAO
+from villas_boas.utils import CONQUISTAS_DB, processar_perseguidores_por_tempo, extrair_argumentos, atualizar_eventos_de_tempo
+from villas_boas.engine import devmode
+from villas_boas.engine.minigames.seguranca import MinigameSeguranca
+from villas_boas.engine.minigames.minotauro import MinigameMinotauro
+from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
+
 from data import (
-    ARTE_PIANO,
-    ARTE_PORCO,
-    ARTE_ROBO,
-    BARULHO_ACAO_COMUM,
-    BARULHO_CORRER,
-    BARULHO_IR_ABRIR,
-    CHANCE_PERDER_ITEM_CORRER,
-    LIMITE_BARULHO_FANTASMA,
-    MAPA_ORIGINAL,
-    MAX_INVENTARIO,
-    MAX_TENTATIVAS_COFRE,
-    REDUCAO_OLHAR_ESPERAR,
-    TURNOS_ENJOADO_CORRER,
-    VIDA_NORMAL,
-    VIDA_PESADELO,
+    MAX_INVENTARIO, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, MAPA_ORIGINAL,
+    ARTE_PASTA, ARTE_DISQUETE, ARTE_RADAR, VIDA_NORMAL, VIDA_PESADELO,
+    COFRE_SENHA, MAX_TENTATIVAS_COFRE, BARULHO_CORRER, TURNOS_ENJOADO_CORRER,
+    CHANCE_PERDER_ITEM_CORRER, BARULHO_IR_ABRIR, REDUCAO_OLHAR_ESPERAR,
+    BARULHO_ACAO_COMUM, LIMITE_BARULHO_FANTASMA, TEMPO_SPEEDRUN_VERDADEIRO,
+    TEMPO_SPEEDRUN_NEUTRO, BARULHO_ERROS_CONSECUTIVOS, LIMITE_ERROS_DICA
 )
-from ui import DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, DOS_AMARELO, RESET
+
 from views import (
+    imprimir_tela_boot,
+    imprimir_menu_dificuldade,
+    imprimir_tutorial,
     dar_dica_jon,
-    dar_tela_de_morte,
     falar_pianista,
     imprimir_contexto_sala,
-    imprimir_menu_dificuldade,
-    imprimir_tela_boot,
-    imprimir_tutorial,
-    rodar_final,
-)
-from villas_boas.actions import processar_comando
-from villas_boas.actions.parser import normalizar
-from villas_boas.engine import devmode
-from villas_boas.engine.minigames.minotauro import MinigameMinotauro
-from villas_boas.engine.minigames.seguranca import MinigameSeguranca
-from villas_boas.utils import (
-    CONQUISTAS_DB,
-    atualizar_eventos_de_tempo,
-    extrair_argumentos,
+    dar_tela_de_morte,
+    rodar_final
 )
 
 logger = logging.getLogger(__name__)
 
+SALAS_TERMINAIS = ("morte", "saida", "cama", "final_bom")
+CHAVES_NAO_SAIDA = {"descrição", "itens", "inspecionaveis", "energia", "cofre_important", "cadeira"}
+SALAS_SEGURAS_PATRULHA = SALAS_TERMINAIS | {"01", "sala de energia", "tubo de ventilação"}
 
 def calcular_caminho_bfs(mapa, inicio, destino):
-    jogo_temp = type("Temp", (), {"mapa": mapa})()
     from state import GameState
-
+    jogo_temp = type("Temp", (), {"mapa": mapa})()
     return GameState.calcular_caminho_bfs(jogo_temp, inicio, destino)
 
-
 def processar_ia_inimigo(jogo):
-    god_congela_ia = getattr(jogo, "god_mode", False) and not getattr(
-        jogo, "dev_ia", False
-    )
-    if god_congela_ia or jogo.estado_atual != "JOGO":
+    relatorio = jogo.avancar_ia_perseguidor()
+    if not relatorio.get("ativa"):
         return
 
-    if jogo.nivel_barulho > 0:
-        jogo.nivel_barulho = max(0, jogo.nivel_barulho - 5)
-
-    if jogo.nivel_barulho >= 80 or jogo.ai_sala == jogo.sala_atual:
-        jogo.ai_estado = "CACA"
-    elif jogo.nivel_barulho >= 50 and jogo.ai_estado != "CACA":
-        jogo.ai_estado = "ALERTA"
-    elif jogo.nivel_barulho < 50:
-        jogo.ai_estado = "PATRULHA"
-
-    if jogo.ai_estado == "PATRULHA":
-        vizinhos = [
-            v
-            for k, v in jogo.mapa.get(jogo.ai_sala, {}).items()
-            if isinstance(v, str)
-            and v in jogo.mapa
-            and k not in ["descrição", "itens", "inspecionaveis", "energia"]
-        ]
-        if random.random() > 0.5 and vizinhos:
-            jogo.ai_sala = random.choice(vizinhos)
-
-    elif jogo.ai_estado in ["ALERTA", "CACA"]:
-        destino = (
-            jogo.sala_atual
-            if jogo.ai_estado == "CACA"
-            else (jogo.ai_alvo if jogo.ai_alvo else jogo.sala_atual)
-        )
-        caminho = calcular_caminho_bfs(jogo.mapa, jogo.ai_sala, destino)
-        if len(caminho) > 1:
-            jogo.ai_sala = caminho[1]
-
-    caminho_para_jogador = calcular_caminho_bfs(
-        jogo.mapa, jogo.sala_atual, jogo.ai_sala
-    )
-    distancia = len(caminho_para_jogador) - 1 if caminho_para_jogador else 99
-
-    if distancia == 0 and jogo.sala_atual not in ["01", "sala de energia"]:
-        jogo.estado_atual = "COMBATE_ANIMATRONICO"
-        jogo.ui_handler.buffer.append(
-            "@@TYPE@@vermelho@@15@@O animatrônico irrompe na sala! Ele encontrou você!"
-        )
+    distancia = relatorio["distancia"]
+    if relatorio["combate_iniciado"]:
+        jogo.ui_handler.buffer.append("@@TYPE@@vermelho@@15@@O animatrônico irrompe na sala! Ele encontrou você!")
     elif distancia == 1:
-        jogo.ui_handler.buffer.append(
-            "@@PASSO@@Você ouve passos metálicos pesados na sala ao lado..."
-        )
+        jogo.ui_handler.buffer.append("@@PASSO@@Você ouve passos metálicos pesados na sala ao lado...")
     elif distancia == 2:
-        jogo.ui_handler.buffer.append(
-            "@@TYPE@@amarelo@@15@@Um baque surdo ecoa pelos corredores distantes."
-        )
-
-
-ARTE_COFRE = r"""
-  __________________________
- /  ______________________  \
-|  |  __   __   __   __   |  |
-|  | |  | |  | |  | |  |  |  |
-|  | |__| |__| |__| |__|  |  |
-|  |                      |  |
-|  |       .------.       |  |
-|  |      /        \      |  |
-|  |     |   [**]   |     |  |
-|  |      \        /      |  |
-|  |       `------'       |  |
-|  |                      |  |
-|  |______________________|  |
- \__________________________/
-"""
-
-
-ARTE_COFRE_TENSO = r"""
-  __________________________
- /  ______________/\_______  \
-|  |  __   __   __\/  __   |  |
-|  | |  | |  | |  |  |  |  |  |
-|  | |__| |__|/|__|  |__|  |  |
-|  |         /            |  |
-|  |       .------.       |  |
-|  |      /   !!   \      |  |
-|  |     | x [**] x |     |  |
-|  |      \        /      |  |
-|  |       `------'       |  |
-|  |                      |  |
-|  |______________________|  |
- \__________________________/
-"""
-
-_PISTAS_COFRE = [
-    "[1º dígito] Um único ponto de luz acende sozinho na unidade, o primeiro som da noite.",
-    "[2º e 3º dígitos] Nove marcas de unha, em 2 vezes, na fileira da lateral do metal.",
-    "[4º dígito] Quatro cadeiras na sala do piano. Só uma nunca foi ocupada de novo.",
-]
-
-
-def gerar_charada_cofre(jogo):
-    """Monta o texto de pistas embaralhando a ordem de exibição a cada
-    tentativa, mas mantendo a integridade das frases."""
-    pistas = _PISTAS_COFRE.copy()
-    random.shuffle(pistas)
-
-    linhas = []
-    for pista in pistas:
-        linhas.append(f"  {pista}")
-
-    return "\n".join(linhas)
-
-
-def imprimir_painel_cofre(jogo, primeira_vez=False):
-    ui = jogo.ui_handler
-    tentativas = getattr(jogo, "cofre_tentativas", 0)
-
-    if tentativas == 0:
-        ui.animar(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}", 0.015, jogo=jogo)
-    else:
-        ui.animar(f"{DOS_VERMELHO}{ARTE_COFRE_TENSO}{RESET}", 0.015, jogo=jogo)
-
-    if primeira_vez:
-        ui.exibir(
-            f"{DOS_BRANCO}O cofre de ferro possui um teclado numérico antigo, gasto pelo tempo.{RESET}"
-        )
-        ui.exibir(
-            f"{DOS_BRANCO}Gravado a canivete embaixo do teclado, quatro frases soltas:{RESET}"
-        )
-        ui.exibir(gerar_charada_cofre(jogo))
-
-    restantes = MAX_TENTATIVAS_COFRE - tentativas
-    if tentativas > 0:
-        ui.exibir(
-            f"{DOS_VERMELHO}Tentativas restantes antes do painel travar: {restantes}{RESET}"
-        )
-    ui.exibir(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}")
-
-
-def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
-    try:
-        from flask import has_request_context, session
-        from services.telemetry_service import registrar_telemetria
-
-        if getattr(jogo, "dev_usado", False):
-            return
-
-        if not has_request_context():
-            return
-        registrar_telemetria(
-            evento,
-            sala,
-            dificuldade,
-            motivo,
-            jogo=jogo,
-            sid_sessao=session.get("sid"),
-            permite_telemetria=session.get("permite_telemetria", True),
-        )
-    except (ImportError, AttributeError) as e:
-        logger.warning(f"Falha ao registrar telemetria ({evento}/{motivo}): {e}")
-
+        jogo.ui_handler.buffer.append("@@TYPE@@amarelo@@15@@Um baque surdo ecoa pelos corredores distantes.")
 
 def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
-    """Aplica os efeitos de barulho/IA depois que um comando gastou turno."""
-    from data import BARULHO_CORRER, TURNOS_ENJOADO_CORRER, CHANCE_PERDER_ITEM_CORRER, BARULHO_IR_ABRIR, REDUCAO_OLHAR_ESPERAR, BARULHO_ACAO_COMUM
-    import random
-    from ui import DOS_VERMELHO, DOS_AMARELO, RESET
-    
     ui = jogo.ui_handler
 
     if comando_correu:
@@ -230,19 +66,11 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
         if jogo.inventario and len(jogo.inventario) > 0 and random.random() <= CHANCE_PERDER_ITEM_CORRER:
             item_perdido = random.choice(jogo.inventario)
             jogo.inventario.remove(item_perdido)
-
             sala_atual = jogo.mapa.get(jogo.sala_atual, {})
-            if "itens" not in sala_atual:
-                sala_atual["itens"] = []
-            sala_atual["itens"].append(item_perdido)
-
-            ui.buffer.append(
-                f"@@TYPE@@vermelho@@15@@Você corre desesperado. No pânico, "
-                f"você tropeça e deixa cair seu(sua) {item_perdido.upper()}!"
-            )
+            sala_atual.setdefault("itens", []).append(item_perdido)
+            ui.buffer.append(f"@@TYPE@@vermelho@@15@@Você corre desesperado. No pânico, você tropeça e deixa cair seu(sua) {item_perdido.upper()}!")
         else:
             ui.buffer.append("@@TYPE@@vermelho@@15@@Você foge correndo! Você deixa tudo para trás num piscar de olhos")
-
         ui.buffer.append("@@TYPE@@amarelo@@10@@O animatrônico te perde de vista enquanto corre.")
 
     elif comando.startswith(("ir ", "abrir ")):
@@ -255,376 +83,169 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
     if not comando_correu:
         processar_ia_inimigo(jogo)
     
-    if getattr(jogo, "dificuldade_escolhida", "") == "DESAFIO_FANTASMA" and jogo.nivel_barulho > 50:
+    if getattr(jogo, "dificuldade_escolhida", "") == "DESAFIO_FANTASMA" and jogo.nivel_barulho > LIMITE_BARULHO_FANTASMA:
         ui.buffer.append("@@JUMPSCARE@@")
         ui.exibir(f"\n{DOS_VERMELHO}Você quebrou o silêncio. Eles ouviram.{RESET}")
         ui.pausar(1.5)
         jogo.sala_atual = "morte"
         jogo.estado_atual = "FIM"
 
+def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
+    try:
+        from flask import has_request_context, session
+        from services.telemetry_service import registrar_telemetria
+
+        if getattr(jogo, "dev_usado", False) or not has_request_context():
+            return
+        registrar_telemetria(
+            evento, sala, dificuldade, motivo,
+            jogo=jogo, sid_sessao=session.get("sid"),
+            permite_telemetria=session.get("permite_telemetria", True),
+        )
+    except (ImportError, AttributeError) as e:
+        logger.warning(f"Falha ao registrar telemetria ({evento}/{motivo}): {e}")
 
 def desbloquear_conquista(jogo, id_conquista):
-
-    if id_conquista in CONQUISTAS_DB and id_conquista not in jogo.conquistas:
+    if id_conquista in CONQUISTAS_DB and id_conquista not in jogo.conquistas: 
         jogo.conquistas.append(id_conquista)
         jogo.novas_conquistas_turno.append(CONQUISTAS_DB[id_conquista])
 
-
 def verificar_final_de_jogo(jogo):
     if jogo.sala_atual == "morte":
-        registrar_telemetria_segura(
-            "MORTE", jogo.sala_atual, jogo.dificuldade_escolhida, "Morte no Mapa", jogo
-        )
+        registrar_telemetria_segura("MORTE", jogo.sala_atual, jogo.dificuldade_escolhida, "Morte no Mapa", jogo)
         dar_tela_de_morte(jogo)
         desbloquear_conquista(jogo, "primeira_morte")
         return True
-
-    if (
-        jogo.sala_atual in ["saida", "cama", "hall de entrada"]
-        and getattr(jogo, "estado_atual", "") != "FIM"
-    ):
+    
+    if jogo.sala_atual in SALAS_TERMINAIS and getattr(jogo, 'estado_atual', '') != "FIM":
         jogo.tempo_total_segundos = time.time() - jogo.tempo_inicio
 
     if jogo.sala_atual == "saida":
-        registrar_telemetria_segura(
-            "VITORIA",
-            jogo.sala_atual,
-            jogo.dificuldade_escolhida,
-            "Final Covarde",
-            jogo,
-        )
+        registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Covarde", jogo)
         rodar_final("saida", jogo)
         return True
 
     if jogo.sala_atual == "cama":
-        registrar_telemetria_segura(
-            "VITORIA",
-            jogo.sala_atual,
-            jogo.dificuldade_escolhida,
-            "Final Dorminhoco",
-            jogo,
-        )
+        registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Dorminhoco", jogo)
         rodar_final("cama", jogo)
         return True
 
-    if jogo.sala_atual == "hall de entrada" and getattr(jogo, "noite_vencida", False):
-        if getattr(jogo, "fios_cortados_inventario", False):
-            registrar_telemetria_segura(
-                "VITORIA",
-                jogo.sala_atual,
-                jogo.dificuldade_escolhida,
-                "Final Verdadeiro",
-                jogo,
-            )
+    if jogo.sala_atual == "hall de entrada" and getattr(jogo, 'noite_vencida', False):
+        if getattr(jogo, 'fios_cortados_inventario', False):
+            registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro", jogo)
             rodar_final("verdadeiro", jogo)
-
             desbloquear_conquista(jogo, "final_verdadeiro")
             if jogo.dificuldade_escolhida == "PESADELO":
                 desbloquear_conquista(jogo, "pesadelo_verdadeiro")
             elif jogo.dificuldade_escolhida == "NORMAL":
                 desbloquear_conquista(jogo, "normal_zerado")
-            if jogo.dificuldade_escolhida == "DESAFIO_SPEEDRUN":
-                if jogo.tempo_total_segundos < 360.0:  # 6 min
-                    desbloquear_conquista(jogo, "speedrun")
-            elif jogo.dificuldade_escolhida == "DESAFIO_FANTASMA":
-                desbloquear_conquista(jogo, "fantasma")
-            elif jogo.dificuldade_escolhida == "DESAFIO_BREU":
-                desbloquear_conquista(jogo, "breu_total")
-
+            if jogo.dificuldade_escolhida == "DESAFIO_SPEEDRUN" and jogo.tempo_total_segundos < TEMPO_SPEEDRUN_VERDADEIRO:
+                desbloquear_conquista(jogo, "speedrun")
         else:
-            registrar_telemetria_segura(
-                "VITORIA",
-                jogo.sala_atual,
-                jogo.dificuldade_escolhida,
-                "Final Neutro",
-                jogo,
-            )
+            registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Neutro", jogo)
             rodar_final("final_bom", jogo)
-
             desbloquear_conquista(jogo, "final_bom")
             if jogo.dificuldade_escolhida == "PESADELO":
                 desbloquear_conquista(jogo, "pesadelo_neutro")
             elif jogo.dificuldade_escolhida == "NORMAL":
                 desbloquear_conquista(jogo, "normal_zerado")
-
-            if jogo.dificuldade_escolhida == "DESAFIO_SPEEDRUN":
-                if jogo.tempo_total_segundos < 300.0:  # 5 min
-                    desbloquear_conquista(jogo, "speedrun")
-            elif jogo.dificuldade_escolhida == "DESAFIO_FANTASMA":
-                desbloquear_conquista(jogo, "fantasma")
-            elif jogo.dificuldade_escolhida == "DESAFIO_BREU":
-                desbloquear_conquista(jogo, "breu_total")
-
+            if jogo.dificuldade_escolhida == "DESAFIO_SPEEDRUN" and jogo.tempo_total_segundos < TEMPO_SPEEDRUN_NEUTRO:
+                desbloquear_conquista(jogo, "speedrun")
         return True
-
     return False
 
-
 def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save=None):
-
     comando = normalizar(comando_bruto)
     estado_antes = jogo.estado_atual
 
-    if (
-        devmode.eh_codigo_de_ativacao(comando)
-        and estado_antes in devmode.ESTADOS_ATIVACAO
-    ):
-        devmode.ativar(jogo, vindo_do_menu=(estado_antes == "MENU"))
-        if estado_antes == "MENU":
+    if devmode.eh_codigo_de_ativacao(comando) and estado_antes in devmode.ESTADOS_ATIVACAO:
+        devmode.ativar(jogo, vindo_do_menu=(estado_antes in ["MENU", "AGUARDANDO_DIR"]))
+        if estado_antes in ["MENU", "AGUARDANDO_DIR"]:
             imprimir_contexto_sala(jogo)
         return
 
     if getattr(jogo, "dev_mode", False):
         resultado = devmode.processar_comando_dev(comando, jogo, estado_antes)
         if resultado != devmode.NAO_TRATADO:
-            if (
-                resultado == devmode.TRATADO_MUDOU_SALA
-                and not verificar_final_de_jogo(jogo)
-                and jogo.estado_atual == "JOGO"
-            ):
+            if resultado == devmode.TRATADO_MUDOU_SALA and not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
                 imprimir_contexto_sala(jogo)
             return
-
-        snapshot = devmode.tirar_snapshot(jogo)
         snapshot = devmode.tirar_snapshot(jogo)
         _processar_fluxo_jogo_normal(comando_bruto, jogo, tem_save, callback_load_save)
         if getattr(jogo, "dev_mode", False) and estado_antes != "FIM":
+            if getattr(jogo, "dev_ia", False) and estado_antes == "JOGO" and jogo.estado_atual == "JOGO" and comando.startswith(("ir ", "abrir ")):
+                aplicar_efeitos_pos_turno(jogo, comando, False)
             devmode.pos_turno(jogo, snapshot)
         return
 
+    _processar_fluxo_jogo_normal(comando_bruto, jogo, tem_save, callback_load_save)
 
-def _processar_fluxo_jogo_normal(
-    comando_bruto, jogo, tem_save=False, callback_load_save=None
-):
+def _processar_fluxo_jogo_normal(comando_bruto, jogo, tem_save=False, callback_load_save=None):
     comando = normalizar(comando_bruto)
     ui = jogo.ui_handler
     estado_antes = jogo.estado_atual
 
-    if (
-        comando.startswith("tp ")
-        and getattr(jogo, "god_mode", False)
-        and "MINIGAME" in getattr(jogo, "estado_atual", "")
-    ):
+    if comando.startswith("tp ") and getattr(jogo, 'god_mode', False) and "MINIGAME" in getattr(jogo, "estado_atual", ""):
         jogo.estado_atual = "JOGO"
         jogo.minigame_atual = None
-        ui.exibir(
-            f"{DOS_AMARELO}[GOD MODE] Sequência do minigame abortada via distorção espacial.{RESET}"
-        )
+        ui.exibir(f"{DOS_AMARELO}[GOD MODE] Sequência do minigame abortada via distorção espacial.{RESET}")
 
-    if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in [
-        "morte",
-        "saida",
-        "cama",
-        "final_bom",
-    ]:
+    if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in SALAS_TERMINAIS:
         jogo.sala_atual = "01"
 
-    # estado fim de jogo
     if jogo.estado_atual == "FIM":
         if comando in ["f5", "reiniciar", "restart", "reset", "dir"]:
-            try:
-                jogo.mapa = copy.deepcopy(MAPA_ORIGINAL)
-            except (ImportError, AttributeError) as e:
-                logger.error(f"Erro ao restaurar MAPA_ORIGINAL: {e}")
-
-            # reset das variaveis
-            jogo.estado_atual = "AGUARDANDO_DIR"
-            jogo.inventario = []
-            jogo.hp = 3
-            jogo.sala_atual = "entrada"
-            jogo.incendio = False
-            jogo.noite_vencida = False
-            jogo.fios_cortados_inventario = False
-            jogo.amanheceu = False
-            jogo.alberto_desativado = False
-            jogo.god_mode = False
+            jogo.resetar_para_novo_jogo()
             devmode.resetar(jogo)
-            jogo.turnos_luz = 0
-            jogo.fast_mode = False
-            jogo.dificuldade_escolhida = "NORMAL"
-            jogo.minigame_atual = None
-            jogo.tempo_inicio = time.time()
-
             if comando == "dir":
                 ui.limpar()
                 ui.exibir(f"{DOS_BRANCO} Volume in drive A is VILLASBOAS{RESET}")
-                ui.exibir(f"{DOS_BRANCO} Directory of A:\\{RESET}\n")
-                ui.exibir("")
-                ui.exibir(
-                    f"{DOS_VERDE}COMMAND  COM        47.845  02-11-1982  6:00a{RESET}"
-                )
-                ui.exibir("")
-                ui.exibir(
-                    f"{DOS_VERDE}SEGURA   SYS         2.048  02-11-1982  6:00a{RESET}"
-                )
-                ui.exibir("")
-                ui.exibir(
-                    f"{DOS_VERDE}NOTURNO  EXE        18.204  02-11-1982  6:00a{RESET}"
-                )
-                ui.exibir("")
-                ui.exibir(
-                    f"{DOS_VERDE}DESKTOP  &lt;DIR&gt;              24-07-2007  4:00a{RESET}"
-                )
-                ui.exibir("")
-                ui.exibir(
-                    f"{DOS_VERDE}SAVES    &lt;DIR&gt;              23-07-2008  4:00a{RESET}"
-                )
-                ui.exibir("")
-                ui.exibir(
-                    f"{DOS_VERDE}PICTURE  &lt;DIR&gt;              05-11-1994  4:00a{RESET}"
-                )
-                ui.exibir("")
-                ui.exibir(
-                    f"{DOS_VERDE}VALID    &lt;DIR&gt;              24-07-2007  4:00a{RESET}"
-                )
-                ui.exibir("")
+                ui.exibir(f"{DOS_BRANCO} Directory of A:\\{RESET}\n\n")
+                ui.exibir(f"{DOS_VERDE}COMMAND  COM        47.845  02-11-1982  6:00a{RESET}\n")
+                ui.exibir(f"{DOS_VERDE}SEGURA   SYS         2.048  02-11-1982  6:00a{RESET}\n")
+                ui.exibir(f"{DOS_VERDE}NOTURNO  EXE        18.204  02-11-1982  6:00a{RESET}\n")
                 ui.exibir(f"{DOS_AMARELO}         3 file(s)       68.097 bytes{RESET}")
-                ui.exibir(
-                    f"{DOS_AMARELO}         4 dir(s)       655.360 bytes free{RESET}"
-                )
-                ui.exibir(
-                    f"{DOS_VERDE}=================================================={RESET}"
-                )
+                ui.exibir(f"{DOS_VERDE}=================================================={RESET}")
                 jogo.estado_atual = "MENU"
                 imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
-                return
             else:
                 ui.limpar()
                 imprimir_tela_boot(ui)
-                return
-
-        ui.exibir(
-            f"{DOS_VERMELHO}[SISTEMA BLOQUEADO] - Aperte a tecla F5 no teclado para jogar novamente.{RESET}"
-        )
+            return
+        ui.exibir(f"{DOS_VERMELHO}[SISTEMA BLOQUEADO] - Aperte a tecla F5 no teclado para jogar novamente.{RESET}")
         return
 
-    # estado aguardando dir
     if jogo.estado_atual == "AGUARDANDO_DIR":
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
             imprimir_tela_boot(ui)
-
         elif comando == "help":
-            ui.exibir(f"{DOS_BRANCO}Comandos internos suportados:{RESET}")
-            ui.exibir(
-                f"{DOS_VERDE}DIR{RESET}      Exibe uma lista de arquivos e subdiretórios."
-            )
-            ui.exibir(f"{DOS_VERDE}CLS{RESET}      Limpa a tela do terminal.")
-            ui.exibir(
-                f"{DOS_VERDE}MEM{RESET}      Exibe a quantidade de memória usada e livre no sistema."
-            )
-            ui.exibir(
-                f"{DOS_VERDE}CHKDSK{RESET}   Verifica um disco e exibe um relatório de status."
-            )
-            ui.exibir(
-                f"{DOS_VERDE}EXIT{RESET}     Encerra o programa COMMAND.COM (Tela Preta)."
-            )
-            ui.exibir(f"{DOS_VERDE}SHUTDOWN{RESET} Desliga e reinicia a máquina.")
-            ui.pausar(1)
-            ui.exibir(
-                f"\n{DOS_VERMELHO}[ERRO DO SISTEMA]: O arquivo AJUDA.COM foi corrompido. Você está por conta própria aqui.{RESET}"
-            )
-
-        elif comando in [
-            "del caroline.sys",
-            "delete caroline.sys",
-            "erase caroline.sys",
-            "format a:",
-        ]:
-            ui.exibir(
-                f"{DOS_VERMELHO}Acesso Negado. O arquivo CAROLINE.SYS está enraizado na sua mente.{RESET}"
-            )
+            ui.exibir(f"{DOS_VERMELHO}[ERRO DO SISTEMA]: O arquivo AJUDA.COM foi corrompido.{RESET}")
+        elif comando in ["del caroline.sys", "delete caroline.sys", "erase caroline.sys", "format a:"]:
+            ui.exibir(f"{DOS_VERMELHO}Acesso Negado. O arquivo CAROLINE.SYS está enraizado na sua mente.{RESET}")
             ui.pausar(2)
-            ui.exibir(
-                f"{DOS_VERMELHO}Tentativa de exclusão de entidade hostil detectada. Iniciando purga do sistema...{RESET}"
-            )
-            ui.pausar(1)
             from views import dar_tela_kernel_panic
-
             dar_tela_kernel_panic(jogo)
             return
-
-        elif comando == "mem":
-            ui.exibir(f"{DOS_BRANCO}Microsoft Disk Operation System 2007{RESET}")
-            ui.exibir(f"{DOS_BRANCO}VILLAS-BOAS BIOS - RELEASE 05/11/1982{RESET}\n")
-            ui.exibir(f"{DOS_VERDE}    640K memória convencional total{RESET}")
-            ui.exibir(f"{DOS_VERDE}    981K disponíveis para o MS-DOS{RESET}")
-            ui.exibir(f"{DOS_VERDE}    598K maior programa executável{RESET}\n")
-            ui.pausar(1)
-            ui.exibir(
-                f"{DOS_AMARELO}ALERTA: O módulo oculto 'CAROLINE.SYS' está consumindo memória em excesso.{RESET}"
-            )
-
-        elif comando == "chkdsk":
-            ui.exibir(f"{DOS_BRANCO}O tipo de sistema de arquivos é FAT16.{RESET}")
-            ui.exibir(f"{DOS_BRANCO}O número de série do volume é 1982-1994{RESET}")
-            ui.exibir(f"{DOS_VERDE}Verificando arquivos e pastas...{RESET}")
-            ui.pausar(1.5)
-            ui.exibir(f"{DOS_VERDE}Verificação de arquivo concluída.{RESET}")
-            ui.pausar(1)
-            ui.exibir(
-                f"{DOS_VERMELHO}Setores defeituosos encontrados em A:\\VALID\\ROGERIO.DAT{RESET}"
-            )
-            ui.exibir(
-                f"{DOS_VERMELHO}Erro ao ler registro 44: 'Eu não consigo dormir, ela assombra meus pensamentos.'{RESET}"
-            )
-            ui.exibir(
-                f"{DOS_AMARELO}O Sistema não pôde reparar os dados corrompidos.{RESET}"
-            )
-
         elif comando == "exit":
             ui.buffer.append("@@EXIT@@")
-
         elif comando == "shutdown":
             ui.buffer.append("@@RELOAD@@")
-
         elif comando == "dir":
             ui.limpar()
             ui.exibir(f"{DOS_BRANCO} Volume in drive A is VILLASBOAS{RESET}")
-            ui.exibir(f"{DOS_BRANCO} Directory of A:\\{RESET}\n")
-            ui.exibir("")
-            ui.exibir(
-                f"{DOS_VERDE}COMMAND  COM        47.845  02-11-1982  6:00a{RESET}"
-            )
-            ui.exibir("")
-            ui.exibir(
-                f"{DOS_VERDE}SEGURA   SYS         2.048  02-11-1982  6:00a{RESET}"
-            )
-            ui.exibir("")
-            ui.exibir(
-                f"{DOS_VERDE}NOTURNO  EXE        18.204  02-11-1982  6:00a{RESET}"
-            )
-            ui.exibir("")
-            ui.exibir(
-                f"{DOS_VERDE}DESKTOP  DIR                24-07-2007  4:00a{RESET}"
-            )
-            ui.exibir("")
-            ui.exibir(
-                f"{DOS_VERDE}SAVES    DIR                23-03-2008  4:00a{RESET}"
-            )
-            ui.exibir("")
-            ui.exibir(
-                f"{DOS_VERDE}PICTURE  DIR                05-11-1994  4:00a{RESET}"
-            )
-            ui.exibir("")
-            ui.exibir(
-                f"{DOS_VERDE}VALID    DIR                24-07-2007  4:00a{RESET}"
-            )
-            ui.exibir("")
+            ui.exibir(f"{DOS_BRANCO} Directory of A:\\{RESET}\n\n")
+            ui.exibir(f"{DOS_VERDE}COMMAND  COM        47.845  02-11-1982  6:00a{RESET}\n")
+            ui.exibir(f"{DOS_VERDE}SEGURA   SYS         2.048  02-11-1982  6:00a{RESET}\n")
+            ui.exibir(f"{DOS_VERDE}NOTURNO  EXE        18.204  02-11-1982  6:00a{RESET}\n")
             ui.exibir(f"{DOS_AMARELO}         3 file(s)       68.097 bytes{RESET}")
-            ui.exibir(f"{DOS_AMARELO}         4 dir(s)       655.360 bytes free{RESET}")
-            ui.exibir(
-                f"{DOS_VERDE}=================================================={RESET}"
-            )
+            ui.exibir(f"{DOS_VERDE}=================================================={RESET}")
             jogo.estado_atual = "MENU"
             imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
         else:
             ui.exibir(f"{DOS_VERMELHO}Bad command or file name{RESET}")
-            ui.exibir(
-                f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}"
-            )
+            ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
 
-    # estado menu
     elif jogo.estado_atual == "MENU":
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
@@ -632,150 +253,90 @@ def _processar_fluxo_jogo_normal(
         elif comando == "7" and tem_save:
             ui.limpar()
             if callback_load_save and callback_load_save(jogo):
-                ui.animar(
-                    f"{DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO SEU AUTOSAVE.{RESET}\n",
-                    0.04,
-                    jogo=jogo,
-                )
+                ui.animar(f"{DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO SEU AUTOSAVE.{RESET}\n", 0.04, jogo=jogo)
                 imprimir_contexto_sala(jogo)
             else:
-                ui.animar(
-                    f"{DOS_VERMELHO}Falha ao ler o seu Autosave.{RESET}",
-                    0.04,
-                    jogo=jogo,
-                )
+                ui.animar(f"{DOS_VERMELHO}Falha ao ler o seu Autosave.{RESET}", 0.04, jogo=jogo)
                 imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
-
-        elif comando in ["1", "2", "3", "4", "5", "6"]:
+        elif comando in ["1", "2", "3", "4"]:
             ui.limpar()
-            if comando == "1":
-                jogo.dificuldade_escolhida = "NORMAL"
-                jogo.fast_mode = False
-                jogo.hp = VIDA_NORMAL
-                jogo.furia_noite = 1
-                jogo.energia_min_noite = 100
-                jogo.energia_max_noite = 100
-                ui.animar(
-                    f"{DOS_VERDE}MODO NORMAL SELECIONADO. VELOCIDADE RETRÔ ATIVADA.{RESET}\n",
-                    0.04,
-                    jogo=jogo,
-                )
-
-            elif comando == "2":
-                jogo.dificuldade_escolhida = "NORMAL"
-                jogo.fast_mode = True
-                jogo.hp = VIDA_NORMAL
-                jogo.furia_noite = 1
-                jogo.energia_min_noite = 100
-                jogo.energia_max_noite = 100
-                ui.animar(
-                    f"{DOS_AMARELO}MODO NORMAL COM TEXTO RÁPIDO SELECIONADO.{RESET}\n",
-                    0.04,
-                    jogo=jogo,
-                )
-
-            elif comando == "3":
-                jogo.dificuldade_escolhida = "PESADELO"
-                jogo.fast_mode = False
-                jogo.hp = VIDA_PESADELO
-                jogo.furia_noite = 2
-                jogo.energia_min_noite = 70
-                jogo.energia_max_noite = 82
-                ui.animar(
-                    f"{DOS_VERMELHO}MODO PESADELO SELECIONADO. VELOCIDADE RETRÔ ATIVADA. BOA SORTE.{RESET}\n",
-                    0.04,
-                    jogo=jogo,
-                )
-
-            elif comando == "4":
-                jogo.dificuldade_escolhida = "PESADELO"
-                jogo.fast_mode = True
-                jogo.hp = VIDA_PESADELO
-                jogo.furia_noite = 2
-                jogo.energia_min_noite = 70
-                jogo.energia_max_noite = 82
-                ui.animar(
-                    f"{DOS_VERMELHO}MODO PESADELO COM TEXTO RÁPIDO SELECIONADO. BOA SORTE.{RESET}\n",
-                    0.04,
-                    jogo=jogo,
-                )
-
-            elif comando == "5":
-                jogo.estado_atual = "MENU_DESAFIOS"
-                ui.limpar()
-                ui.exibir(f"{DOS_AMARELO}=== MODOS DE DESAFIO ==={RESET}")
-                ui.exibir(
-                    "1 - SPEEDRUN: Zere em menos de 5 minutos reais. (Texto Rápido forçado)"
-                )
-                ui.exibir(
-                    "2 - FANTASMA: Se o barulho passar de 50%, você morre instantaneamente."
-                )
-                ui.exibir(
-                    "3 - BREU TOTAL: Você começa com a bateria da lanterna totalmente zerada."
-                )
-                ui.exibir("\nDigite o número do desafio ou 'voltar':")
-                return
-
-            elif comando == "6":
-                jogo.estado_atual = "MENU_CUSTOM_BAT"
-                ui.limpar()
-                ui.exibir(f"{DOS_AMARELO}=== MODO PERSONALIZADO ==={RESET}")
-                ui.exibir("Defina os parâmetros para a sua partida.")
-                ui.exibir(
-                    "\n1. Bateria Inicial (Digite um número de turnos, ex: 12, 50, 0):"
-                )
-                return
-
+            is_fast = comando in ["2", "4"]
+            diff = "PESADELO" if comando in ["3", "4"] else "NORMAL"
+            jogo.configurar_dificuldade(diff, fast_mode=is_fast)
+            ui.animar(f"{DOS_VERDE}MODO {diff} SELECIONADO. BOA SORTE.{RESET}\n", 0.04, jogo=jogo)
             jogo.estado_atual = "JOGO"
             jogo.tempo_inicio = time.time()
             imprimir_tutorial(ui, jogo=jogo)
-            ui.animar(
-                f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna dá três piscadas fracas...{RESET}",
-                0.04,
-                jogo=jogo,
-            )
-            ui.animar(
-                f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}",
-                0.04,
-                jogo=jogo,
-            )
             imprimir_contexto_sala(jogo)
-
         elif comando == "2007":
             ui.limpar()
-            jogo.dificuldade_escolhida = "GOD MODE"
-            jogo.god_mode = True
-            jogo.hp = 9999
-            jogo.furia_noite = 0
-            jogo.energia_min_noite = 9999
-            jogo.energia_max_noite = 9999
-            jogo.turnos_luz = 9999
+            jogo.configurar_dificuldade("GOD MODE", fast_mode=False)
             jogo.estado_atual = "JOGO"
             jogo.tempo_inicio = time.time()
-            ui.animar(
-                f"{DOS_AMARELO}MODO DEUS ATIVADO. ACESSO AOS BASTIDORES CONCEDIDO.{RESET}\n",
-                0.04,
-                jogo=jogo,
-            )
-            ui.animar(
-                f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna brilha com a força de uma estrela...{RESET}",
-                0.04,
-                jogo=jogo,
-            )
+            ui.animar(f"{DOS_AMARELO}MODO DEUS ATIVADO. ACESSO AOS BASTIDORES CONCEDIDO.{RESET}\n", 0.04, jogo=jogo)
             imprimir_contexto_sala(jogo)
             desbloquear_conquista(jogo, "trapaceiro")
-
         elif comando == "1980":
             ui.exibir("@@PLAY_1980_SLIDESHOW@@")
-            ui.exibir(" ")
             return
-
         else:
-            ui.animar(
-                f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}",
-                0.04,
-                jogo=jogo,
-            )
+            ui.animar(f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}", 0.04, jogo=jogo)
+
+    elif jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
+        if comando in ["cls", "limpar", "clear", "clean"]:
+            ui.limpar()
+            imprimir_contexto_sala(jogo)
+        elif comando == "abrir cofre" and jogo.sala_atual == "01":
+            jogo.estado_atual = "MINIGAME_COFRE"
+            jogo.cofre_tentativas = 0
+            from views import imprimir_painel_cofre
+            imprimir_painel_cofre(jogo, primeira_vez=True)
+        else:
+            jogador_correu = False
+            comando_para_executar = comando_bruto
+
+            if comando.startswith("correr "):
+                direcao = comando.replace("correr ", "").strip()
+                mapa_direcoes = {"f": "frente", "t": "atrás", "e": "esquerda", "d": "direita"}
+                direcao = mapa_direcoes.get(direcao, direcao)
+                comando_para_executar = f"ir {direcao}"
+                comando = comando_para_executar
+                jogador_correu = True
+                if jogo.estado_atual == "COMBATE_ANIMATRONICO":
+                    jogo.estado_atual = "JOGO"
+
+            gastou_turno = processar_comando(comando_para_executar, jogo, jogo.mapa)
+
+            if gastou_turno:
+                atualizar_eventos_de_tempo(jogo)
+                jogo.erros_consecutivos = 0
+                if jogo.estado_atual == "JOGO" and gastou_turno != "olhar":
+                    aplicar_efeitos_pos_turno(jogo, ATALHOS_DIRECAO.get(comando, comando), jogador_correu)
+            else:
+                if jogador_correu and estado_antes == "COMBATE_ANIMATRONICO":
+                    jogo.estado_atual = "COMBATE_ANIMATRONICO"
+                
+                jogo.erros_consecutivos += 1
+                if jogo.erros_consecutivos >= LIMITE_ERROS_DICA:
+                    jogo.alterar_barulho(BARULHO_ERROS_CONSECUTIVOS)
+                    jogo.ai_alvo = jogo.sala_atual
+                    ui.animar("Seus tropeços no escuro estão chamando muita atenção...", 0.03, DOS_AMARELO, jogo)
+                    jogo.erros_consecutivos = 0
+
+            if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in SALAS_TERMINAIS:
+                jogo.sala_atual = "01"
+
+            if jogo.estado_atual == "FIM" and getattr(jogo, 'incendio', False):
+                registrar_telemetria_segura("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro", jogo)
+                desbloquear_conquista(jogo, "final_verdadeiro")
+                rodar_final("verdadeiro", jogo)
+                return
+
+            if jogo.atingiu_meta_acumulador():
+                desbloquear_conquista(jogo, "acumulador")
+
+            if not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
+                imprimir_contexto_sala(jogo)
 
     # estado jogo/combate
     elif jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:

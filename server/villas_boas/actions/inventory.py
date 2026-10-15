@@ -1,36 +1,31 @@
 import logging
-
-from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
 from villas_boas.utils import encontrar_melhor_match
+from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
+from data import TURNOS_BATERIA
 
 logger = logging.getLogger(__name__)
-
 
 def cmd_pegar(comando, jogo, mapa):
     ui = jogo.ui_handler
     item = comando.replace("pegar ", "").strip()
     sala = mapa.get(jogo.sala_atual, {})
     itens_chao = sala.get("itens", [])
-
+    
     match_item = encontrar_melhor_match(item, itens_chao)
     if not match_item:
         ui.exibir(f"Não há nenhum '{item}' aqui para pegar.")
         return False
-
+        
     item = match_item
 
     if item == "bolsa":
-        jogo.equipar_bolsa()
+        novo_limite = jogo.equipar_bolsa()
         itens_chao.remove("bolsa")
-        ui.exibir(
-            f"{DOS_VERDE}Você equipou a bolsa! Seu limite de inventário aumentou permanentemente (+3 slots).{RESET}"
-        )
+        ui.exibir(f"{DOS_VERDE}Você equipou a bolsa! Seu limite de inventário aumentou permanentemente (Total: {novo_limite} slots).{RESET}")
         return True
 
     if not jogo.adicionar_item_inventario(item):
-        ui.exibir(
-            f"{DOS_VERMELHO}Sua mochila está cheia! Você precisa largar algo antes.{RESET}"
-        )
+        ui.exibir(f"{DOS_VERMELHO}Sua mochila está cheia! Você precisa largar algo antes.{RESET}")
         return False
 
     itens_chao.remove(item)
@@ -38,9 +33,8 @@ def cmd_pegar(comando, jogo, mapa):
 
     if jogo.atingiu_meta_acumulador():
         from villas_boas.engine.core import desbloquear_conquista
-
         desbloquear_conquista(jogo, "acumulador")
-
+        
     return True
 
 
