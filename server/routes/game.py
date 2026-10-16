@@ -40,6 +40,7 @@ game_bp = Blueprint("game", __name__)
 
 
 @game_bp.route("/iniciar", methods=["GET"])
+@limiter.limit("10 per minute")
 def iniciar_jogo():
     sid_antigo = session.get("sid")
     if sid_antigo and sid_antigo in MEMORIA_SESSOES:
@@ -64,7 +65,7 @@ def iniciar_jogo():
 
 
 @game_bp.route("/comando", methods=["GET", "POST"])
-@limiter.limit("60 per minute")
+@limiter.limit("120 per minute")
 @limiter.limit("500 per hour")
 def receber_comando():
     if request.method == "GET":
@@ -164,7 +165,7 @@ def importar_save():
 
 
 @game_bp.route("/share/generate", methods=["GET"])
-@limiter.limit("5 per minute")
+@limiter.limit("5 per hour")
 def gerar_link():
     sid = obter_sid_seguro()
     if not sid:

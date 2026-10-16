@@ -1,17 +1,19 @@
 import logging
 
 from authlib.integrations.base_client.errors import OAuthError
-from extensions import MEMORIA_SESSOES, db, oauth
 from flask import Blueprint, current_app, redirect, request, session, url_for
+from sqlalchemy.exc import SQLAlchemyError
+
+from extensions import db, limiter, MEMORIA_SESSOES, oauth
 from models import Jogador, SaveJogo
 from services.save_service import obter_ou_recuperar_jogo
-from sqlalchemy.exc import SQLAlchemyError
 
 logger = logging.getLogger(__name__)
 auth_bp = Blueprint("auth", __name__)
 
 
 @auth_bp.route("/login/google")
+@limiter.limit("5 per minute")
 def login_google():
     session["arcade_initials"] = request.args.get("iniciais", "???").upper()[:3]
     return oauth.google.authorize_redirect(
