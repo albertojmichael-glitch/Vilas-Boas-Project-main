@@ -18,6 +18,7 @@ from collections import Counter
 
 from data import TURNOS_BATERIA, VIDA_NORMAL, descricoes_itens
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
+
 from villas_boas.utils import encontrar_melhor_match
 
 CODIGO_PADRAO = "sudo admin 1982"

@@ -3,6 +3,7 @@ import random
 import time
 
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
+
 from villas_boas.engine.minigames.base import BaseMinigame
 
 logger = logging.getLogger(__name__)
@@ -274,7 +275,6 @@ class MinigameMinotauro(BaseMinigame):
         self.ui.exibir(f"\n[{opcoes}]")
 
     def _dar_passo(self, alvo_x, alvo_y, chance_erro=0.0):
-
         if random.random() < chance_erro:
             dx = random.choice([-1, 0, 1])
             dy = random.choice([-1, 0, 1])
@@ -301,7 +301,6 @@ class MinigameMinotauro(BaseMinigame):
             self.my += 1 if dif_y > 0 else -1
 
     def mover_minotauro(self, acao_jogador):
-
         chance_erro = 0.25
         acao_norm = acao_jogador.lower().strip()
 
@@ -324,7 +323,6 @@ class MinigameMinotauro(BaseMinigame):
     def _resolver_colisao(
         self, jogo, dist_ui, px_old, py_old, mx_old, my_old, quem_moveu="jogador"
     ):
-
         if self.px == self.mx and self.py == self.my:
             if dist_ui > DISTANCIA_PERIGO:
                 if quem_moveu == "jogador":
@@ -365,7 +363,6 @@ class MinigameMinotauro(BaseMinigame):
         return None
 
     def _processar_investigacao(self, acao, jogo):
-
         if acao not in [
             "celular quebrado",
             "ver celular quebrado",
@@ -390,7 +387,6 @@ class MinigameMinotauro(BaseMinigame):
         return "continuar"
 
     def _processar_god_mode_ataque(self, acao, jogo):
-
         if acao in ["atacar", "bater", "chutar", "lutar"] and getattr(
             jogo, "god_mode", False
         ):
@@ -405,7 +401,6 @@ class MinigameMinotauro(BaseMinigame):
         return None
 
     def _processar_movimento_e_acoes(self, acao, jogo):
-
         ui = self.ui
         turno_gasto = False
 

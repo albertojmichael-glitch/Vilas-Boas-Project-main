@@ -3,6 +3,7 @@ import random
 
 from data import ARTE_INDIO, ARTE_MESA_SEGURANCA
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
+
 from villas_boas.engine.minigames.base import BaseMinigame
 
 logger = logging.getLogger(__name__)

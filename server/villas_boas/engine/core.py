@@ -1,48 +1,47 @@
-import random
 import logging
+import random
 import time
 
-from villas_boas.actions import processar_comando
-from villas_boas.actions.parser import normalizar, ATALHOS_DIRECAO
-from villas_boas.utils import (
-    CONQUISTAS_DB,
-    extrair_argumentos,
-    atualizar_eventos_de_tempo,
-)
-from villas_boas.engine import devmode
-from villas_boas.engine.minigames.seguranca import MinigameSeguranca
-from villas_boas.engine.minigames.minotauro import MinigameMinotauro
-from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
-
 from data import (
-    MAX_INVENTARIO,
+    ARTE_PIANO,
     ARTE_PORCO,
     ARTE_ROBO,
-    ARTE_PIANO,
-    VIDA_NORMAL,
-    MAX_TENTATIVAS_COFRE,
-    BARULHO_CORRER,
-    TURNOS_ENJOADO_CORRER,
-    CHANCE_PERDER_ITEM_CORRER,
-    BARULHO_IR_ABRIR,
-    REDUCAO_OLHAR_ESPERAR,
     BARULHO_ACAO_COMUM,
-    LIMITE_BARULHO_FANTASMA,
-    TEMPO_SPEEDRUN_VERDADEIRO,
-    TEMPO_SPEEDRUN_NEUTRO,
+    BARULHO_CORRER,
     BARULHO_ERROS_CONSECUTIVOS,
+    BARULHO_IR_ABRIR,
+    CHANCE_PERDER_ITEM_CORRER,
+    LIMITE_BARULHO_FANTASMA,
     LIMITE_ERROS_DICA,
+    MAX_INVENTARIO,
+    MAX_TENTATIVAS_COFRE,
+    REDUCAO_OLHAR_ESPERAR,
+    TEMPO_SPEEDRUN_NEUTRO,
+    TEMPO_SPEEDRUN_VERDADEIRO,
+    TURNOS_ENJOADO_CORRER,
+    VIDA_NORMAL,
 )
-
+from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
 from views import (
-    imprimir_tela_boot,
-    imprimir_menu_dificuldade,
-    imprimir_tutorial,
     dar_dica_jon,
+    dar_tela_de_morte,
     falar_pianista,
     imprimir_contexto_sala,
-    dar_tela_de_morte,
+    imprimir_menu_dificuldade,
+    imprimir_tela_boot,
+    imprimir_tutorial,
     rodar_final,
+)
+
+from villas_boas.actions import processar_comando
+from villas_boas.actions.parser import ATALHOS_DIRECAO, normalizar
+from villas_boas.engine import devmode
+from villas_boas.engine.minigames.minotauro import MinigameMinotauro
+from villas_boas.engine.minigames.seguranca import MinigameSeguranca
+from villas_boas.utils import (
+    CONQUISTAS_DB,
+    atualizar_eventos_de_tempo,
+    extrair_argumentos,
 )
 
 logger = logging.getLogger(__name__)

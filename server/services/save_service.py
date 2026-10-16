@@ -13,12 +13,13 @@ from state import GameState
 
 logger = logging.getLogger(__name__)
 
-_key_hash = hashlib.sha256((Config.SECRET_KEY).encode()).digest()
+_key_hash = hashlib.sha256(
+    (Config.SECRET_KEY or "chave-secreta-dev-padrao-1982").encode()
+).digest()
 CIPHER_SUITE = Fernet(base64.urlsafe_b64encode(_key_hash))
 
 
 def to_uuid(sid):
-
     if isinstance(sid, uuid.UUID):
         return sid
     try:
@@ -28,7 +29,6 @@ def to_uuid(sid):
 
 
 def _processar_dados_save(dados_brutos):
-
     if isinstance(dados_brutos, str):
         try:
             dados_json = CIPHER_SUITE.decrypt(dados_brutos.encode("utf-8")).decode(

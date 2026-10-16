@@ -16,12 +16,6 @@ from flask import (
 )
 from models import Compartilhamento, SaveJogo
 from pydantic import ValidationError
-from routes.helpers import (
-    ComandoRequest,
-    WebUIHandler,
-    gerar_resposta_json,
-    obter_sid_seguro,
-)
 from services.save_service import (
     CIPHER_SUITE,
     carregar_save_web,
@@ -33,6 +27,13 @@ from services.save_service import (
 from state import GameState
 from views import imprimir_tela_boot
 from villas_boas.engine.core import processar_fluxo_jogo
+
+from routes.helpers import (
+    ComandoRequest,
+    WebUIHandler,
+    gerar_resposta_json,
+    obter_sid_seguro,
+)
 
 logger = logging.getLogger(__name__)
 game_bp = Blueprint("game", __name__)

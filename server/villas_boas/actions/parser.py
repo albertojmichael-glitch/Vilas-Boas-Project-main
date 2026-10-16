@@ -2,6 +2,7 @@ import difflib
 
 from data import descricoes_itens
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERMELHO, RESET
+
 from villas_boas.actions.inspection import cmd_examinar
 from villas_boas.actions.inventory import (
     cmd_combinar,
@@ -14,7 +15,6 @@ from villas_boas.actions.movement import cmd_ir
 
 
 def normalizar(comando_bruto):
-
     if not comando_bruto:
         return ""
 
@@ -26,7 +26,6 @@ def normalizar(comando_bruto):
 
 
 def encontrar_melhor_match(palavra_digitada, lista_opcoes, limite=0.6):
-
     matches = difflib.get_close_matches(
         palavra_digitada, lista_opcoes, n=1, cutoff=limite
     )

@@ -2,6 +2,7 @@ import random
 
 from data import CHANCE_TROPECO_ESCURO_PCT, EVENTOS_ALEATORIOS
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, RESET, default_ui
+
 from villas_boas.utils import encontrar_melhor_match, extrair_argumentos
 
 
