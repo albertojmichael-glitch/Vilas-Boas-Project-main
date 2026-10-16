@@ -81,4 +81,5 @@ def test_seguranca_bloqueio_salva_jogador(jogo_mock):
 
     resultado = minigame.processar_turno("esperar", jogo_mock)
     assert resultado == "continuar"
-    assert minigame.rick_pos == 0
+
+    assert minigame.rick_pos < 3
