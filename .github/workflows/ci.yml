@@ -1,15 +1,14 @@
 name: CI do Vilas Boas OS
 
-
 on:
   push:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
 
-
 jobs:
-  lint-and-test:
+  backend-tests:
+    name: Backend Lint & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -31,28 +30,37 @@ jobs:
 
     - name: Verificar lint e formatação com Ruff
       run: |
-        # Auto-fix formatting issues
-        ruff format .
-        # Auto-fix code quality issues
-        ruff check --fix .
-        # Check if there are any remaining errors
         ruff check .
+        ruff format --check .
 
     - name: Verificação estática de tipos com Mypy
       run: |
-        run: cd server && mypy app.py state.py --ignore-missing-imports || true
+        cd server && mypy app.py state.py --ignore-missing-imports || true
 
     - name: Executar testes automatizados com Pytest
       run: |
         PYTHONPATH=server pytest tests/
 
-    - name: Verificar lint e formatação com Ruff
-      run: |
-        ruff check . || true
-        ruff format --check .
-
     - name: Auditoria de Segurança (Dependências)
       run: |
         pip-audit --desc on
 
-    
+
+  frontend-build:
+    name: Frontend TypeScript Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Fazer checkout do código
+      uses: actions/checkout@v4
+
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Instalar TypeScript
+      run: npm install -g typescript
+
+    - name: Compilar Cliente (TypeScript)
+      run: tsc -p client/tsconfig.json

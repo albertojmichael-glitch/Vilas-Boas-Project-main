@@ -229,39 +229,59 @@ def atualizar_eventos_de_tempo(jogo):
             jogo.turnos_no_escuro = 0
             if jogo.turnos_luz == 2:
                 ui.buffer.append("@@GLITCH_LUZ@@")
-                ui.exibir(f"\n{DOS_AMARELO}Sua lanterna dá uma leve piscada. A luz está enfraquecendo...{RESET}")
+                ui.exibir(
+                    f"\n{DOS_AMARELO}Sua lanterna dá uma leve piscada. A luz está enfraquecendo...{RESET}"
+                )
             elif jogo.turnos_luz == 1:
                 ui.buffer.append("@@GLITCH_LUZ@@")
-                ui.exibir(f"\n{DOS_VERMELHO}A luz da lanterna falha quase que totalmente. Vai apagar a qualquer momento.{RESET}")
+                ui.exibir(
+                    f"\n{DOS_VERMELHO}A luz da lanterna falha quase que totalmente. Vai apagar a qualquer momento.{RESET}"
+                )
             elif jogo.turnos_luz == 0:
-                ui.exibir(f"\n{DOS_VERMELHO}A escuridão volta a dominar... Sua fonte de luz se apagou{RESET}")
+                ui.exibir(
+                    f"\n{DOS_VERMELHO}A escuridão volta a dominar... Sua fonte de luz se apagou{RESET}"
+                )
                 ui.pausar(1.5)
         else:
             jogo.turnos_no_escuro += 1
             if jogo.turnos_no_escuro == 1:
-                ui.exibir(f"\n{DOS_AMARELO}As sombras parecem se mexer nos cantos da sua visão...{RESET}")
+                ui.exibir(
+                    f"\n{DOS_AMARELO}As sombras parecem se mexer nos cantos da sua visão...{RESET}"
+                )
             elif jogo.turnos_no_escuro == 3:
                 jogo.nivel_barulho = 100
                 jogo.ai_alvo = jogo.sala_atual
-                ui.exibir(f"\n{DOS_VERMELHO}No escuro absoluto, você entra em pânico e esbarra nos móveis. O barulho ecoa pelo corredor!{RESET}")
+                ui.exibir(
+                    f"\n{DOS_VERMELHO}No escuro absoluto, você entra em pânico e esbarra nos móveis. O barulho ecoa pelo corredor!{RESET}"
+                )
             elif jogo.turnos_no_escuro >= 5:
                 jogo.hp -= 1
                 jogo.turnos_no_escuro = 0
                 if jogo.hp > 0:
-                    ui.exibir(f"\n{DOS_VERMELHO}Você tenta andar no escuro, tropeça violentamente e se machuca! (-1 HP){RESET}")
+                    ui.exibir(
+                        f"\n{DOS_VERMELHO}Você tenta andar no escuro, tropeça violentamente e se machuca! (-1 HP){RESET}"
+                    )
                 else:
-                    ui.exibir(f"\n{DOS_VERMELHO}Você cai de mau jeito no escuro e bate a cabeça. Você não consegue mais levantar...{RESET}")
+                    ui.exibir(
+                        f"\n{DOS_VERMELHO}Você cai de mau jeito no escuro e bate a cabeça. Você não consegue mais levantar...{RESET}"
+                    )
                     jogo.sala_atual = "morte"
 
     if getattr(jogo, "incendio", False):
         jogo.turnos_fuga -= 1
-        ui.exibir(f"\n{DOS_VERMELHO}O RESTAURANTE ESTÁ DESMORONANDO ({jogo.turnos_fuga} turnos para fugir){RESET}")
+        ui.exibir(
+            f"\n{DOS_VERMELHO}O RESTAURANTE ESTÁ DESMORONANDO ({jogo.turnos_fuga} turnos para fugir){RESET}"
+        )
         if jogo.turnos_fuga <= 0:
-            ui.exibir(f"\n{DOS_VERMELHO}O teto desaba sobre você. O fogo consome o que restou.{RESET}")
+            ui.exibir(
+                f"\n{DOS_VERMELHO}O teto desaba sobre você. O fogo consome o que restou.{RESET}"
+            )
             jogo.sala_atual = "morte"
 
     if jogo.turnos_enjoado > 0:
-        ui.exibir(f"\n{DOS_AMARELO}Você está enjoado e com tontura... Seus olhos embaçam.{RESET}")
+        ui.exibir(
+            f"\n{DOS_AMARELO}Você está enjoado e com tontura... Seus olhos embaçam.{RESET}"
+        )
         if (
             jogo.turnos_luz > 0
             and not getattr(jogo, "amanheceu", False)
@@ -293,7 +313,6 @@ def corromper_texto(texto, intensidade=0.5):
 
 
 def texto_cintilante(texto, paleta="perigo"):
-
     if paleta == "perigo":
         cores = [DOS_VERMELHO, DOS_AMARELO]
     elif paleta == "sistema":

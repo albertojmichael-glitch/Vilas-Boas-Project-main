@@ -1,14 +1,15 @@
 import queue
+from queue import Queue
+from typing import Any
 
 from extensions import db
 from models import Telemetria
 from sqlalchemy.exc import SQLAlchemyError
 
-fila_telemetria = queue.Queue()
+fila_telemetria: "Queue[Any]" = Queue()
 
 
 def worker_telemetria(app_instance):
-
     while True:
         lote = []
         try:
@@ -53,7 +54,6 @@ def registrar_telemetria(
     sid_sessao=None,
     permite_telemetria=True,
 ):
-
     if not permite_telemetria:
         return
 

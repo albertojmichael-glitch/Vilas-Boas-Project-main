@@ -95,7 +95,6 @@ class MinigameSeguranca(BaseMinigame):
         self.ui.pausar(1)
 
     def _custo_extra_por_hora(self):
-
         if self.turno >= TURNO_CRITICO:
             return CUSTO_EXTRA_CRITICO
         if self.turno >= TURNO_INICIO_CALOR:
@@ -162,7 +161,6 @@ class MinigameSeguranca(BaseMinigame):
         return self.rick_pos >= RICK_POS_PORTA
 
     def _processar_avanco_monstro(self, jogo):
-
         ui = self.ui
         god_mode = getattr(jogo, "god_mode", False)
 
@@ -325,7 +323,6 @@ class MinigameSeguranca(BaseMinigame):
             return
 
     def processar_turno(self, acao, jogo):
-
         ui = self.ui
 
         acao_norm = acao.lower().strip()
@@ -734,20 +731,6 @@ class MinigameSeguranca(BaseMinigame):
             else:
                 ui.exibir("◉ Sensor não detecta nada")
 
-    def _chance_interferencia(self, ui):
-        if random.random() > CHANCE_INTERFERENCIA_MOV:
-            return
-        quem = random.choice(["rick", "jon", "caroline"])
-        if quem == "rick":
-            self.rick_pos += 1
-        elif quem == "jon":
-            self.jon_pos += 1
-        else:
-            self.caroline_pos += 1
-        ui.exibir(
-            f"\n@@PASSO@@{DOS_VERMELHO}Você ouve um ruído metálico se aproximando enquanto mexe no sistema.{RESET}"
-        )
-
     def _checar_recuo_na_porta(self, ui):
         if self.rick_pos >= RICK_POS_ATAQUE:
             self.rick_pos = 0
@@ -784,7 +767,6 @@ class MinigameSeguranca(BaseMinigame):
             )
 
     def _resolver_fim_de_turno(self, ui, jogo, god_mode):
-
         self.usos_sistema_turno = 0
 
         if self.turnos_gerador_ativo > 0:

@@ -9,6 +9,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from state import GameState
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +24,7 @@ oauth = OAuth()
 try:
     import redis
 except ImportError:
-    redis = None
-
-from state import GameState
+    redis = None  # type: ignore
 
 
 class RedisSessionStore:
@@ -58,7 +57,7 @@ if REDIS_URL and redis is not None:
         logger.info("Conectado ao Redis com sucesso.")
     except Exception:
         logger.exception("Falha ao conectar no Redis — caindo para TTLCache.")
-        MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
+        MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)  # type: ignore
 else:
     logger.info("Usando TTLCache na memória RAM local.")
-    MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
+    MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)  # type: ignore

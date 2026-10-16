@@ -1,9 +1,9 @@
-COFRE_SENHA = "1994"
-MAX_INVENTARIO = 3
-
 import json
 import os
 from pathlib import Path
+
+COFRE_SENHA = "1994"
+MAX_INVENTARIO = 3
 
 CAVEIRA_MORTE = r'''
                      .ed"""" """$$$$be.
@@ -229,8 +229,7 @@ ARTE_ENTRADA = r"""
 `'.'"^  ^` "^ "^|"|^'"' `^`-.^~'
 """
 
-ARTE_FINAL_MEDIOCRE = (
-    r"""
+ARTE_FINAL_MEDIOCRE = r"""
                                  * .    .    .     +     .  * .     .  *
 .   * . .   * .    .   .        *     .
        __________    * .    *   . sinto sua falta.    +  .   *  .   
@@ -241,7 +240,6 @@ ARTE_FINAL_MEDIOCRE = (
     `"( () )       ( () )"`         
 ……………….'--'.........'--'.............................................
 """
-)
 
 ARTE_FINAL_NEUTRO = r"""
  *    .  *       .            *
