@@ -421,7 +421,16 @@ def _processar_fluxo_jogo_normal(
             jogo.tempo_inicio = time.time()
             imprimir_tutorial(ui, jogo=jogo)
             imprimir_contexto_sala(jogo)
+
         elif comando == "2007":
+            if not devmode.modo_dev_habilitado():
+                ui.animar(
+                    f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}",
+                    0.04,
+                    jogo=jogo,
+                )
+                return
+
             ui.limpar()
             jogo.configurar_dificuldade("GOD MODE", fast_mode=False)
             jogo.estado_atual = "JOGO"
@@ -433,6 +442,7 @@ def _processar_fluxo_jogo_normal(
             )
             imprimir_contexto_sala(jogo)
             desbloquear_conquista(jogo, "trapaceiro")
+
         elif comando == "1980":
             ui.exibir("@@PLAY_1980_SLIDESHOW@@")
             return
@@ -816,12 +826,21 @@ def _processar_fluxo_jogo_normal(
             jogo.cofre_tentativas = getattr(jogo, "cofre_tentativas", 0) + 1
 
             if jogo.cofre_tentativas >= MAX_TENTATIVAS_COFRE:
+                registrar_telemetria_segura(
+                    "FALHA_MINIGAME",
+                    "01",
+                    jogo.dificuldade_escolhida,
+                    "Cofre Travado",
+                    jogo,
+                )
+
                 ui.exibir(
                     f"{DOS_VERMELHO} ⛝ Senha incorreta. O painel solta uma fagulha e trava com um estalo seco.⛝{RESET}"
                 )
                 ui.exibir(
                     f"{DOS_AMARELO}O teclado esfria, morto. Talvez ele aceite tentar de novo mais tarde.{RESET}"
                 )
+
                 jogo.cofre_tentativas = 0
                 jogo.estado_atual = "JOGO"
                 imprimir_contexto_sala(jogo)
@@ -887,10 +906,12 @@ def _processar_fluxo_jogo_normal(
                 jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
                 if jogo.hp <= 0:
                     registrar_telemetria_segura(
+                        "FALHA_MINIGAME",
                         "MORTE",
                         "MINIGAME_JON",
                         jogo.dificuldade_escolhida,
                         "Morto pelo Porco",
+                        "Errou a direcao",
                         jogo,
                     )
                     dar_tela_de_morte(jogo)
@@ -936,6 +957,9 @@ def _processar_fluxo_jogo_normal(
         ui.exibir(
             f"\n{DOS_VERMELHO}ele começa a sangrar, e a gritar no seu ouvido.{RESET}"
         )
+        ui.pausar(2)
+        ui.exibir("@@JUMPSCARE@@")
+        ui.pausar(1)
         sala = jogo.mapa[jogo.sala_atual]
         sala.setdefault("itens", [])
 
@@ -1028,9 +1052,11 @@ def _processar_fluxo_jogo_normal(
         if jogo.estado_atual == "MINIGAME_JULGAMENTO_V1":
             jogo.estado_atual = "MINIGAME_JULGAMENTO_V2"
             ui.exibir("Digite o 2º nome: ")
+
         elif jogo.estado_atual == "MINIGAME_JULGAMENTO_V2":
             jogo.estado_atual = "MINIGAME_JULGAMENTO_V3"
             ui.exibir("Digite o 3º nome: ")
+
         else:
             if len(jogo.web_julgamento["vitimas"]) == 0:
                 jogo.web_julgamento["pontos"] += 1

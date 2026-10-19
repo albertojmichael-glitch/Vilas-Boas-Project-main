@@ -30,20 +30,20 @@ ESTADOS_DE_JOGO = ("JOGO", "COMBATE_ANIMATRONICO")
 
 NAO_TRATADO = 0
 TRATADO = 1
-TRATADO_MUDOU_SALA = 2  # o chamador deve checar finais e redesenhar a sala
+TRATADO_MUDOU_SALA = 2
 
-_SEM_ITEM_NO_TUDO = {
-    "fios cortados"
-}  # muda o rumo da história: só via 'gerar fios cortados'
+_SEM_ITEM_NO_TUDO = {"fios cortados"}
 
 
-# ---------------------------------------------------------------- ativação
+# ativação
+
+
 def modo_dev_habilitado():
-    return os.environ.get("DEV_MODE_ENABLED", "1").strip().lower() not in (
-        "0",
-        "false",
-        "no",
-        "off",
+    return os.environ.get("DEV_MODE_ENABLED", "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
     )
 
 
@@ -58,7 +58,7 @@ def eh_codigo_de_ativacao(comando_normalizado):
 
 
 def _aplicar_invulnerabilidade(jogo):
-    jogo.god_mode = True  # reaproveita tudo que o God Mode já faz (inventário sem limite, tp, minigames…)
+    jogo.god_mode = True
     jogo.hp = VALOR_INFINITO
     jogo.turnos_luz = VALOR_INFINITO
     jogo.turnos_enjoado = 0
@@ -114,14 +114,15 @@ def desativar(jogo):
 
 
 def resetar(jogo):
-    """Chamado quando o jogo reinicia depois de um fim de jogo."""
     jogo.dev_mode = False
     jogo.dev_usado = False
     jogo.dev_radar = True
     jogo.dev_ia = False
 
 
-# ------------------------------------------------------------------- radar
+# radar
+
+
 def _bfs(jogo, origem, destino):
     from villas_boas.engine.core import calcular_caminho_bfs
 
@@ -178,7 +179,9 @@ def imprimir_radar(jogo):
         jogo.ui_handler.exibir(linha)
 
 
-# ------------------------------------------------------- itens infinitos
+# itens infinitos
+
+
 def tirar_snapshot(jogo):
     return {
         "estado": jogo.estado_atual,
@@ -197,8 +200,6 @@ def _contar_itens_do_mapa(jogo):
 
 
 def _restaurar_itens(jogo, snap):
-    """Devolve o que foi consumido no turno (usar, combinar, minigames…).
-    Itens largados/derrubados em alguma sala não contam como consumidos."""
     depois = Counter(jogo.inventario)
     mapa_depois = _contar_itens_do_mapa(jogo)
     for item, qtd_antes in snap["inv"].items():
