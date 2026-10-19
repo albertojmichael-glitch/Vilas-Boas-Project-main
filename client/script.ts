@@ -1,6 +1,4 @@
-// ==========================================
-// 1. INTERFACES E TIPAGENS
-// ==========================================
+// 1. constantes e elementos do dom e interfaces/tipagens
 
 type TipoBeep = 'sucesso' | 'erro';
 type CorTerminal = 'verde' | 'vermelho' | 'amarelo' | 'branco' | '';
@@ -82,9 +80,7 @@ declare global {
     }
 }
 
-// ==========================================
-// 2. CONSTANTES E ELEMENTOS DO DOM
-// ==========================================
+// 2. estado global do ambiente
 
 const API_URL = "https://vilas-boas-project-main.up.railway.app";
 const SAVE_VERSION = 1.0;
@@ -126,9 +122,7 @@ const terminalSection = document.querySelector<HTMLElement>('.terminal-section')
 
 const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
-// ==========================================
-// 3. ESTADO GLOBAL DO CLIENTE
-// ==========================================
+// 3. armazenamento seguro (safe storage)
 
 let historicoComandos: string[] = [];
 let posicaoHistorico = -1;
@@ -151,9 +145,7 @@ let audioCtx: AudioContext | null = null;
 let masterGainNode: GainNode | null = null;
 let crtOsc: OscillatorNode | null = null;
 
-// ==========================================
-// 4. ARMAZENAMENTO SEGURO (SAFE STORAGE)
-// ==========================================
+// 4. efeitos visuais e imagens secretas
 
 const SafeStorage = {
     save<T>(key: string, data: T): void {
@@ -211,9 +203,7 @@ const SafeStorage = {
     }
 };
 
-// ==========================================
-// 5. EFEITOS VISUAIS E IMAGENS SECRETAS
-// ==========================================
+// 4. imagens secretas e flash
 
 function startFlashingSecrets(): void {
     const overlay = getEl<HTMLDivElement>("secret-image-overlay");
@@ -309,9 +299,7 @@ function ativarBSOD(): void {
     }, 2500);
 }
 
-// ==========================================
-// 6. SISTEMA DE ÁUDIO (WEB AUDIO API)
-// ==========================================
+// 6. sistema de áudio (web audio api)
 
 function obterAudioContext(): AudioContext | null {
     if (!audioCtx) {
@@ -469,9 +457,7 @@ function playBip(tipo: TipoBeep = 'sucesso'): void {
     reproduzirBeep(tipo);
 }
 
-// ==========================================
-// 7. SISTEMA DE CONQUISTAS
-// ==========================================
+// 6. sistema de conquistas
 
 function abrirModalConquistas(): void {
     const modal = getEl<HTMLDivElement>('achievements-modal');
@@ -545,9 +531,7 @@ function mostrarToastConquista(conquista: Conquista): void {
     }, 4000);
 }
 
-// ==========================================
-// 8. GERENCIAMENTO DE SAVES E MODAIS
-// ==========================================
+// 7. gerenciamento de saves e modais
 
 function openSaves(): void {
     getEl<HTMLDivElement>('saves-modal')?.classList.remove('hidden');
@@ -679,9 +663,7 @@ async function gerarLinkCompartilhamentoUI(): Promise<void> {
     }
 }
 
-// ==========================================
-// 9. PREFERÊNCIAS E CONFIGURAÇÕES
-// ==========================================
+// 8. preferências e configurações
 
 function atualizarLabelVelocidade(val: number): void {
     const label = getEl<HTMLSpanElement>('speed-val-display');
@@ -774,9 +756,7 @@ function carregarPreferencias(): void {
     });
 }
 
-// ==========================================
-// 10. ATUALIZAÇÃO DO HUD E TERMINAL
-// ==========================================
+// 9. atualização de hud e terminal
 
 function atualizarSidebar(estado?: EstadoJogo): void {
     if (!estado) return;
@@ -1059,9 +1039,7 @@ function digitarTextoAnimadoHTML(
     requestAnimationFrame(digitar);
 }
 
-// ==========================================
-// 11. COMUNICAÇÃO COM O SERVIDOR (FETCH)
-// ==========================================
+// 10. comunicação com o server (fetch)
 
 function mostrarSalvando(): void {
     const ind = getEl<HTMLDivElement>('save-indicator');
@@ -1149,9 +1127,7 @@ function executarAtalho(cmd: string): void {
     enviarComando(cmd);
 }
 
-// ==========================================
-// 12. TV RETRÔ, REPLAY E ARCADE LEADERBOARD
-// ==========================================
+// 11. tv retro, replay e leaderboard
 
 function ligarTV(): void {
     const powerBtn = getEl<HTMLButtonElement>("power-button");
@@ -1336,9 +1312,7 @@ function iniciarLoginESalvar(): void {
     window.location.href = `${API_URL}/login/google?iniciais=${iniciais}`;
 }
 
-// ==========================================
-// 13. EVENTOS DE TECLADO, CLIQUE E BOOT
-// ==========================================
+// 12. eventos de teclado, clique e boot
 
 document.body.addEventListener('click', iniciarSomAmbiente, { once: true });
 document.body.addEventListener('keydown', iniciarSomAmbiente, { once: true });
@@ -1472,9 +1446,7 @@ window.addEventListener('load', () => {
     }
 });
 
-// ==========================================
-// 14. EXPOSIÇÃO GLOBAL PARA O INDEX.HTML
-// ==========================================
+// 13. exposição global console
 
 window.openHelp = openHelp;
 window.closeHelp = closeHelp;

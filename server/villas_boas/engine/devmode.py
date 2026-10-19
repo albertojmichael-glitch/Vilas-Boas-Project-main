@@ -1,13 +1,10 @@
-"""Modo desenvolvedor do Villas Boas.
+"""modo desenvolvedor do Vilas Boas
 
-Ativação:  digite  sudo admin 1982  no menu (começa uma partida já em modo dev)
+ativação:
+digite  sudo admin 1982  no menu (começa uma partida já em modo dev)
            ou durante a partida (liga o modo dev no ponto em que você está).
 
-Variáveis de ambiente (opcionais):
-    DEV_MODE_ENABLED=0      desliga o modo dev por completo (recomendado em produção)
-    DEV_MODE_CODE="..."     troca o código de ativação
-
-Regras de segurança do modo:
+regras de segurança do modo:
     * partidas que usaram o modo dev (``dev_usado``) NÃO entram no leaderboard
     * a telemetria ignora partidas em modo dev
     * o modo é desligado ao reiniciar depois de um fim de jogo

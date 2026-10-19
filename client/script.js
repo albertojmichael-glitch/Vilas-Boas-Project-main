@@ -1,9 +1,5 @@
-// ==========================================
-// 1. INTERFACES E TIPAGENS
-// ==========================================
-// ==========================================
-// 2. CONSTANTES E ELEMENTOS DO DOM
-// ==========================================
+// 1. constantes e elementos do dom e interfaces/tipagens
+
 const API_URL = "https://vilas-boas-project-main.up.railway.app";
 const SAVE_VERSION = 1.0;
 const LIMITE_LINHAS = 50;
@@ -37,9 +33,9 @@ const loadingSpinner = getEl('loading');
 const inputLineDiv = document.querySelector('.input-line');
 const terminalSection = document.querySelector('.terminal-section');
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-// ==========================================
-// 3. ESTADO GLOBAL DO CLIENTE
-// ==========================================
+
+// 2. estado global do ambiente
+
 let historicoComandos = [];
 let posicaoHistorico = -1;
 let comandoDigitadoAtual = "";
@@ -57,9 +53,9 @@ let sonsRandomicosAtivos = false;
 let audioCtx = null;
 let masterGainNode = null;
 let crtOsc = null;
-// ==========================================
-// 4. ARMAZENAMENTO SEGURO (SAFE STORAGE)
-// ==========================================
+
+// 3. armazenamento seguro (safe storage)
+
 const SafeStorage = {
     save(key, data) {
         try {
@@ -115,9 +111,9 @@ const SafeStorage = {
         }
     }
 };
-// ==========================================
-// 5. EFEITOS VISUAIS E IMAGENS SECRETAS
-// ==========================================
+
+// 4. efeitos visuais e imagens secretas
+
 function startFlashingSecrets() {
     const overlay = getEl("secret-image-overlay");
     const img = getEl("secret-img-display");
@@ -199,9 +195,9 @@ function ativarBSOD() {
         tela.style.display = 'none';
     }, 2500);
 }
-// ==========================================
-// 6. SISTEMA DE ÁUDIO (WEB AUDIO API)
-// ==========================================
+
+// 5. sistema de áudio (web audio api)
+
 function obterAudioContext() {
     if (!audioCtx) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -333,9 +329,9 @@ function reproduzirBeep(tipo = 'sucesso') {
 function playBip(tipo = 'sucesso') {
     reproduzirBeep(tipo);
 }
-// ==========================================
-// 7. SISTEMA DE CONQUISTAS
-// ==========================================
+
+// 6. sistema de conquistas
+
 function abrirModalConquistas() {
     const modal = getEl('achievements-modal');
     const grid = getEl('achievements-grid');
@@ -396,9 +392,9 @@ function mostrarToastConquista(conquista) {
         toast.classList.remove('show');
     }, 4000);
 }
-// ==========================================
-// 8. GERENCIAMENTO DE SAVES E MODAIS
-// ==========================================
+
+// 7. gerenciamento de saves e modais
+
 function openSaves() {
     getEl('saves-modal')?.classList.remove('hidden');
 }
@@ -519,9 +515,9 @@ async function gerarLinkCompartilhamentoUI() {
         alert("Falha de conexão com os servidores centrais.");
     }
 }
-// ==========================================
-// 9. PREFERÊNCIAS E CONFIGURAÇÕES
-// ==========================================
+
+// 8. preferências e configurações
+
 function atualizarLabelVelocidade(val) {
     const label = getEl('speed-val-display');
     if (!label)
@@ -610,9 +606,9 @@ function carregarPreferencias() {
         setTimeout(() => testeSusto.pause(), 300);
     });
 }
-// ==========================================
-// 10. ATUALIZAÇÃO DO HUD E TERMINAL
-// ==========================================
+
+// 9. atualização de hud e terminal
+
 function atualizarSidebar(estado) {
     if (!estado)
         return;
@@ -882,9 +878,9 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
     }
     requestAnimationFrame(digitar);
 }
-// ==========================================
-// 11. COMUNICAÇÃO COM O SERVIDOR (FETCH)
-// ==========================================
+
+// 10. comunicação com o server (fetch)
+
 function mostrarSalvando() {
     const ind = getEl('save-indicator');
     if (ind) {
@@ -969,9 +965,9 @@ function executarAtalho(cmd) {
     inputField.focus();
     enviarComando(cmd);
 }
-// ==========================================
-// 12. TV RETRÔ, REPLAY E ARCADE LEADERBOARD
-// ==========================================
+
+// 11. tv retro, replay e leaderboard
+
 function ligarTV() {
     const powerBtn = getEl("power-button");
     const powerLed = getEl("power-led");
@@ -1022,6 +1018,7 @@ function ligarTV() {
         iniciarJogo();
     }, 6000);
 }
+
 async function iniciarReplay(idReplay) {
     if (modoReplayAtivo)
         return;
@@ -1125,9 +1122,9 @@ function iniciarLoginESalvar() {
     }
     window.location.href = `${API_URL}/login/google?iniciais=${iniciais}`;
 }
-// ==========================================
-// 13. EVENTOS DE TECLADO, CLIQUE E BOOT
-// ==========================================
+
+// 12. eventos de teclado, clique e boot
+
 document.body.addEventListener('click', iniciarSomAmbiente, { once: true });
 document.body.addEventListener('keydown', iniciarSomAmbiente, { once: true });
 window.addEventListener('click', (e) => {
@@ -1251,9 +1248,9 @@ window.addEventListener('load', () => {
         window.history.replaceState({}, document.title, "/");
     }
 });
-// ==========================================
-// 14. EXPOSIÇÃO GLOBAL PARA O INDEX.HTML
-// ==========================================
+
+// 13. exposição global console
+
 window.openHelp = openHelp;
 window.closeHelp = closeHelp;
 window.openSettings = openSettings;
