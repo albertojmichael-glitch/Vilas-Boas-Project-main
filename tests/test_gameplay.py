@@ -14,10 +14,10 @@ class MockUIHandler:
         self.buffer.clear()
 
     def exibir(self, txt):
-        self.buffer.append(txt)
+        self.buffer.append(str(txt))
 
-    def animar(self, txt, vel, *args, **kwargs):
-        self.buffer.append(txt)
+    def animar(self, txt, vel=0, *args, **kwargs):
+        self.buffer.append(str(txt))
 
     def pausar(self, tempo):
         pass
@@ -25,7 +25,6 @@ class MockUIHandler:
 
 @pytest.fixture
 def jogo_base():
-
     jogo = GameState()
     jogo.ui_handler = MockUIHandler()
     jogo.estado_atual = "JOGO"
@@ -42,47 +41,44 @@ def test_parser_normaliza_comandos():
 
 
 def test_atalhos_de_movimento(jogo_base):
-
     jogo_base.sala_atual = "entrada"
+    # Injetamos uma rota falsa para garantir que o motor processa o movimento
+    jogo_base.mapa["entrada"] = {"frente": "quarto de refrigeração"}
+    jogo_base.mapa["quarto de refrigeração"] = {"atrás": "entrada"}
+
     processar_fluxo_jogo("correr frente", jogo_base)
     assert jogo_base.nivel_barulho == 100
 
 
 def test_movimento_sala_invalida(jogo_base):
     sala_original = jogo_base.sala_atual
-
     processar_fluxo_jogo("ir teto", jogo_base)
-
     assert jogo_base.sala_atual == sala_original
 
 
 def test_limite_inventario_base(jogo_base):
+    jogo_base.inventario = ["lanterna", "bateria", "isqueiro"]
+    jogo_base.mapa[jogo_base.sala_atual] = {"itens": ["papel"]}
 
-    jogo_base.inventario = ["lanterna", "bateria", "faca"]
-
-    jogo_base.mapa[jogo_base.sala_atual] = {"itens": ["chave de fenda"]}
-
-    processar_fluxo_jogo("pegar chave de fenda", jogo_base)
+    processar_fluxo_jogo("pegar papel", jogo_base)
 
     assert len(jogo_base.inventario) == 3
     assert "chave de fenda" not in jogo_base.inventario
-
     assert any("cheia" in msg.lower() for msg in jogo_base.ui_handler.buffer)
 
 
 def test_expansao_inventario_com_bolsas(jogo_base):
-    jogo_base.inventario = ["lanterna", "bateria", "faca"]
-    jogo_base.bolsas_coletadas = 1  # +3 espaços (total 6)
+    jogo_base.inventario = ["lanterna", "bateria", "isqueiro"]
+    jogo_base.bolsas_coletadas = 1
 
-    jogo_base.mapa[jogo_base.sala_atual] = {"itens": ["chave de fenda"]}
-    processar_fluxo_jogo("pegar chave de fenda", jogo_base)
+    jogo_base.mapa[jogo_base.sala_atual] = {"itens": ["papel"]}
+    processar_fluxo_jogo("pegar papel", jogo_base)
 
     assert len(jogo_base.inventario) == 4
-    assert "chave de fenda" in jogo_base.inventario
+    assert "papel" in jogo_base.inventario
 
 
 def test_gatilho_final_verdadeiro(jogo_base):
-
     jogo_base.sala_atual = "hall de entrada"
     jogo_base.noite_vencida = True
     jogo_base.fios_cortados_inventario = True
@@ -96,11 +92,8 @@ def test_gatilho_final_verdadeiro(jogo_base):
 
 def test_morte_por_dano(jogo_base):
     jogo_base.hp = 1
-
     jogo_base.sala_atual = "morte"
-
     fim = verificar_final_de_jogo(jogo_base)
-
     assert fim is True
     assert "primeira_morte" in jogo_base.conquistas
 
@@ -113,7 +106,6 @@ def test_save_load_schema_integrity():
     jogo_original.conquistas = ["primeira_morte"]
 
     payload_save = jogo_original.to_dict()
-
     jogo_restaurado = GameState.from_dict(payload_save)
 
     assert jogo_restaurado.hp == 1

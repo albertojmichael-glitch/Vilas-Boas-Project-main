@@ -1,19 +1,18 @@
-# olamundo
 import copy
 import os
 import sys
 
 import pytest
 
-os.environ.setdefault("DATABASE_URL", "sqlite://")
-
+os.environ["DATABASE_URL"] = "sqlite://"
+os.environ["DEV_MODE_ENABLED"] = "1"
 
 caminho_server = os.path.abspath(os.path.join(os.path.dirname(__file__), "../server"))
 sys.path.insert(0, caminho_server)
 
-from app import app
-from extensions import MEMORIA_SESSOES
-from state import GameState
+from app import app  # noqa: E402
+from extensions import MEMORIA_SESSOES, db  # noqa: E402
+from state import GameState  # noqa: E402
 
 
 class DummyUI:
@@ -30,31 +29,25 @@ class DummyUI:
         pass
 
 
-@pytest.fixture
-def jogo_base(mapa_mock):
-    jogo = GameState()
-    jogo.sala_atual = "entrada"
-    jogo.mapa = copy.deepcopy(mapa_mock)
-
-    jogo.ui_handler = DummyUI()
-
-    return jogo
+@pytest.fixture(autouse=True)
+def app_ctx():
+    with app.app_context():
+        db.create_all()
+        yield
+        db.session.remove()
+        db.drop_all()
 
 
 @pytest.fixture
-def jogo_mock(mapa_mock):
-    jogo = GameState()
-    jogo.sala_atual = "entrada"
-    jogo.mapa = copy.deepcopy(mapa_mock)
-
-    jogo.ui_handler = DummyUI()
-
-    return jogo
+def cliente():
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        yield client
+        MEMORIA_SESSOES.clear()
 
 
 @pytest.fixture
 def mapa_mock():
-
     return {
         "entrada": {
             "descrição": "Sala inicial do teste",
@@ -70,23 +63,17 @@ def mapa_mock():
 
 
 @pytest.fixture
-def cliente():
-
-    app.config["TESTING"] = True
-
-    with app.test_client() as client:
-        yield client
-
-        MEMORIA_SESSOES.clear()
+def jogo_mock():
+    jogo = GameState()
+    jogo.sala_atual = "entrada"
+    jogo.ui_handler = DummyUI()
+    return jogo
 
 
 @pytest.fixture
-def app_ctx():
-    from app import app
-    from extensions import db
-
-    with app.app_context():
-        db.create_all()
-        yield
-        db.session.remove()
-        db.drop_all()
+def jogo_base(mapa_mock):
+    jogo = GameState()
+    jogo.sala_atual = "entrada"
+    jogo.mapa = copy.deepcopy(mapa_mock)
+    jogo.ui_handler = DummyUI()
+    return jogo
