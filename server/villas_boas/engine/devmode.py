@@ -14,6 +14,7 @@ import os
 from collections import Counter
 
 from data import TURNOS_BATERIA, VIDA_NORMAL, descricoes_itens
+from state import SALAS_SEGURAS_PATRULHA
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
 
 from villas_boas.utils import encontrar_melhor_match
@@ -236,7 +237,7 @@ def _interceptar_perseguidor(jogo):
     ui = jogo.ui_handler
     longe, maior = jogo.ai_sala, -1
     for sala in jogo.mapa:
-        if sala in ("morte", "saida", "cama", "final_bom"):
+        if sala in SALAS_SEGURAS_PATRULHA:  # mesma regra da patrulha
             continue
         caminho = _bfs(jogo, jogo.sala_atual, sala)
         if caminho and len(caminho) > maior:

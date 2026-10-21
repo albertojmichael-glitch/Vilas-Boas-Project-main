@@ -28,6 +28,17 @@ from data import (
 )
 from pydantic import BaseModel, Field, PrivateAttr
 
+# Fins de jogo (sem saídas) e salas em que o perseguidor não deve patrulhar.
+SALAS_TERMINAIS = frozenset({"morte", "saida", "cama", "final_bom"})
+SALAS_SEGURAS_PATRULHA = SALAS_TERMINAIS | {
+    "01",
+    "sala de energia",
+    "tubo de ventilação",
+}
+CHAVES_NAO_SAIDA = frozenset(
+    {"descrição", "itens", "inspecionaveis", "energia", "cofre_important", "cadeira"}
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -318,7 +329,10 @@ class GameState(BaseModel):
 
     def avancar_ia_perseguidor(self) -> dict[str, Any]:
         """Executa um passo puro da IA do perseguidor e retorna o relatório de proximidade."""
-        if self.god_mode or self.estado_atual != GameStateEnum.JOGO.value:
+        ia_congelada = (
+            self.god_mode and not self.dev_ia
+        )  # 'dev ia on' solta o perseguidor
+        if ia_congelada or self.estado_atual != GameStateEnum.JOGO.value:
             return {"ativa": False, "distancia": 99, "combate_iniciado": False}
 
         if self.nivel_barulho > 0:
@@ -331,13 +345,14 @@ class GameState(BaseModel):
         elif self.nivel_barulho < LIMIAR_ALERTA:
             self.ai_estado = "PATRULHA"
 
-        chaves_nao_saida = {"descrição", "itens", "inspecionaveis", "energia"}
-
         if self.ai_estado == "PATRULHA":
             vizinhos = [
                 v
                 for k, v in self.mapa.get(self.ai_sala, {}).items()
-                if isinstance(v, str) and v in self.mapa and k not in chaves_nao_saida
+                if isinstance(v, str)
+                and v in self.mapa
+                and v not in SALAS_SEGURAS_PATRULHA
+                and k not in CHAVES_NAO_SAIDA
             ]
             if random.random() > CHANCE_MOVER_PATRULHA and vizinhos:
                 self.ai_sala = random.choice(vizinhos)

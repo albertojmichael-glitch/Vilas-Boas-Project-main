@@ -21,6 +21,11 @@ from data import (
     TURNOS_ENJOADO_CORRER,
     VIDA_NORMAL,
 )
+from state import (  # noqa: F401 (re-exportados)
+    CHAVES_NAO_SAIDA,
+    SALAS_SEGURAS_PATRULHA,
+    SALAS_TERMINAIS,
+)
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
 from views import (
     dar_dica_jon,
@@ -45,21 +50,6 @@ from villas_boas.utils import (
 )
 
 logger = logging.getLogger(__name__)
-
-SALAS_TERMINAIS = {"morte", "saida", "cama", "final_bom"}
-CHAVES_NAO_SAIDA = {
-    "descrição",
-    "itens",
-    "inspecionaveis",
-    "energia",
-    "cofre_important",
-    "cadeira",
-}
-SALAS_SEGURAS_PATRULHA = SALAS_TERMINAIS | {
-    "01",
-    "sala de energia",
-    "tubo de ventilação",
-}
 
 
 def calcular_caminho_bfs(mapa, inicio, destino):
@@ -136,6 +126,87 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
         ui.pausar(1.5)
         jogo.sala_atual = "morte"
         jogo.estado_atual = "FIM"
+
+
+ARTE_COFRE = r"""
+  __________________________
+ /  ______________________  \
+|  |  __   __   __   __   |  |
+|  | |  | |  | |  | |  |  |  |
+|  | |__| |__| |__| |__|  |  |
+|  |                      |  |
+|  |       .------.       |  |
+|  |      /        \      |  |
+|  |     |   [**]   |     |  |
+|  |      \        /      |  |
+|  |       `------'       |  |
+|  |                      |  |
+|  |______________________|  |
+ \__________________________/
+"""
+
+
+ARTE_COFRE_TENSO = r"""
+  __________________________
+ /  ______________/\_______  \
+|  |  __   __   __\/  __   |  |
+|  | |  | |  | |  |  |  |  |  |
+|  | |__| |__|/|__|  |__|  |  |
+|  |         /            |  |
+|  |       .------.       |  |
+|  |      /   !!   \      |  |
+|  |     | x [**] x |     |  |
+|  |      \        /      |  |
+|  |       `------'       |  |
+|  |                      |  |
+|  |______________________|  |
+ \__________________________/
+"""
+
+_PISTAS_COFRE = [
+    "[1º dígito] Um único ponto de luz acende sozinho na unidade, o primeiro som da noite.",
+    "[2º e 3º dígitos] Nove marcas de unha, em 2 vezes, na fileira da lateral do metal.",
+    "[4º dígito] Quatro cadeiras na sala do piano. Só uma nunca foi ocupada de novo.",
+]
+
+
+def gerar_charada_cofre(jogo):
+    """Monta o texto de pistas embaralhando a ordem de exibição a cada
+    tentativa, mas mantendo a integridade das frases."""
+    pistas = _PISTAS_COFRE.copy()
+    random.shuffle(pistas)
+
+    linhas = []
+    for pista in pistas:
+        linhas.append(f"  {pista}")
+
+    return "\n".join(linhas)
+
+
+def imprimir_painel_cofre(jogo, primeira_vez=False):
+    ui = jogo.ui_handler
+    tentativas = getattr(jogo, "cofre_tentativas", 0)
+
+    if tentativas == 0:
+        ui.animar(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}", 0.015, jogo=jogo)
+    else:
+        ui.animar(f"{DOS_VERMELHO}{ARTE_COFRE_TENSO}{RESET}", 0.015, jogo=jogo)
+
+    if primeira_vez:
+        ui.exibir(
+            f"{DOS_BRANCO}O cofre de ferro possui um teclado numérico antigo, gasto pelo tempo.{RESET}"
+        )
+        ui.exibir(
+            f"{DOS_BRANCO}Gravado a canivete embaixo do teclado, quatro frases soltas:{RESET}"
+        )
+        ui.exibir(gerar_charada_cofre(jogo))
+
+    restantes = MAX_TENTATIVAS_COFRE - tentativas
+    if tentativas > 0:
+        ui.exibir(
+            f"{DOS_VERMELHO}Tentativas restantes antes do painel travar: {restantes}{RESET}"
+        )
+    ui.exibir(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}")
 
 
 def registrar_telemetria_segura(evento, sala, dificuldade, motivo, jogo=None):
@@ -270,13 +341,6 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         snapshot = devmode.tirar_snapshot(jogo)
         _processar_fluxo_jogo_normal(comando_bruto, jogo, tem_save, callback_load_save)
         if getattr(jogo, "dev_mode", False) and estado_antes != "FIM":
-            if (
-                getattr(jogo, "dev_ia", False)
-                and estado_antes == "JOGO"
-                and jogo.estado_atual == "JOGO"
-                and comando.startswith(("ir ", "abrir "))
-            ):
-                aplicar_efeitos_pos_turno(jogo, comando, False)
             devmode.pos_turno(jogo, snapshot)
         return
 
@@ -457,85 +521,6 @@ def _processar_fluxo_jogo_normal(
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
             imprimir_contexto_sala(jogo)
-        elif comando == "abrir cofre" and jogo.sala_atual == "01":
-            jogo.estado_atual = "MINIGAME_COFRE"
-            jogo.cofre_tentativas = 0
-            from views import imprimir_painel_cofre
-
-            imprimir_painel_cofre(jogo, primeira_vez=True)
-        else:
-            jogador_correu = False
-            comando_para_executar = comando_bruto
-
-            if comando.startswith("correr "):
-                direcao = comando.replace("correr ", "").strip()
-                mapa_direcoes = {
-                    "f": "frente",
-                    "t": "atrás",
-                    "e": "esquerda",
-                    "d": "direita",
-                }
-                direcao = mapa_direcoes.get(direcao, direcao)
-                comando_para_executar = f"ir {direcao}"
-                comando = comando_para_executar
-                jogador_correu = True
-                if jogo.estado_atual == "COMBATE_ANIMATRONICO":
-                    jogo.estado_atual = "JOGO"
-
-            gastou_turno = processar_comando(comando_para_executar, jogo, jogo.mapa)
-
-            if gastou_turno:
-                atualizar_eventos_de_tempo(jogo)
-                jogo.erros_consecutivos = 0
-                if jogo.estado_atual == "JOGO" and gastou_turno != "olhar":
-                    aplicar_efeitos_pos_turno(
-                        jogo, ATALHOS_DIRECAO.get(comando, comando), jogador_correu
-                    )
-            else:
-                if jogador_correu and estado_antes == "COMBATE_ANIMATRONICO":
-                    jogo.estado_atual = "COMBATE_ANIMATRONICO"
-
-                jogo.erros_consecutivos += 1
-                if jogo.erros_consecutivos >= LIMITE_ERROS_DICA:
-                    jogo.alterar_barulho(BARULHO_ERROS_CONSECUTIVOS)
-                    jogo.ai_alvo = jogo.sala_atual
-                    ui.animar(
-                        "Seus tropeços no escuro estão chamando muita atenção...",
-                        0.03,
-                        DOS_AMARELO,
-                        jogo,
-                    )
-                    jogo.erros_consecutivos = 0
-
-            if (
-                jogo.sala_atual not in jogo.mapa
-                and jogo.sala_atual not in SALAS_TERMINAIS
-            ):
-                jogo.sala_atual = "01"
-
-            if jogo.estado_atual == "FIM" and getattr(jogo, "incendio", False):
-                registrar_telemetria_segura(
-                    "VITORIA",
-                    jogo.sala_atual,
-                    jogo.dificuldade_escolhida,
-                    "Final Verdadeiro",
-                    jogo,
-                )
-                desbloquear_conquista(jogo, "final_verdadeiro")
-                rodar_final("verdadeiro", jogo)
-                return
-
-            if jogo.atingiu_meta_acumulador():
-                desbloquear_conquista(jogo, "acumulador")
-
-            if not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
-                imprimir_contexto_sala(jogo)
-
-    # estado jogo/combate
-    elif jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
-        if comando in ["cls", "limpar", "clear", "clean"]:
-            ui.limpar()
-            imprimir_contexto_sala(jogo)
 
         elif jogo.sala_atual == "sala de energia" and not getattr(
             jogo, "fios_cortados_inventario", False
@@ -633,9 +618,7 @@ def _processar_fluxo_jogo_normal(
                     "e": "esquerda",
                     "d": "direita",
                 }
-                if direcao in mapa_direcoes:
-                    direcao = mapa_direcoes[direcao]
-
+                direcao = mapa_direcoes.get(direcao, direcao)
                 comando_para_executar = f"ir {direcao}"
                 comando = comando_para_executar
                 jogador_correu = True
@@ -648,13 +631,16 @@ def _processar_fluxo_jogo_normal(
                 atualizar_eventos_de_tempo(jogo)
                 jogo.erros_consecutivos = 0
                 if jogo.estado_atual == "JOGO" and gastou_turno != "olhar":
-                    aplicar_efeitos_pos_turno(jogo, comando, jogador_correu)
+                    aplicar_efeitos_pos_turno(
+                        jogo, ATALHOS_DIRECAO.get(comando, comando), jogador_correu
+                    )
             else:
                 if jogador_correu and estado_antes == "COMBATE_ANIMATRONICO":
                     jogo.estado_atual = "COMBATE_ANIMATRONICO"
 
-                if jogo.erros_consecutivos >= 3:
-                    jogo.nivel_barulho = min(100, jogo.nivel_barulho + 30)
+                jogo.erros_consecutivos += 1
+                if jogo.erros_consecutivos >= LIMITE_ERROS_DICA:
+                    jogo.alterar_barulho(BARULHO_ERROS_CONSECUTIVOS)
                     jogo.ai_alvo = jogo.sala_atual
                     ui.animar(
                         "Seus tropeços no escuro estão chamando muita atenção...",
@@ -664,15 +650,12 @@ def _processar_fluxo_jogo_normal(
                     )
                     jogo.erros_consecutivos = 0
 
-            if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in [
-                "morte",
-                "saida",
-                "cama",
-                "final_bom",
-            ]:
+            if (
+                jogo.sala_atual not in jogo.mapa
+                and jogo.sala_atual not in SALAS_TERMINAIS
+            ):
                 jogo.sala_atual = "01"
 
-            # gatilho do final verdadeiro
             if jogo.estado_atual == "FIM" and getattr(jogo, "incendio", False):
                 registrar_telemetria_segura(
                     "VITORIA",
@@ -681,22 +664,15 @@ def _processar_fluxo_jogo_normal(
                     "Final Verdadeiro",
                     jogo,
                 )
-
                 desbloquear_conquista(jogo, "final_verdadeiro")
-                if jogo.dificuldade_escolhida == "PESADELO":
-                    desbloquear_conquista(jogo, "pesadelo_verdadeiro")
-                elif jogo.dificuldade_escolhida == "NORMAL":
-                    desbloquear_conquista(jogo, "normal_zerado")
-
                 rodar_final("verdadeiro", jogo)
                 return
 
-            if len(jogo.inventario) >= 9:
+            if jogo.atingiu_meta_acumulador():
                 desbloquear_conquista(jogo, "acumulador")
 
             if not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
                 imprimir_contexto_sala(jogo)
-
     elif jogo.estado_atual == "MENU_DESAFIOS":
         if comando == "voltar":
             jogo.estado_atual = "MENU"
