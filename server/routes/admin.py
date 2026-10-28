@@ -54,7 +54,9 @@ def ver_telemetria():
 @requer_admin
 def auditoria_mortes():
     resultados = (
-        db.session.query(Jogador.email, Telemetria.sala, Telemetria.log_comandos)
+        db.session.query(
+            Jogador.iniciais, Jogador.email, Telemetria.sala, Telemetria.log_comandos
+        )
         .join(Telemetria, Jogador.id == Telemetria.jogador_id)
         .filter(Telemetria.evento == "MORTE")
         .limit(50)
@@ -64,11 +66,11 @@ def auditoria_mortes():
         {
             "mortes_identificadas": [
                 {
-                    "vitima": e,
+                    "vitima": f"{iniciais} ({(email_hash or 'anon')[:8]})",
                     "morreu_na_sala": s,
                     "ultimas_palavras": c[-3:] if c else [],
                 }
-                for e, s, c in resultados
+                for iniciais, email_hash, s, c in resultados
             ]
         }
     )

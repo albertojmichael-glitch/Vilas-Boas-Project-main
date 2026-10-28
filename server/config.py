@@ -6,39 +6,61 @@ from typing import ClassVar
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
-class Config:
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-
-    IS_PRODUCTION = bool(
+def is_production() -> bool:
+    """Detecta de forma centralizada se a aplicação está em produção via APP_ENV=production."""
+    app_env = os.environ.get("APP_ENV", "").strip().lower()
+    if app_env:
+        return app_env == "production"
+    return bool(
         os.environ.get("FLASK_ENV") == "production"
-        or os.environ.get("RENDER")
-        or os.environ.get("RAILWAY_STATIC_URL")
-        or os.environ.get("PROD")
+        or os.environ.get("PROD", "").strip().lower() in ("1", "true", "yes", "on")
     )
+
+
+class Config:
+    BASE_DIR = BASE_DIR
+    IS_PRODUCTION = is_production()
 
     SQLALCHEMY_ENGINE_OPTIONS: ClassVar[dict] = {
         "pool_pre_ping": True,
         "pool_recycle": int(os.environ.get("DB_POOL_RECYCLE", "300")),
         "pool_size": int(os.environ.get("DB_POOL_SIZE", "5")),
         "max_overflow": int(os.environ.get("DB_MAX_OVERFLOW", "10")),
-        "pool_timeout": 30,
+        "pool_timeout": int(os.environ.get("DB_POOL_TIMEOUT", "30")),
     }
 
     SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
+    SAVE_ENCRYPTION_KEY = os.environ.get("SAVE_ENCRYPTION_KEY")
     ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
     FRONTEND_URL = os.environ.get("FRONTEND_URL")
     ALLOWED_ORIGINS_ENV = os.environ.get("ALLOWED_ORIGINS", "")
     DATABASE_URL = os.environ.get("DATABASE_URL")
     REDIS_URL = os.environ.get("REDIS_URL")
+    SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN") or None
+    SESSION_COOKIE_SAMESITE = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax")
 
     @classmethod
     def validar_e_configurar(cls):
+        cls.IS_PRODUCTION = is_production()
+        cls.SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get(
+            "FLASK_SECRET_KEY"
+        )
+        cls.SAVE_ENCRYPTION_KEY = os.environ.get("SAVE_ENCRYPTION_KEY")
+        cls.ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
+        cls.FRONTEND_URL = os.environ.get("FRONTEND_URL")
+        cls.ALLOWED_ORIGINS_ENV = os.environ.get("ALLOWED_ORIGINS", "")
+        cls.DATABASE_URL = os.environ.get("DATABASE_URL")
+        cls.REDIS_URL = os.environ.get("REDIS_URL")
+        cls.SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN") or None
+        cls.SESSION_COOKIE_SAMESITE = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax")
 
         if cls.IS_PRODUCTION:
             if not cls.SECRET_KEY or not cls.ADMIN_TOKEN:
                 sys.exit(
                     "➣ ERRO FATAL: SECRET_KEY e/ou ADMIN_TOKEN ausentes na produção."
                 )
+            if not cls.SAVE_ENCRYPTION_KEY:
+                sys.exit("➣ ERRO FATAL: SAVE_ENCRYPTION_KEY ausente na produção.")
             if not cls.FRONTEND_URL:
                 sys.exit("➣ ERRO FATAL: FRONTEND_URL ausente na produção.")
             if not cls.DATABASE_URL:
@@ -50,6 +72,9 @@ class Config:
 
         if not cls.SECRET_KEY:
             cls.SECRET_KEY = "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
+
+        if not cls.SAVE_ENCRYPTION_KEY:
+            cls.SAVE_ENCRYPTION_KEY = "DEV_SAVE_KEY_DO_NOT_USE_IN_PROD_1982"
 
         cls.FRONTEND_URL = cls.FRONTEND_URL or "http://localhost:5000"
 
@@ -82,7 +107,13 @@ class Config:
 
         cls.SQLALCHEMY_DATABASE_URI = cls.DATABASE_URL
         cls.SQLALCHEMY_TRACK_MODIFICATIONS = False
-        cls.SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 300}
+        cls.SQLALCHEMY_ENGINE_OPTIONS = {
+            "pool_pre_ping": True,
+            "pool_recycle": int(os.environ.get("DB_POOL_RECYCLE", "300")),
+            "pool_size": int(os.environ.get("DB_POOL_SIZE", "5")),
+            "max_overflow": int(os.environ.get("DB_MAX_OVERFLOW", "10")),
+            "pool_timeout": int(os.environ.get("DB_POOL_TIMEOUT", "30")),
+        }
 
 
 Config.validar_e_configurar()

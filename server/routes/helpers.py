@@ -14,13 +14,19 @@ class ComandoRequest(BaseModel):
     comando: str = Field(
         default="",
         max_length=256,
-        pattern=r"^[a-zA-Z0-9\s\"\'\-\_áéíóúâêôãõçÁÉÍÓÚÂÊÔÃÕÇ\.\:]+$",
     )
     telemetria: bool = Field(default=True)
 
     @field_validator("comando", mode="before")
-    def limpar_comando(cls, v):
-        return v.replace("\x00", "").replace("\0", "") if isinstance(v, str) else ""
+    @classmethod
+    def limpar_e_normalizar_comando(cls, v):
+        if not isinstance(v, str):
+            return ""
+        limpo = v.replace("\x00", "").replace("\0", "")
+        if re.search(r"[<>;`]", limpo):
+            raise ValueError("Caracteres não permitidos no comando.")
+        limpo = re.sub(r"[\r\n\t]+", " ", limpo)
+        return limpo.strip()
 
 
 def obter_sid_seguro():

@@ -1,117 +1,42 @@
-// 1. constantes e elementos do dom e interfaces/tipagens
-
-type TipoBeep = 'sucesso' | 'erro';
-type CorTerminal = 'verde' | 'vermelho' | 'amarelo' | 'branco' | '';
-
-interface Conquista {
-    id: string;
-    nome: string;
-    desc: string;
-    icone: string;
-}
-
-interface EstadoJogo {
-    hp?: number | string;
-    luz_restante?: number | string;
-    som?: number;
-    bolsas_coletadas?: number;
-    inventario?: string[];
-    estado_jogo?: string;
-    tempo_final?: number;
-    final_alcancado?: string;
-}
-
-interface RespostaServidor {
-    linhas: string[];
-    estado?: EstadoJogo;
-    novas_conquistas?: Conquista[];
-    erro?: string;
-}
-
-interface SavePayload<T> {
-    __version__: number;
-    timestamp: number;
-    data: T;
-}
-
-interface SaveExportado {
-    dados_seguros: string;
-    resumo: {
-        sala: string;
-        [key: string]: unknown;
-    };
-    [key: string]: unknown;
-}
-
-interface RespostaShare {
-    link: string;
-    mensagem: string;
-    erro?: string;
-}
-
-interface DadosReplay {
-    jogador: string;
-    sala_final: string;
-    log_comandos: string[];
-    erro?: string;
-}
-
-declare global {
-    interface Window {
-        webkitAudioContext?: typeof AudioContext;
-        colorBarOsc?: OscillatorNode;
-        processarRespostaBackend?: (data: RespostaServidor) => void;
-        openHelp: () => void;
-        closeHelp: () => void;
-        openSettings: () => void;
-        closeSettings: () => void;
-        openSaves: () => void;
-        closeSaves: () => void;
-        abrirModalConquistas: () => void;
-        fecharModalConquistas: () => void;
-        exportarSave: () => Promise<void>;
-        importarSave: (event: Event) => Promise<void>;
-        gerarLinkCompartilhamentoUI: () => Promise<void>;
-        executarAtalho: (cmd: string) => void;
-        ligarTV: () => void;
-        iniciarLoginESalvar: () => void;
-        fecharArcadeModal: () => void;
-        playBip: (tipo?: TipoBeep) => void;
-    }
-}
-
-// 2. estado global do ambiente
-
-const API_URL = "https://vilas-boas-project-main.up.railway.app";
-const SAVE_VERSION = 1.0;
-const LIMITE_LINHAS = 50;
-
-const SECRET_IMAGES: readonly string[] = [
-    "hidden image 19.png", "hidden image 20.png", "hidden image 21.png",
-    "HiddenImage1.webp", "HiddenImage2.webp", "HiddenImage3.webp",
-    "HiddenImage4.webp", "HiddenImage5.webp", "HiddenImage6.webp",
-    "HiddenImage7.webp", "HiddenImage8.webp", "HiddenImage10.webp",
-    "HiddenImage11.webp", "HiddenImage12.webp", "HiddenImage14.webp",
-    "HiddenImage15.webp", "HiddenImage16.webp", "HiddenImage17.webp",
-    "HiddenImage18.webp", "HiddenImage20.webp", "mimic.webp"
-];
-
-const CATALOGO_CONQUISTAS: readonly Conquista[] = [
-    { id: "primeira_morte", nome: "Sangue no Carpete", desc: "Bem-vindo ao Vilas Boas.", icone: "☠" },
-    { id: "mente_brilhante", nome: "Mente Brilhante", desc: "Abra o cofre na primeira tentativa.", icone: "★" },
-    { id: "labirinto", nome: "Labirinto", desc: "Sobreviva à Sala de Energia.", icone: "☄" },
-    { id: "acumulador", nome: "Acumulador", desc: "Encha todos os 9 espaços do inventário.", icone: "☑" },
-    { id: "glicose", nome: "Glicose Mortal", desc: "Coma o doce velho encontrado no chão.", icone: "✴" },
-    { id: "trapaceiro", nome: "Hacker", desc: "Ative o God Mode.", icone: "☣" },
-    { id: "normal_zerado", nome: "Fim do Expediente", desc: "Sobreviva à noite na dificuldade Normal.", icone: "♨" },
-    { id: "final_bom", nome: "Sobrevivente", desc: "Alcance o Final Neutro.", icone: "☀" },
-    { id: "final_verdadeiro", nome: "A Verdade", desc: "Alcance o Final Verdadeiro.", icone: "✦" },
-    { id: "pesadelo_neutro", nome: "Pesadelo Superado", desc: "Alcance o Final Neutro no modo PESADELO.", icone: "♛" },
-    { id: "pesadelo_verdadeiro", nome: "Mestre do Pesadelo", desc: "Alcance o Final Verdadeiro no modo PESADELO.", icone: "♚" }
-];
-
-const getEl = <T extends HTMLElement>(id: string): T | null =>
-    document.getElementById(id) as T | null;
+import {
+    definirVolume,
+    definirVolumeJumpscare,
+    iniciarSomAmbiente,
+    obterAudioContext,
+    obterVolume,
+    obterVolumeJumpscare,
+    reproduzirBeep,
+    tocarBipEntrada,
+    tocarPassoMetalico,
+    tocarPorta,
+    tocarSomDigito,
+} from './modules/audio.js';
+import {
+    API_URL,
+    CATALOGO_CONQUISTAS,
+    getEl,
+    LIMITE_LINHAS,
+    sleep,
+} from './modules/constants.js';
+import {
+    aplicarEfeitoCRT,
+    ativarBSOD,
+    ativarJumpscare,
+    play1980Slideshow,
+    startFlashingSecrets,
+    stopFlashingSecrets,
+} from './modules/effects.js';
+import { configurarLoggerStorage, SafeStorage } from './modules/storage.js';
+import type {
+    Conquista,
+    CorTerminal,
+    DadosReplay,
+    EstadoJogo,
+    RespostaServidor,
+    RespostaShare,
+    SaveExportado,
+    TipoBeep,
+} from './modules/types.js';
 
 const outputDiv = getEl<HTMLDivElement>('output');
 const inputField = getEl<HTMLInputElement>('comando');
@@ -120,344 +45,27 @@ const loadingSpinner = getEl<HTMLDivElement>('loading');
 const inputLineDiv = document.querySelector<HTMLDivElement>('.input-line');
 const terminalSection = document.querySelector<HTMLElement>('.terminal-section');
 
-const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
-
-// 3. armazenamento seguro (safe storage)
-
 let historicoComandos: string[] = [];
 let posicaoHistorico = -1;
 let comandoDigitadoAtual = "";
 let modoReplayAtivo = false;
 
-let pref_telemetria = true;
-let pref_multiplicadorVelocidade = 1.0;
-let pref_volume = 1.0;
-let pref_volume_jumpscare = 1.0;
-
-let flashInterval: ReturnType<typeof setInterval> | null = null;
-let flashTimeout: ReturnType<typeof setTimeout> | null = null;
-let legendaTimeout: ReturnType<typeof setTimeout> | undefined;
+let prefTelemetria = true;
+let prefMultiplicadorVelocidade = 1.0;
 let toastTimeout: ReturnType<typeof setTimeout> | undefined;
-
-let audioAmbienteLoop: HTMLAudioElement | null = null;
-let sonsRandomicosAtivos = false;
-let audioCtx: AudioContext | null = null;
-let masterGainNode: GainNode | null = null;
-let crtOsc: OscillatorNode | null = null;
-
-// 4. efeitos visuais e imagens secretas
-
-const SafeStorage = {
-    save<T>(key: string, data: T): void {
-        try {
-            const payload: SavePayload<T> = {
-                __version__: SAVE_VERSION,
-                timestamp: Date.now(),
-                data
-            };
-            const jsonString = JSON.stringify(payload);
-            const oldData = localStorage.getItem(key);
-            if (oldData) localStorage.setItem(`${key}_backup`, oldData);
-            localStorage.setItem(key, jsonString);
-        } catch (e) {
-            console.error("[SISTEMA] Erro crítico de I/O no disco local:", e);
-        }
-    },
-
-    load<T>(key: string, defaultValue: T): T {
-        try {
-            const raw = localStorage.getItem(key);
-            if (!raw) return defaultValue;
-
-            if (!raw.includes('__version__')) {
-                const parsed = JSON.parse(raw) as T;
-                this.save(key, parsed);
-                return parsed;
-            }
-
-            const parsed = JSON.parse(raw) as SavePayload<T>;
-            if (parsed.__version__ < SAVE_VERSION) {
-                console.warn(`[SISTEMA] Atualizando save do formato ${parsed.__version__} para ${SAVE_VERSION}`);
-            }
-            return parsed.data;
-        } catch {
-            console.warn(`[SISTEMA] Setor corrompido em ${key}. Iniciando protocolo de recuperação...`);
-            return this.recover(key, defaultValue);
-        }
-    },
-
-    recover<T>(key: string, defaultValue: T): T {
-        try {
-            const rawBackup = localStorage.getItem(`${key}_backup`);
-            if (!rawBackup) throw new Error("Fita de backup inexistente.");
-
-            localStorage.setItem(key, rawBackup);
-            adicionarLinhaTerminal(`[ AVISO ] Anomalia de memória detectada. Backup de segurança restaurado.`, "amarelo");
-
-            const parsed = JSON.parse(rawBackup);
-            return (parsed.data !== undefined ? parsed.data : parsed) as T;
-        } catch {
-            adicionarLinhaTerminal(`[ FATAL ] Perda de dados irreversível no setor: ${key}.`, "vermelho");
-            return defaultValue;
-        }
-    }
-};
-
-// 4. imagens secretas e flash
-
-function startFlashingSecrets(): void {
-    const overlay = getEl<HTMLDivElement>("secret-image-overlay");
-    const img = getEl<HTMLImageElement>("secret-img-display");
-    if (!overlay || !img) return;
-
-    stopFlashingSecrets();
-    overlay.classList.remove("hidden", "slideshow-mode");
-
-    flashInterval = setInterval(() => {
-        const randomImg = SECRET_IMAGES[Math.floor(Math.random() * SECRET_IMAGES.length)];
-        img.src = `assets/secret images/${randomImg}`;
-        img.classList.add("flash-active");
-
-        flashTimeout = setTimeout(() => {
-            img.classList.remove("flash-active");
-        }, 50 + Math.random() * 250);
-    }, 800 + Math.random() * 1500);
-}
-
-function stopFlashingSecrets(): void {
-    if (flashInterval) clearInterval(flashInterval);
-    if (flashTimeout) clearTimeout(flashTimeout);
-    flashInterval = null;
-    flashTimeout = null;
-
-    const overlay = getEl<HTMLDivElement>("secret-image-overlay");
-    const img = getEl<HTMLImageElement>("secret-img-display");
-    img?.classList.remove("flash-active");
-    overlay?.classList.add("hidden");
-}
-
-async function play1980Slideshow(): Promise<void> {
-    const overlay = getEl<HTMLDivElement>("secret-image-overlay");
-    const img = getEl<HTMLImageElement>("secret-img-display");
-    if (!overlay || !img) return;
-
-    overlay.classList.remove("hidden");
-    overlay.classList.add("slideshow-mode");
-
-    for (const src of SECRET_IMAGES) {
-        img.src = `assets/secret images/${src}`;
-        img.classList.add("slideshow-active");
-        await sleep(2000);
-        img.classList.remove("slideshow-active");
-        await sleep(200);
-    }
-
-    overlay.classList.add("hidden");
-    overlay.classList.remove("slideshow-mode");
-}
-
-function ativarJumpscare(): void {
-    const tela = getEl<HTMLDivElement>('tela-jumpscare');
-    const img = getEl<HTMLImageElement>('img-jumpscare');
-    if (!tela || !img) return;
-
-    const imagens = ['./assets/static/images/JUMPSCARE1.jpg', './assets/static/images/JUMPSCARE2.jpg'];
-    img.src = imagens[Math.floor(Math.random() * imagens.length)];
-
-    const audioSusto = new Audio('./assets/audio/grito.mp3');
-    audioSusto.volume = pref_volume * pref_volume_jumpscare;
-    audioSusto.play().catch(err => console.log("Erro de áudio do jumpscare:", err));
-
-    tela.style.display = 'flex';
-    setTimeout(() => {
-        tela.style.display = 'none';
-    }, 2500);
-}
-
-function ativarBSOD(): void {
-    const tela = getEl<HTMLDivElement>('tela-bsod');
-    const imgCreepy = getEl<HTMLImageElement>('img-bsod-creepy');
-    if (!tela || !imgCreepy) return;
-
-    const imagens = [
-        './assets/static/images/JAPONESMEDO.jpg',
-        './assets/static/images/SHEISHERE1.jpg',
-        './assets/static/images/SHEISHERE2.jpg'
-    ];
-    imgCreepy.src = imagens[Math.floor(Math.random() * imagens.length)];
-
-    tela.style.display = 'flex';
-    reproduzirBeep('erro');
-
-    setTimeout(() => { imgCreepy.style.opacity = '0.6'; }, 300);
-    setTimeout(() => { imgCreepy.style.opacity = '0'; }, 400);
-    setTimeout(() => { imgCreepy.style.opacity = '0.9'; }, 700);
-    setTimeout(() => { imgCreepy.style.opacity = '0'; }, 800);
-
-    setTimeout(() => {
-        tela.style.display = 'none';
-    }, 2500);
-}
-
-// 6. sistema de áudio (web audio api)
-
-function obterAudioContext(): AudioContext | null {
-    if (!audioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) {
-            audioCtx = new AudioContextClass();
-            masterGainNode = audioCtx.createGain();
-            masterGainNode.gain.value = pref_volume;
-            masterGainNode.connect(audioCtx.destination);
-        }
-    }
-    if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-    return audioCtx;
-}
-
-function mostrarLegendaDeAudio(texto: string): void {
-    const legendaDiv = getEl<HTMLDivElement>('audio-captions');
-    if (legendaDiv) {
-        legendaDiv.textContent = `[ Áudio: ${texto} ]`;
-        legendaDiv.classList.remove('hidden');
-
-        clearTimeout(legendaTimeout);
-        legendaTimeout = setTimeout(() => {
-            legendaDiv.classList.add('hidden');
-        }, 2000);
-    }
-}
-
-function tocarSomDigito(): void {
-    const ctx = obterAudioContext();
-    if (!ctx || !masterGainNode) return;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(400 + Math.random() * 150, ctx.currentTime);
-
-    gain.gain.setValueAtTime(0.015, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
-
-    osc.connect(gain);
-    gain.connect(masterGainNode);
-
-    osc.start();
-    osc.stop(ctx.currentTime + 0.05);
-}
-
-function iniciarSomAmbiente(): void {
-    const ctx = obterAudioContext();
-    if (!ctx || !masterGainNode) return;
-
-    if (!crtOsc) {
-        crtOsc = ctx.createOscillator();
-        const crtGain = ctx.createGain();
-        crtOsc.type = 'sawtooth';
-        crtOsc.frequency.value = 60;
-        crtGain.gain.value = 0.005;
-        crtOsc.connect(crtGain);
-        crtGain.connect(masterGainNode);
-        crtOsc.start();
-    }
-
-    if (!audioAmbienteLoop) {
-        audioAmbienteLoop = new Audio('./assets/audio/ambiente.mp3');
-        audioAmbienteLoop.loop = true;
-        audioAmbienteLoop.volume = pref_volume * 0.6;
-        audioAmbienteLoop.play().catch(err => console.log("Autoplay bloqueado:", err));
-    }
-
-    if (!sonsRandomicosAtivos) {
-        sonsRandomicosAtivos = true;
-        tocarSonsAssustadoresAleatorios();
-    }
-}
-
-function tocarSonsAssustadoresAleatorios(): void {
-    const tempoAleatorio = Math.floor(Math.random() * (80000 - 30000 + 1)) + 30000;
-
-    setTimeout(() => {
-        const audios = ['./assets/audio/sonsrandomicos.mp3', './assets/audio/sonsrandomicos2.mp3'];
-        const escolhido = audios[Math.floor(Math.random() * audios.length)];
-
-        const audioSusto = new Audio(escolhido);
-        audioSusto.volume = pref_volume * 0.8;
-        audioSusto.play().catch(e => console.log("Erro som randomico:", e));
-
-        tocarSonsAssustadoresAleatorios();
-    }, tempoAleatorio);
-}
-
-function tocarBipEntrada(): void {
-    const ctx = obterAudioContext();
-    if (!ctx || !masterGainNode) return;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(550, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(1100, ctx.currentTime + 0.05);
-
-    gain.gain.setValueAtTime(0.035, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
-
-    osc.connect(gain);
-    gain.connect(masterGainNode);
-
-    osc.start();
-    osc.stop(ctx.currentTime + 0.06);
-}
-
-function tocarPassoMetalico(): void {
-    const passoAudio = new Audio('./assets/audio/metalrangendo.mp3');
-    passoAudio.volume = pref_volume;
-    passoAudio.play().catch(e => console.log("Erro ao tocar passo:", e));
-    mostrarLegendaDeAudio("Passos metálicos pesados");
-}
-
-function tocarPorta(): void {
-    const portaAudio = new Audio('./assets/audio/portafechandoabrindo.mp3');
-    portaAudio.volume = pref_volume;
-    portaAudio.play().catch(e => console.log(e));
-    mostrarLegendaDeAudio("Porta rangendo");
-}
-
-function reproduzirBeep(tipo: TipoBeep = 'sucesso'): void {
-    const ctx = obterAudioContext();
-    if (!ctx || !masterGainNode) return;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.connect(gain);
-    gain.connect(masterGainNode);
-
-    if (tipo === 'erro') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, ctx.currentTime);
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.3);
-    } else {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(800, ctx.currentTime);
-        gain.gain.setValueAtTime(0.03, ctx.currentTime);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.1);
-    }
-}
 
 function playBip(tipo: TipoBeep = 'sucesso'): void {
     reproduzirBeep(tipo);
 }
 
-// 6. sistema de conquistas
+// Sanitiza HTML recebido do servidor permitindo apenas spans de cor do terminal
+function sanitizarHTMLServidor(raw: string): string {
+    return raw.replace(/<\/?(?!span\b)[^>]*>/gi, (tag) =>
+        tag.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    );
+}
+
+// 1. Sistema de conquistas
 
 function abrirModalConquistas(): void {
     const modal = getEl<HTMLDivElement>('achievements-modal');
@@ -466,7 +74,7 @@ function abrirModalConquistas(): void {
     if (!modal || !grid || !title) return;
 
     const salvas = SafeStorage.load<Record<string, Conquista>>('vilasBoasAchievements', {});
-    grid.innerHTML = '';
+    grid.textContent = '';
     let quantidadeDesbloqueada = 0;
 
     CATALOGO_CONQUISTAS.forEach(conquista => {
@@ -476,16 +84,23 @@ function abrirModalConquistas(): void {
         const card = document.createElement('div');
         card.className = `achievement-card ${estaDesbloqueada ? 'unlocked' : 'locked'}`;
 
-        const nomeExibicao = estaDesbloqueada ? conquista.nome : '???';
-        const descExibicao = estaDesbloqueada ? conquista.desc : 'Continue explorando para desbloquear.';
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'achieve-card-icon';
+        iconDiv.textContent = conquista.icone;
 
-        card.innerHTML = `
-            <div class="achieve-card-icon">${conquista.icone}</div>
-            <div class="achieve-card-info">
-                <h3>${nomeExibicao}</h3>
-                <p>${descExibicao}</p>
-            </div>
-        `;
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'achieve-card-info';
+
+        const h3 = document.createElement('h3');
+        h3.textContent = estaDesbloqueada ? conquista.nome : '???';
+
+        const p = document.createElement('p');
+        p.textContent = estaDesbloqueada ? conquista.desc : 'Continue explorando para desbloquear.';
+
+        infoDiv.appendChild(h3);
+        infoDiv.appendChild(p);
+        card.appendChild(iconDiv);
+        card.appendChild(infoDiv);
         grid.appendChild(card);
     });
 
@@ -531,7 +146,7 @@ function mostrarToastConquista(conquista: Conquista): void {
     }, 4000);
 }
 
-// 7. gerenciamento de saves e modais
+// 2. Gerenciamento de saves e modais
 
 function openSaves(): void {
     getEl<HTMLDivElement>('saves-modal')?.classList.remove('hidden');
@@ -632,7 +247,10 @@ async function importarSave(event: Event): Promise<void> {
 
 async function gerarLinkCompartilhamentoUI(): Promise<void> {
     try {
-        const res = await fetch(`${API_URL}/share/generate`, { credentials: 'include' });
+        const res = await fetch(`${API_URL}/share/generate`, {
+            method: 'POST',
+            credentials: 'include'
+        });
         const data = (await res.json()) as RespostaShare;
 
         if (res.ok) {
@@ -663,16 +281,12 @@ async function gerarLinkCompartilhamentoUI(): Promise<void> {
     }
 }
 
-// 8. preferências e configurações
+// 3. Preferências e configurações
 
 function atualizarLabelVelocidade(val: number): void {
     const label = getEl<HTMLSpanElement>('speed-val-display');
     if (!label) return;
     label.innerText = val === 0 ? "Instantâneo (0x)" : `Atual (${val}x)`;
-}
-
-function aplicarEfeitoCRT(ativado: boolean): void {
-    document.body.classList.toggle('crt-enabled', ativado);
 }
 
 function carregarPreferencias(): void {
@@ -689,23 +303,23 @@ function carregarPreferencias(): void {
     const savedVolumeJump = localStorage.getItem('vilasBoasVolumeJump');
 
     if (savedTele !== null && teleCheckbox) {
-        pref_telemetria = savedTele === 'true';
-        teleCheckbox.checked = pref_telemetria;
+        prefTelemetria = savedTele === 'true';
+        teleCheckbox.checked = prefTelemetria;
     }
     teleCheckbox?.addEventListener('change', (e) => {
-        pref_telemetria = (e.target as HTMLInputElement).checked;
-        localStorage.setItem('vilasBoasTelemetry', String(pref_telemetria));
+        prefTelemetria = (e.target as HTMLInputElement).checked;
+        localStorage.setItem('vilasBoasTelemetry', String(prefTelemetria));
     });
 
     if (savedSpeed !== null && speedSlider) {
-        pref_multiplicadorVelocidade = parseFloat(savedSpeed);
-        speedSlider.value = String(pref_multiplicadorVelocidade);
-        atualizarLabelVelocidade(pref_multiplicadorVelocidade);
+        prefMultiplicadorVelocidade = parseFloat(savedSpeed);
+        speedSlider.value = String(prefMultiplicadorVelocidade);
+        atualizarLabelVelocidade(prefMultiplicadorVelocidade);
     }
     speedSlider?.addEventListener('input', (e) => {
-        pref_multiplicadorVelocidade = parseFloat((e.target as HTMLInputElement).value);
-        localStorage.setItem('vilasBoasSpeed', String(pref_multiplicadorVelocidade));
-        atualizarLabelVelocidade(pref_multiplicadorVelocidade);
+        prefMultiplicadorVelocidade = parseFloat((e.target as HTMLInputElement).value);
+        localStorage.setItem('vilasBoasSpeed', String(prefMultiplicadorVelocidade));
+        atualizarLabelVelocidade(prefMultiplicadorVelocidade);
     });
 
     if (crtCheckbox) {
@@ -721,42 +335,42 @@ function carregarPreferencias(): void {
     }
 
     if (savedVolume !== null && volSlider) {
-        pref_volume = parseFloat(savedVolume);
-        volSlider.value = String(pref_volume);
+        const vol = parseFloat(savedVolume);
+        definirVolume(vol);
+        volSlider.value = String(vol);
         const volDisplay = getEl<HTMLSpanElement>('volume-val-display');
-        if (volDisplay) volDisplay.innerText = `${Math.round(pref_volume * 100)}%`;
-        if (masterGainNode) masterGainNode.gain.value = pref_volume;
+        if (volDisplay) volDisplay.innerText = `${Math.round(vol * 100)}%`;
     }
     volSlider?.addEventListener('input', (e) => {
-        pref_volume = parseFloat((e.target as HTMLInputElement).value);
-        localStorage.setItem('vilasBoasVolume', String(pref_volume));
+        const vol = parseFloat((e.target as HTMLInputElement).value);
+        definirVolume(vol);
+        localStorage.setItem('vilasBoasVolume', String(vol));
         const volDisplay = getEl<HTMLSpanElement>('volume-val-display');
-        if (volDisplay) volDisplay.innerText = `${Math.round(pref_volume * 100)}%`;
-
-        if (masterGainNode) masterGainNode.gain.value = pref_volume;
-        if (audioAmbienteLoop) audioAmbienteLoop.volume = pref_volume * 0.6;
+        if (volDisplay) volDisplay.innerText = `${Math.round(vol * 100)}%`;
     });
 
     if (savedVolumeJump !== null && volJumpSlider) {
-        pref_volume_jumpscare = parseFloat(savedVolumeJump);
-        volJumpSlider.value = String(pref_volume_jumpscare);
+        const volJump = parseFloat(savedVolumeJump);
+        definirVolumeJumpscare(volJump);
+        volJumpSlider.value = String(volJump);
         const displayJump = getEl<HTMLSpanElement>('volume-jump-val-display');
-        if (displayJump) displayJump.innerText = `${Math.round(pref_volume_jumpscare * 100)}%`;
+        if (displayJump) displayJump.innerText = `${Math.round(volJump * 100)}%`;
     }
     volJumpSlider?.addEventListener('input', (e) => {
-        pref_volume_jumpscare = parseFloat((e.target as HTMLInputElement).value);
-        localStorage.setItem('vilasBoasVolumeJump', String(pref_volume_jumpscare));
+        const volJump = parseFloat((e.target as HTMLInputElement).value);
+        definirVolumeJumpscare(volJump);
+        localStorage.setItem('vilasBoasVolumeJump', String(volJump));
         const displayJump = getEl<HTMLSpanElement>('volume-jump-val-display');
-        if (displayJump) displayJump.innerText = `${Math.round(pref_volume_jumpscare * 100)}%`;
+        if (displayJump) displayJump.innerText = `${Math.round(volJump * 100)}%`;
 
         const testeSusto = new Audio('./assets/audio/grito.mp3');
-        testeSusto.volume = pref_volume * pref_volume_jumpscare;
+        testeSusto.volume = obterVolume() * obterVolumeJumpscare();
         testeSusto.play().catch(() => {});
         setTimeout(() => testeSusto.pause(), 300);
     });
 }
 
-// 9. atualização de hud e terminal
+// 4. Atualização de HUD e terminal
 
 function atualizarSidebar(estado?: EstadoJogo): void {
     if (!estado) return;
@@ -798,7 +412,7 @@ function atualizarSidebar(estado?: EstadoJogo): void {
     const invTitulo = document.querySelector<HTMLElement>("#hud-inv, .inventory-box h3");
 
     if (invList) {
-        invList.innerHTML = "";
+        invList.textContent = "";
 
         const qtdBolsas = estado.bolsas_coletadas || 0;
         const limiteMaximo = 3 + (qtdBolsas * 3);
@@ -832,7 +446,7 @@ function atualizarSidebar(estado?: EstadoJogo): void {
         }
 
         if (slotsContainer) {
-            slotsContainer.innerHTML = "";
+            slotsContainer.textContent = "";
             for (let i = 0; i < limiteMaximo; i++) {
                 const slotBox = document.createElement("div");
                 slotBox.className = `inv-slot ${i < qtdAtual ? "cheio" : "vazio"}`;
@@ -842,10 +456,12 @@ function atualizarSidebar(estado?: EstadoJogo): void {
     }
 }
 
-function adicionarLinhaTerminal(htmlContent: string, cor: CorTerminal = ""): void {
+function adicionarLinhaTerminal(texto: string, cor: CorTerminal = ""): void {
     if (!outputDiv) return;
-    const classeCor = cor ? ` ${cor}` : "";
-    outputDiv.insertAdjacentHTML('beforeend', `<div class="linha${classeCor}">${htmlContent}</div>`);
+    const div = document.createElement("div");
+    div.className = cor ? `linha ${cor}` : "linha";
+    div.textContent = texto;
+    outputDiv.appendChild(div);
 
     while (outputDiv.childElementCount > LIMITE_LINHAS) {
         if (outputDiv.firstChild) outputDiv.removeChild(outputDiv.firstChild);
@@ -853,6 +469,8 @@ function adicionarLinhaTerminal(htmlContent: string, cor: CorTerminal = ""): voi
 
     outputDiv.scrollTop = outputDiv.scrollHeight;
 }
+
+configurarLoggerStorage(adicionarLinhaTerminal);
 
 async function processarLinhas(linhas: string[], estado?: EstadoJogo): Promise<void> {
     for (const linha of linhas) {
@@ -897,7 +515,7 @@ function novaLinha(linhaBruta: string, terminalEl: HTMLElement | null): Promise<
 
         if (linha.startsWith("@@CLEAR@@")) {
             document.body.classList.remove("glitch-mode", "low-power-mode", "blackout-mode", "kernel-panic-mode");
-            if (outputDiv) outputDiv.innerHTML = "";
+            if (outputDiv) outputDiv.textContent = "";
             if (terminalEl) terminalEl.scrollTop = terminalEl.scrollHeight;
             resolve();
         } else if (linha.includes("@@PANIC@@")) {
@@ -928,7 +546,7 @@ function novaLinha(linhaBruta: string, terminalEl: HTMLElement | null): Promise<
             document.body.classList.remove("low-power-mode", "blackout-mode");
             resolve();
         } else if (linha.startsWith("@@EXIT@@")) {
-            document.body.innerHTML = "";
+            document.body.textContent = "";
             document.body.style.backgroundColor = "#000";
             resolve();
         } else if (linha.startsWith("@@RELOAD@@")) {
@@ -945,17 +563,17 @@ function novaLinha(linhaBruta: string, terminalEl: HTMLElement | null): Promise<
             const ms = parseInt(parts[3], 10);
             const texto = parts.slice(4).join("@@");
 
-            const velocidadeFinal = pref_multiplicadorVelocidade === 0 ? 0 : ms * pref_multiplicadorVelocidade;
+            const velocidadeFinal = prefMultiplicadorVelocidade === 0 ? 0 : ms * prefMultiplicadorVelocidade;
             digitarTextoAnimadoHTML(texto, cor, velocidadeFinal, resolve);
         } else {
-            const velocidadeFinal = pref_multiplicadorVelocidade === 0 ? 0 : 15 * pref_multiplicadorVelocidade;
+            const velocidadeFinal = prefMultiplicadorVelocidade === 0 ? 0 : 15 * prefMultiplicadorVelocidade;
             digitarTextoAnimadoHTML(linha, "", velocidadeFinal, resolve);
         }
     });
 }
 
 function digitarTextoAnimadoHTML(
-    htmlString: string,
+    htmlStringBruto: string,
     classeCor: CorTerminal,
     velocidade: number,
     aoTerminar: () => void
@@ -964,6 +582,8 @@ function digitarTextoAnimadoHTML(
         aoTerminar();
         return;
     }
+
+    const htmlString = sanitizarHTMLServidor(htmlStringBruto);
 
     const p = document.createElement('p');
     if (classeCor) p.className = classeCor;
@@ -1039,7 +659,7 @@ function digitarTextoAnimadoHTML(
     requestAnimationFrame(digitar);
 }
 
-// 10. comunicação com o server (fetch)
+// 5. Comunicação com o servidor (fetch)
 
 function mostrarSalvando(): void {
     const ind = getEl<HTMLDivElement>('save-indicator');
@@ -1092,7 +712,7 @@ async function fetchSeguro(url: string, options: RequestInit = {}): Promise<void
         if (outputDiv) {
             const p = document.createElement('p');
             p.className = 'vermelho';
-            p.innerHTML = "[ERRO DE CONEXÃO] O sinal com o servidor falhou. Verifique sua internet.";
+            p.textContent = "[ERRO DE CONEXÃO] O sinal com o servidor falhou. Verifique sua internet.";
             outputDiv.appendChild(p);
         }
         if (terminal) terminal.scrollTop = terminal.scrollHeight;
@@ -1106,7 +726,7 @@ async function fetchSeguro(url: string, options: RequestInit = {}): Promise<void
 }
 
 function iniciarJogo(): void {
-    fetchSeguro('/iniciar', { method: 'GET' });
+    fetchSeguro('/iniciar', { method: 'POST' });
 }
 
 async function enviarComando(comando: string): Promise<void> {
@@ -1115,7 +735,7 @@ async function enviarComando(comando: string): Promise<void> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             comando,
-            telemetria: pref_telemetria
+            telemetria: prefTelemetria
         })
     });
 }
@@ -1127,7 +747,7 @@ function executarAtalho(cmd: string): void {
     enviarComando(cmd);
 }
 
-// 11. tv retro, replay e leaderboard
+// 6. TV Retro, Replay e Leaderboard
 
 function ligarTV(): void {
     const powerBtn = getEl<HTMLButtonElement>("power-button");
@@ -1193,11 +813,21 @@ async function iniciarReplay(idReplay: string): Promise<void> {
     if (modoReplayAtivo) return;
 
     try {
-        const response = await fetch(`/api/replay/${idReplay}`);
+        const tokenAdmin = sessionStorage.getItem('vilasBoasAdminToken') || '';
+        const headersReplay: Record<string, string> = {};
+        if (tokenAdmin) {
+            headersReplay['X-Admin-Token'] = tokenAdmin;
+        }
+
+        const response = await fetch(`${API_URL}/admin/replay/${encodeURIComponent(idReplay)}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: headersReplay
+        });
         const data = (await response.json()) as DadosReplay;
 
         if (!response.ok) {
-            adicionarLinhaTerminal(`[ SISTEMA ] ${data.erro}`, "vermelho");
+            adicionarLinhaTerminal(`[ SISTEMA ] ${data.erro || 'Acesso negado ao replay.'}`, "vermelho");
             return;
         }
 
@@ -1235,8 +865,9 @@ async function iniciarReplay(idReplay: string): Promise<void> {
             adicionarLinhaTerminal(`C:\\> ${comando}`, "branco");
             if (inputField) inputField.value = "";
 
-            const resPost = await fetch('/comando', {
+            const resPost = await fetch(`${API_URL}/comando`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ comando, telemetria: false })
             });
@@ -1309,10 +940,10 @@ function iniciarLoginESalvar(): void {
         btn.disabled = true;
     }
 
-    window.location.href = `${API_URL}/login/google?iniciais=${iniciais}`;
+    window.location.href = `${API_URL}/login/google?iniciais=${encodeURIComponent(iniciais)}`;
 }
 
-// 12. eventos de teclado, clique e boot
+// 7. Eventos de teclado, clique e boot
 
 document.body.addEventListener('click', iniciarSomAmbiente, { once: true });
 document.body.addEventListener('keydown', iniciarSomAmbiente, { once: true });
@@ -1354,7 +985,11 @@ inputField?.addEventListener("keydown", async (event: KeyboardEvent) => {
             if (outputDiv) {
                 const p = document.createElement("p");
                 p.className = "branco";
-                p.innerHTML = `<span class="prompt">C:\\></span> ${comandoBruto}`;
+                const spanPrompt = document.createElement("span");
+                spanPrompt.className = "prompt";
+                spanPrompt.textContent = "C:\\>";
+                p.appendChild(spanPrompt);
+                p.appendChild(document.createTextNode(` ${comandoBruto}`));
                 outputDiv.appendChild(p);
             }
 
@@ -1366,7 +1001,7 @@ inputField?.addEventListener("keydown", async (event: KeyboardEvent) => {
                 if (outputDiv) {
                     const pResp = document.createElement("p");
                     pResp.className = "verde";
-                    pResp.innerHTML = "[SISTEMA] Abrindo o Manual de Sobrevivência...";
+                    pResp.textContent = "[SISTEMA] Abrindo o Manual de Sobrevivência...";
                     outputDiv.appendChild(pResp);
                 }
                 if (terminal) terminal.scrollTop = terminal.scrollHeight;
@@ -1405,7 +1040,7 @@ document.addEventListener('keydown', (e: KeyboardEvent) => {
 
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
         e.preventDefault();
-        if (outputDiv) outputDiv.innerHTML = '';
+        if (outputDiv) outputDiv.textContent = '';
         reproduzirBeep('sucesso');
     }
 
@@ -1414,7 +1049,7 @@ document.addEventListener('keydown', (e: KeyboardEvent) => {
         if (outputDiv) {
             const p = document.createElement('p');
             p.className = 'verde';
-            p.innerHTML = "[SISTEMA] O progresso do jogo é salvo automaticamente a cada turno.";
+            p.textContent = "[SISTEMA] O progresso do jogo é salvo automaticamente quando o estado muda.";
             outputDiv.appendChild(p);
         }
         if (terminal) terminal.scrollTop = terminal.scrollHeight;
@@ -1446,8 +1081,6 @@ window.addEventListener('load', () => {
     }
 });
 
-// 13. exposição global console
-
 window.openHelp = openHelp;
 window.closeHelp = closeHelp;
 window.openSettings = openSettings;
@@ -1464,5 +1097,3 @@ window.ligarTV = ligarTV;
 window.iniciarLoginESalvar = iniciarLoginESalvar;
 window.fecharArcadeModal = fecharArcadeModal;
 window.playBip = playBip;
-
-export {};

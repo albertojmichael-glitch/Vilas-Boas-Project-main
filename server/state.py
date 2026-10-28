@@ -38,6 +38,7 @@ SALAS_SEGURAS_PATRULHA = SALAS_TERMINAIS | {
 CHAVES_NAO_SAIDA = frozenset(
     {"descrição", "itens", "inspecionaveis", "energia", "cofre_important", "cadeira"}
 )
+MAX_LOG_COMANDOS = 100
 
 logger = logging.getLogger(__name__)
 
@@ -155,14 +156,42 @@ class GameState(BaseModel):
 
     def __init__(self, ui_handler=None, **data):
         super().__init__(**data)
+        if len(self.log_comandos) > MAX_LOG_COMANDOS:
+            self.log_comandos = self.log_comandos[-MAX_LOG_COMANDOS:]
         self._ui_handler = ui_handler if ui_handler is not None else HeadlessUIHandler()
 
+    def registrar_comando(self, comando: str) -> None:
+        if comando:
+            self.log_comandos.append(comando)
+            if len(self.log_comandos) > MAX_LOG_COMANDOS:
+                self.log_comandos = self.log_comandos[-MAX_LOG_COMANDOS:]
+
+    def snapshot_persistencia(self) -> dict[str, Any]:
+        return self.model_dump(
+            exclude={
+                "log_comandos",
+                "erros_consecutivos",
+                "novas_conquistas_turno",
+                "tempo_inicio",
+            }
+        )
+
+    def carregar_estado(self, dados: dict[str, Any]) -> None:
+        validado = self.__class__.from_dict(dados)
+        for chave, valor in validado.to_dict().items():
+            setattr(self, chave, valor)
+
     def to_dict(self):
+        if len(self.log_comandos) > MAX_LOG_COMANDOS:
+            self.log_comandos = self.log_comandos[-MAX_LOG_COMANDOS:]
         return self.model_dump()
 
     @classmethod
     def from_dict(cls, data):
-        return cls.model_validate(data)
+        instancia = cls.model_validate(data)
+        if len(instancia.log_comandos) > MAX_LOG_COMANDOS:
+            instancia.log_comandos = instancia.log_comandos[-MAX_LOG_COMANDOS:]
+        return instancia
 
     @property
     def ui_handler(self):

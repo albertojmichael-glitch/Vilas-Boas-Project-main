@@ -1,23 +1,27 @@
-.PHONY: setup test lint format run push
+.PHONY: setup test lint format run cli push
 
 setup:
 	python3 -m venv venv
 	./venv/bin/pip install -U pip
-	./venv/bin/pip install -r requirements-dev.txt
+	./venv/bin/pip install -e ".[dev]"
 
 test:
-	./venv/bin/pytest tests/ -v
+	PYTHONPATH=server ./venv/bin/pytest tests/ --cov=server --cov-report=term-missing -v
 
 lint:
-	./venv/bin/mypy .
-	./venv/bin/black --check .
+	./venv/bin/ruff check .
+	./venv/bin/ruff format --check .
+	PYTHONPATH=server ./venv/bin/mypy server/
 
 format:
-	./venv/bin/black .
+	./venv/bin/ruff check --fix .
+	./venv/bin/ruff format .
 
 run:
-	./venv/bin/python app.py
+	PYTHONPATH=server ./venv/bin/python server/app.py
 
+cli:
+	PYTHONPATH=server ./venv/bin/python server/cli.py
 
 push: format lint test
 	git add .

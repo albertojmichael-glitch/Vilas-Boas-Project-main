@@ -66,11 +66,15 @@ def registrar_telemetria(
     )
 
     if jogo:
+        from state import MAX_LOG_COMANDOS
+
         registro.hp_restante = getattr(jogo, "hp", 0)
         registro.luz_restante = getattr(jogo, "turnos_luz", 0)
         registro.nivel_barulho = getattr(jogo, "nivel_barulho", 0)
         registro.inventario_qtd = len(getattr(jogo, "inventario", []))
         registro.bolsas = getattr(jogo, "bolsas_coletadas", 0)
-        registro.log_comandos = getattr(jogo, "log_comandos", [])
+        registro.log_comandos = list(getattr(jogo, "log_comandos", []))[
+            -MAX_LOG_COMANDOS:
+        ]
 
     fila_telemetria.put(registro)

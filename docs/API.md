@@ -8,10 +8,10 @@ Esta documentação descreve os endpoints expostos pelo servidor Flask para comu
 
 ---
 
-## 1. `GET /iniciar`
-Inicia uma nova sessão de jogo, destrói qualquer estado anterior atrelado ao usuário e retorna a tela de boot do sistema.
+## 1. `POST /iniciar`
+Inicia uma nova sessão de jogo, destrói qualquer estado anterior atrelado ao usuário e retorna a tela de boot do sistema. Valida o header `Origin`.
 
-* **Rate Limit:** Sem limite estrito (herda fallback global).
+* **Rate Limit:** 10 requisições por minuto.
 * **Parâmetros:** Nenhum.
 
 ### Resposta de Sucesso (`200 OK`)
@@ -20,17 +20,17 @@ Inicia uma nova sessão de jogo, destrói qualquer estado anterior atrelado ao u
   "estado": {
     "hp": "...",
     "inventario": [],
-    "luz": "...",
-    "saidas": [],
-    "sala": "BOOT"
+    "luz_restante": "...",
+    "sala": "SISTEMA"
   },
   "linhas": [
     "@@TYPE@@branco@@15@@[ SISTEMA DE BOOT INICIADO ]",
     "@@TYPE@@verde@@15@@Aguardando comando 'dir'..."
   ]
 }
+```
 
-2. POST /comando
+## 2. `POST /comando`
 Recebe a string de comando do jogador, processa na Engine e retorna o novo estado do jogo juntamente com as linhas narrativas renderizadas.
 
 Rate Limit: 60 requisições por minuto (Proteção Anti-DoS).

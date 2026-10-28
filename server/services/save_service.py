@@ -13,9 +13,7 @@ from state import GameState
 
 logger = logging.getLogger(__name__)
 
-_key_hash = hashlib.sha256(
-    (Config.SECRET_KEY or "chave-secreta-dev-padrao-1982").encode()
-).digest()
+_key_hash = hashlib.sha256(str(Config.SAVE_ENCRYPTION_KEY).encode("utf-8")).digest()
 CIPHER_SUITE = Fernet(base64.urlsafe_b64encode(_key_hash))
 
 

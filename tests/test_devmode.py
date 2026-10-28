@@ -67,6 +67,18 @@ def test_desabilitado_por_env(jogo_menu, monkeypatch):
     assert not jogo_menu.dev_mode
 
 
+def test_recusa_ativar_sem_dev_mode_code(jogo_menu, monkeypatch):
+    monkeypatch.delenv("DEV_MODE_CODE", raising=False)
+    processar_fluxo_jogo(CODIGO, jogo_menu)
+    assert not jogo_menu.dev_mode
+
+
+def test_recusa_ativar_em_producao(jogo_menu, monkeypatch):
+    monkeypatch.setenv("PROD", "1")
+    processar_fluxo_jogo(CODIGO, jogo_menu)
+    assert not jogo_menu.dev_mode
+
+
 def test_codigo_customizado_por_env(jogo_menu, monkeypatch):
     monkeypatch.setenv("DEV_MODE_CODE", "abra se same")
     processar_fluxo_jogo(CODIGO, jogo_menu)

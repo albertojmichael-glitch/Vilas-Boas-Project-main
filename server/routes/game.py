@@ -1,3 +1,4 @@
+import html
 import json
 import logging
 import time
@@ -7,15 +8,14 @@ from cryptography.fernet import InvalidToken
 from extensions import MEMORIA_SESSOES, db, limiter
 from flask import (
     Blueprint,
-    current_app,
     jsonify,
     redirect,
     request,
-    send_from_directory,
     session,
 )
 from models import Compartilhamento, SaveJogo
 from pydantic import ValidationError
+from security import requer_origem_valida
 from services.save_service import (
     CIPHER_SUITE,
     carregar_save_web,
@@ -39,8 +39,9 @@ logger = logging.getLogger(__name__)
 game_bp = Blueprint("game", __name__)
 
 
-@game_bp.route("/iniciar", methods=["GET"])
+@game_bp.route("/iniciar", methods=["POST"])
 @limiter.limit("10 per minute")
+@requer_origem_valida
 def iniciar_jogo():
     sid_antigo = session.get("sid")
     if sid_antigo and sid_antigo in MEMORIA_SESSOES:
@@ -64,13 +65,11 @@ def iniciar_jogo():
     return resposta
 
 
-@game_bp.route("/comando", methods=["GET", "POST"])
+@game_bp.route("/comando", methods=["POST"])
 @limiter.limit("120 per minute")
 @limiter.limit("500 per hour")
+@requer_origem_valida
 def receber_comando():
-    if request.method == "GET":
-        return send_from_directory(current_app.config.get("BASE_DIR"), "index.html")
-
     sid = obter_sid_seguro()
     if not sid or sid not in MEMORIA_SESSOES:
         sid = str(uuid.uuid4())
@@ -97,9 +96,10 @@ def receber_comando():
         return gerar_resposta_json(jogo), 400
 
     if comando:
-        jogo.log_comandos.append(comando)
+        jogo.registrar_comando(comando)
 
     try:
+        snapshot_antes = jogo.snapshot_persistencia()
         processar_fluxo_jogo(
             comando,
             jogo,
@@ -107,7 +107,8 @@ def receber_comando():
             callback_load_save=lambda j: carregar_save_web(j, sid),
         )
         if getattr(jogo, "estado_atual", "") in ["JOGO", "COMBATE_ANIMATRONICO"]:
-            salvar_save_web(jogo, sid)
+            if snapshot_antes != jogo.snapshot_persistencia():
+                salvar_save_web(jogo, sid)
         MEMORIA_SESSOES[sid] = jogo
     except Exception:
         logger.exception("Erro crítico na Engine")
@@ -139,6 +140,7 @@ def exportar_save():
 
 @game_bp.route("/save/import", methods=["POST"])
 @limiter.limit("10 per minute")
+@requer_origem_valida
 def importar_save():
     sid = obter_sid_seguro() or str(uuid.uuid4())
     session["sid"], session.permanent = sid, True
@@ -164,8 +166,9 @@ def importar_save():
         return jsonify({"erro": "Arquivo de save inválido."}), 400
 
 
-@game_bp.route("/share/generate", methods=["GET"])
+@game_bp.route("/share/generate", methods=["POST"])
 @limiter.limit("5 per hour")
+@requer_origem_valida
 def gerar_link():
     sid = obter_sid_seguro()
     if not sid:
@@ -181,7 +184,7 @@ def gerar_link():
     )
 
 
-@game_bp.route("/share/<share_token>")
+@game_bp.route("/share/<share_token>", methods=["GET", "POST"])
 def carregar_compartilhado(share_token):
     share = db.session.execute(
         db.select(Compartilhamento).filter_by(share_token=share_token)
@@ -190,11 +193,10 @@ def carregar_compartilhado(share_token):
     if not share:
         return "Link inválido ou inexistente.", 404
 
-    import time
-
     if time.time() > share.expires_at:
-        db.session.delete(share)
-        db.session.commit()
+        if request.method == "POST":
+            db.session.delete(share)
+            db.session.commit()
         return "Este link temporário expirou e foi removido do sistema.", 410
 
     chave_original = to_uuid(share.original_sid)
@@ -205,6 +207,25 @@ def carregar_compartilhado(share_token):
             "O save original associado a este link foi destruído ou deixou de existir.",
             404,
         )
+
+    if request.method == "GET":
+        token_seguro = html.escape(share_token)
+        return (
+            "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>"
+            "<title>Vilas Boas OS - Save Compartilhado</title></head>"
+            "<body style='background:#000;color:#0f0;font-family:monospace;padding:2rem;'>"
+            "<h1>[ VILAS BOAS OS - SAVE COMPARTILHADO ]</h1>"
+            "<p>Confirme abaixo para carregar este save na sua sessão atual.</p>"
+            f"<form method='POST' action='/share/{token_seguro}'>"
+            "<button type='submit' style='background:#0f0;color:#000;border:0;padding:0.5rem 1rem;font-family:monospace;cursor:pointer;'>"
+            "CARREGAR SAVE</button></form></body></html>",
+            200,
+        )
+
+    from security import validar_origem_request
+
+    if not validar_origem_request():
+        return jsonify({"erro": "Origem não autorizada."}), 403
 
     try:
         dados_descriptografados = CIPHER_SUITE.decrypt(

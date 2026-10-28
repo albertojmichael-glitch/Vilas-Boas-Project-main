@@ -3,11 +3,9 @@ import os
 from logging.handlers import RotatingFileHandler
 
 from app_factory import create_app
-from flask import send_from_directory
+from flask import jsonify
 
 app = create_app()
-
-# ola mundo apenas para dar commit
 
 # logging em arquivo
 
@@ -22,12 +20,9 @@ file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(messa
 logging.getLogger().addHandler(file_handler)
 
 
-# rotas estáticas
-
-
 @app.route("/")
 def raiz():
-    return send_from_directory(app.config.get("BASE_DIR"), "index.html")
+    return jsonify({"status": "online", "servico": "Vilas Boas API"}), 200
 
 
 @app.route("/ping")
@@ -35,24 +30,14 @@ def ping():
     return "Estou vivo!", 200
 
 
-@app.route("/style.css")
-def serve_css():
-    if os.path.exists(os.path.join(app.config.get("BASE_DIR"), "style.min.css")):
-        return send_from_directory(app.config.get("BASE_DIR"), "style.min.css")
-    return send_from_directory(app.config.get("BASE_DIR"), "style.css")
-
-
-@app.route("/script.js")
-def serve_js():
-    if os.path.exists(os.path.join(app.config.get("BASE_DIR"), "script.min.js")):
-        return send_from_directory(app.config.get("BASE_DIR"), "script.min.js")
-    return send_from_directory(app.config.get("BASE_DIR"), "script.js")
-
-
 @app.errorhandler(404)
-@app.errorhandler(405)
 def page_not_found(e):
-    return send_from_directory(app.config.get("BASE_DIR"), "index.html")
+    return jsonify({"erro": "Recurso não encontrado."}), 404
+
+
+@app.errorhandler(405)
+def method_not_allowed(e):
+    return jsonify({"erro": "Método não permitido."}), 405
 
 
 if __name__ == "__main__":

@@ -2,6 +2,9 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ES2020",
+    "moduleResolution": "bundler",
+    "rootDir": ".",
+    "outDir": "./dist",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "strict": true,
     "noImplicitAny": true,
@@ -9,5 +12,5 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "files": ["script.ts"]
+  "include": ["script.ts", "modules/**/*.ts"]
 }

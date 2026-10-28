@@ -26,6 +26,23 @@ def test_share_com_save_original_inexistente_retorna_404(app_ctx, cliente):
     db.session.add(share)
     db.session.commit()
     assert cliente.get(f"/share/{share.share_token}").status_code == 404
+    assert cliente.post(f"/share/{share.share_token}").status_code == 404
+
+
+def test_share_get_nao_consome_nem_cria_save_para_previews(app_ctx, cliente):
+    sid = uuid.uuid4()
+    dados = CIPHER_SUITE.encrypt(GameState().model_dump_json().encode()).decode()
+    db.session.add(SaveJogo(sid=sid, dados=dados))
+    share = Compartilhamento(original_sid=str(sid), expires_at=9e12)
+    db.session.add(share)
+    db.session.commit()
+
+    total_antes = SaveJogo.query.count()
+    r = cliente.get(f"/share/{share.share_token}")
+    assert r.status_code == 200
+    assert SaveJogo.query.count() == total_antes
+    with cliente.session_transaction() as sess:
+        assert "sid" not in sess
 
 
 def test_share_com_save_corrompido_nao_gera_500_nao_tratado(app_ctx, cliente):
@@ -35,7 +52,7 @@ def test_share_com_save_corrompido_nao_gera_500_nao_tratado(app_ctx, cliente):
     db.session.add(share)
     db.session.commit()
     assert (
-        cliente.get(f"/share/{share.share_token}").status_code == 500
+        cliente.post(f"/share/{share.share_token}").status_code == 500
     )  # tratado, com mensagem
 
 
@@ -46,7 +63,7 @@ def test_share_feliz_cria_novo_save_e_redireciona(app_ctx, cliente):
     share = Compartilhamento(original_sid=str(sid), expires_at=9e12)
     db.session.add(share)
     db.session.commit()
-    r = cliente.get(f"/share/{share.share_token}")
+    r = cliente.post(f"/share/{share.share_token}")
     assert r.status_code == 302
 
 

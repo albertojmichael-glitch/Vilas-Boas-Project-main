@@ -13,11 +13,15 @@ from state import GameState
 
 logger = logging.getLogger(__name__)
 
+REDIS_URL = os.environ.get("REDIS_URL")
 
 db = SQLAlchemy()
 migrate = Migrate()
 cors = CORS()
-limiter = Limiter(key_func=get_remote_address, storage_uri="memory://")
+limiter = Limiter(
+    key_func=get_remote_address,
+    storage_uri=REDIS_URL or "memory://",
+)
 oauth = OAuth()
 
 
@@ -32,7 +36,7 @@ class RedisSessionStore:
         self.client = client
 
     def __contains__(self, key):
-        return self.client.exists(key) > 0
+        return bool(self.client.exists(key))
 
     def __getitem__(self, key):
         data = self.client.get(key)
@@ -46,8 +50,21 @@ class RedisSessionStore:
     def __delitem__(self, key):
         self.client.delete(key)
 
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
-REDIS_URL = os.environ.get("REDIS_URL")
+    def pop(self, key, default=None):
+        val = self.get(key, default)
+        self.client.delete(key)
+        return val
+
+    def clear(self):
+        if hasattr(self.client, "flushdb"):
+            self.client.flushdb()
+
 
 if REDIS_URL and redis is not None:
     try:

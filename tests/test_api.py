@@ -5,7 +5,7 @@ def test_ping(app_ctx, cliente):
 
 
 def test_iniciar_jogo_cria_sessao(app_ctx, cliente):
-    resposta = cliente.get("/iniciar")
+    resposta = cliente.post("/iniciar")
     assert resposta.status_code == 200
     dados = resposta.get_json()
     assert "estado" in dados
@@ -13,8 +13,13 @@ def test_iniciar_jogo_cria_sessao(app_ctx, cliente):
     assert dados["estado"]["sala"] == "SISTEMA"
 
 
+def test_iniciar_rejeita_get(app_ctx, cliente):
+    resposta = cliente.get("/iniciar")
+    assert resposta.status_code == 405
+
+
 def test_fluxo_comando_basico(app_ctx, cliente):
-    cliente.get("/iniciar")
+    cliente.post("/iniciar")
     payload = {"comando": "dir", "telemetria": False}
     resposta = cliente.post("/comando", json=payload)
     assert resposta.status_code == 200
@@ -25,7 +30,7 @@ def test_fluxo_comando_basico(app_ctx, cliente):
 
 
 def test_comando_invalido_seguranca(app_ctx, cliente):
-    cliente.get("/iniciar")
+    cliente.post("/iniciar")
     payload_malicioso = {"comando": "a" * 300, "telemetria": False}
     resposta = cliente.post("/comando", json=payload_malicioso)
     assert resposta.status_code == 400

@@ -1,37 +1,46 @@
-version: '3.8'
-
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: server/Dockerfile
     ports:
       - "5000:5000"
-      
     environment:
-      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
-      - FLASK_ENV=production
+      - APP_ENV=production
+      - SECRET_KEY=${SECRET_KEY}
+      - SAVE_ENCRYPTION_KEY=${SAVE_ENCRYPTION_KEY}
       - ADMIN_TOKEN=${ADMIN_TOKEN}
-      - MONGO_URI=mongodb://mongo:27017/
-      - REDIS_URL=redis://redis:6379/0
-      - PROD=true 
-
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:8080}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://vilasboas:vilasboas@postgres:5432/vilasboas}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - SESSION_COOKIE_SAMESITE=${SESSION_COOKIE_SAMESITE:-Lax}
     depends_on:
-      - redis
-      - mongo
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: always
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-vilasboas}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-vilasboas}
+      - POSTGRES_DB=${POSTGRES_DB:-vilasboas}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vilasboas}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
 
   redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-    restart: always
-
-  mongo:
-    image: mongo:6.0
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
+    image: redis:7-alpine
+    expose:
+      - "6379"
     restart: always
 
 volumes:
-  mongo_data:
+  postgres_data:

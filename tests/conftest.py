@@ -7,6 +7,8 @@ import pytest
 # 1. FORÇA AS VARIÁVEIS DE AMBIENTE ANTES DE IMPORTAR QUALQUER COISA DO JOGO
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["DEV_MODE_ENABLED"] = "1"
+os.environ["DEV_MODE_CODE"] = "sudo admin 1982"
+os.environ["ADMIN_TOKEN"] = "token-admin-teste-seguro"
 
 caminho_server = os.path.abspath(os.path.join(os.path.dirname(__file__), "../server"))
 sys.path.insert(0, caminho_server)

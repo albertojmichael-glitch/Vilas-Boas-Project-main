@@ -1,8 +1,8 @@
 """modo desenvolvedor do Vilas Boas
 
 ativação:
-digite  sudo admin 1982  no menu (começa uma partida já em modo dev)
-           ou durante a partida (liga o modo dev no ponto em que você está).
+requer ``DEV_MODE_ENABLED=1`` e ``DEV_MODE_CODE`` configurados no ambiente
+(desabilitado automaticamente em produção).
 
 regras de segurança do modo:
     * partidas que usaram o modo dev (``dev_usado``) NÃO entram no leaderboard
@@ -19,7 +19,6 @@ from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
 
 from villas_boas.utils import encontrar_melhor_match
 
-CODIGO_PADRAO = "sudo admin 1982"
 VALOR_INFINITO = 9999
 DIFICULDADE_DEV = "DEV MODE"
 
@@ -36,23 +35,34 @@ _SEM_ITEM_NO_TUDO = {"fios cortados"}
 # ativação
 
 
-def modo_dev_habilitado():
-    return os.environ.get("DEV_MODE_ENABLED", "0").strip().lower() in (
-        "1",
-        "true",
-        "yes",
-        "on",
-    )
+def _em_producao():
+    from config import Config, is_production
+
+    return is_production() or bool(getattr(Config, "IS_PRODUCTION", False))
 
 
 def _codigo_de_ativacao():
     from villas_boas.actions.parser import normalizar
 
-    return normalizar(os.environ.get("DEV_MODE_CODE") or CODIGO_PADRAO)
+    codigo = os.environ.get("DEV_MODE_CODE", "").strip()
+    return normalizar(codigo) if codigo else ""
+
+
+def modo_dev_habilitado():
+    if _em_producao():
+        return False
+    habilitado = os.environ.get("DEV_MODE_ENABLED", "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    return habilitado and bool(_codigo_de_ativacao())
 
 
 def eh_codigo_de_ativacao(comando_normalizado):
-    return modo_dev_habilitado() and comando_normalizado == _codigo_de_ativacao()
+    codigo = _codigo_de_ativacao()
+    return bool(codigo) and modo_dev_habilitado() and comando_normalizado == codigo
 
 
 def _aplicar_invulnerabilidade(jogo):

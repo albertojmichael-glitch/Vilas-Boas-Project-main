@@ -20,6 +20,18 @@ sessions/
 conquistas.json
 autosave*.json
 
+*.orig
+*.rej
+*.db
+*.patch
+*.diff
+instance/
+server/instance/
+client/dist/
+client/script.js
+client/*.min.js
+client/*.min.css
+node_modules/
 
 .DS_Store
 .vscode/

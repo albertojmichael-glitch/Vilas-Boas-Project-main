@@ -19,14 +19,12 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.11"
-        cache: 'pip' 
+        cache: 'pip'
 
     - name: Instalar dependências
       run: |
         python -m pip install --upgrade pip
-        pip install ruff pytest mypy pip-audit
-        cd server
-        pip install -r requirements.txt
+        pip install -e ".[dev]"
 
     - name: Verificar lint e formatação com Ruff
       run: |
@@ -35,16 +33,15 @@ jobs:
 
     - name: Verificação estática de tipos com Mypy
       run: |
-        cd server && mypy app.py state.py --ignore-missing-imports || true
+        MYPYPATH=server mypy --explicit-package-bases server/
 
-    - name: Executar testes automatizados com Pytest
+    - name: Executar testes automatizados com Pytest e Cobertura
       run: |
-        PYTHONPATH=server pytest tests/
+        PYTHONPATH=server pytest tests/ --cov=server --cov-report=term-missing
 
     - name: Auditoria de Segurança (Dependências)
       run: |
         pip-audit --desc on
-
 
   frontend-build:
     name: Frontend TypeScript Build

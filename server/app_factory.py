@@ -5,25 +5,32 @@ from datetime import timedelta
 from config import Config
 from extensions import cors, db, limiter, migrate, oauth
 from flask import Flask
-from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 def create_app():
-
-    app = Flask(__name__, static_folder=Config.BASE_DIR, static_url_path="/")
+    app = Flask(__name__, static_folder=None)
 
     app.config.from_object(Config)
 
     is_prod = app.config.get("IS_PRODUCTION", False)
 
     app.config.update(
-        SESSION_COOKIE_SAMESITE="None" if is_prod else "Lax",
+        SESSION_COOKIE_SAMESITE=app.config.get("SESSION_COOKIE_SAMESITE", "Lax"),
+        SESSION_COOKIE_DOMAIN=app.config.get("SESSION_COOKIE_DOMAIN"),
         SESSION_COOKIE_SECURE=is_prod,
         SESSION_COOKIE_HTTPONLY=True,
         PERMANENT_SESSION_LIFETIME=timedelta(days=30),
         MAX_CONTENT_LENGTH=1 * 1024 * 1024,
+        RATELIMIT_STORAGE_URI=app.config.get("REDIS_URL") or "memory://",
     )
+
+    if str(app.config.get("SQLALCHEMY_DATABASE_URI", "")).startswith("sqlite"):
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+            k: v
+            for k, v in Config.SQLALCHEMY_ENGINE_OPTIONS.items()
+            if k in ("pool_pre_ping", "pool_recycle")
+        }
 
     app.secret_key = app.config.get("SECRET_KEY")
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -76,57 +83,6 @@ def create_app():
         app.register_blueprint(admin_bp)
         app.register_blueprint(auth_bp)
 
-        try:
-            db.session.execute(
-                db.text("ALTER TABLE saves ADD COLUMN metadados JSON DEFAULT '{}';")
-            )
-            db.session.commit()
-            print("Coluna 'metadados' adicionada com sucesso.")
-        except SQLAlchemyError:
-            db.session.rollback()
-
-        try:
-            db.session.execute(
-                db.text(
-                    "ALTER TABLE saves ADD COLUMN save_version INTEGER DEFAULT 1 NOT NULL;"
-                )
-            )
-            db.session.commit()
-            print("Coluna 'save_version' adicionada com sucesso.")
-        except SQLAlchemyError:
-            db.session.rollback()
-
-        try:
-            db.session.execute(
-                db.text("ALTER TABLE saves ADD COLUMN checksum VARCHAR(64);")
-            )
-            db.session.commit()
-            print("Coluna 'checksum' adicionada com sucesso.")
-        except SQLAlchemyError:
-            db.session.rollback()
-
-        try:
-            db.session.execute(
-                db.text(
-                    "ALTER TABLE saves ADD COLUMN criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
-                )
-            )
-            db.session.commit()
-            print("Coluna 'criado_em' adicionada com sucesso.")
-        except SQLAlchemyError:
-            db.session.rollback()
-
-        try:
-            db.session.execute(
-                db.text(
-                    "ALTER TABLE saves ADD COLUMN atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
-                )
-            )
-            db.session.commit()
-            print("Coluna 'atualizado_em' adicionada com sucesso.")
-        except SQLAlchemyError:
-            db.session.rollback()
-
     from services.telemetry_service import worker_telemetria
 
     thread = threading.Thread(target=worker_telemetria, args=(app,), daemon=True)
@@ -137,8 +93,7 @@ def create_app():
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "script-src 'self'; "
-            "style-src 'self' https://fonts.googleapis.com; "
-            "font-src 'self' https://fonts.gstatic.com; "
+            "style-src 'self' 'unsafe-inline'; "
             "object-src 'none'; "
             "frame-ancestors 'none';"
         )

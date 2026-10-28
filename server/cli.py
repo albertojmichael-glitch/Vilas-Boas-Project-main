@@ -1,3 +1,5 @@
+"""Interface de linha de comando (CLI) interativa do Vilas Boas OS."""
+
 import logging
 
 from state import (
@@ -13,16 +15,15 @@ from villas_boas.engine.core import processar_fluxo_jogo
 
 logger = logging.getLogger(__name__)
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
 
 def load_local_save(jogo):
     return carregar_autosave(jogo)
 
 
-if __name__ == "__main__":
+def executar_cli():
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
     jogo = GameState(ui_handler=default_ui)
     ui = default_ui
 
@@ -64,3 +65,8 @@ if __name__ == "__main__":
             )
             ui.pausar(3)
             continue
+
+
+if __name__ == "__main__":
+    executar_cli()
+
