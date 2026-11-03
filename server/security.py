@@ -76,10 +76,7 @@ def validar_origem_request():
     if origin:
         return origin.rstrip("/") in permitidas
 
-    if current_app.config.get("IS_PRODUCTION", False):
-        return False
-
-    return True
+    return not current_app.config.get("IS_PRODUCTION", False)
 
 
 def requer_origem_valida(f):

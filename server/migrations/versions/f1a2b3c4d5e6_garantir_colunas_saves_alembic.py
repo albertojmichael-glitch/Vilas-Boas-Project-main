@@ -28,7 +28,10 @@ def upgrade():
         if "metadados" not in existentes:
             batch_op.add_column(
                 sa.Column(
-                    "metadados", sa.JSON(), server_default=sa.text("'{}'"), nullable=True
+                    "metadados",
+                    sa.JSON(),
+                    server_default=sa.text("'{}'"),
+                    nullable=True,
                 )
             )
         if "save_version" not in existentes:
@@ -70,4 +73,3 @@ def downgrade():
         for col in ("metadados", "save_version", "checksum", "criado_em"):
             if col in existentes:
                 batch_op.drop_column(col)
-

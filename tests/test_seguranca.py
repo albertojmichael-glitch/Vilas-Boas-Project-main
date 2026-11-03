@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 from extensions import MEMORIA_SESSOES, RedisSessionStore, db, oauth
-from models import Compartilhamento, Jogador, SaveJogo, Telemetria
+from models import Compartilhamento, Jogador, Telemetria
 from pydantic import ValidationError
 from routes.helpers import ComandoRequest
 from services.save_service import salvar_save_web

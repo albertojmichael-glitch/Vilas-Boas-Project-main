@@ -6,9 +6,9 @@
 ![Flask](https://img.shields.io/badge/Flask-3.x-black?style=for-the-badge&logo=flask&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 
-> *"O silêncio naquela casa não era vazio. Era pesado. Como se as paredes estivessem segurando a respiração."*
+> *"Rendenção dos meus erros. Perdão por não ter vindo antes."*
 
-**Vilas Boas OS** é um jogo de terror psicológico, ficção interativa (*text-adventure*) e sobrevivência desenvolvido com estética retrô **MS-DOS / CRT**, arquitetura cliente-servidor desacoplada, inteligência artificial baseada em grafos (BFS) e persistência criptografada.
+**Vilas Boas** é um jogo de terror psicológico, ficção interativa (*text-adventure*) e sobrevivência desenvolvido com estética retrô **MS-DOS / CRT**, arquitetura cliente-servidor desacoplada, inteligência artificial baseada em grafos (BFS) e persistência criptografada.
 
 🔗 **[Jogue Agora no Navegador](https://vilas-boas-project.vercel.app/)**
 

@@ -106,9 +106,12 @@ def receber_comando():
             tem_save=save_existe(sid),
             callback_load_save=lambda j: carregar_save_web(j, sid),
         )
-        if getattr(jogo, "estado_atual", "") in ["JOGO", "COMBATE_ANIMATRONICO"]:
-            if snapshot_antes != jogo.snapshot_persistencia():
-                salvar_save_web(jogo, sid)
+        if (
+            getattr(jogo, "estado_atual", "") in ["JOGO", "COMBATE_ANIMATRONICO"]
+            and snapshot_antes != jogo.snapshot_persistencia()
+        ):
+            salvar_save_web(jogo, sid)
+
         MEMORIA_SESSOES[sid] = jogo
     except Exception:
         logger.exception("Erro crítico na Engine")
@@ -211,14 +214,16 @@ def carregar_compartilhado(share_token):
     if request.method == "GET":
         token_seguro = html.escape(share_token)
         return (
-            "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>"
-            "<title>Vilas Boas OS - Save Compartilhado</title></head>"
-            "<body style='background:#000;color:#0f0;font-family:monospace;padding:2rem;'>"
-            "<h1>[ VILAS BOAS OS - SAVE COMPARTILHADO ]</h1>"
-            "<p>Confirme abaixo para carregar este save na sua sessão atual.</p>"
-            f"<form method='POST' action='/share/{token_seguro}'>"
-            "<button type='submit' style='background:#0f0;color:#000;border:0;padding:0.5rem 1rem;font-family:monospace;cursor:pointer;'>"
-            "CARREGAR SAVE</button></form></body></html>",
+            (
+                "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>"
+                "<title>Vilas Boas OS - Save Compartilhado</title></head>"
+                "<body style='background:#000;color:#0f0;font-family:monospace;padding:2rem;'>"
+                "<h1>[ VILAS BOAS OS - SAVE COMPARTILHADO ]</h1>"
+                "<p>Confirme abaixo para carregar este save na sua sessão atual.</p>"
+                f"<form method='POST' action='/share/{token_seguro}'>"
+                "<button type='submit' style='background:#0f0;color:#000;border:0;padding:0.5rem 1rem;font-family:monospace;cursor:pointer;'>"
+                "CARREGAR SAVE</button></form></body></html>"
+            ),
             200,
         )
 
