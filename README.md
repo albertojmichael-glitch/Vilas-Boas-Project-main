@@ -157,9 +157,8 @@ make format
 
 ### A Tragédia do Restaurante Vilas Boas
 
-Na década de 1980, **Alberto Vilas Boas**, um engenheiro brilhante na área de robótica e sistemas embarcados, construiu animatrônicos avançados para o restaurante da família. A tragédia se instalou quando sua filha, **Caroline**, morreu em um acidente envolvendo sua principal criação na sala de peças e serviços.
+Na década de 1982, **Renato Fidelis Gomes**, um engenheiro brilhante na área de robótica e sistemas embarcados, construiu animatrônicos avançados para o restaurante famoso em Curiiba. Porém, por conta de não haver ajudantes e trabalhadores na area de administração do local, Renato teve que abandonar a robotica e focar em papeis, dinheiro e tempo. O restaurante estava indo muito bem, famoso e tendo proposta de criar filiais, desabou em 1994, onde ocorreu o incidente mais famoso da cidade de Curtiba, o **IPD**, incidente das pessoas desaparecidas, onde 2 funcionarios, incluindo o gerente Renato Fidelis G. E uma cliente, desapareceram como pó ao fim do expediente. Em 1995, sem fluxo de clientes, e com diversas denuncias pela vigilancia sanitaria, o restaurante fechou definitivamente, com decisão de Renato Fidelis Jr, filho do dono, com previsão de abrir novamente nos anos 2000.
 
-Consumido pela culpa e pela recusa em aceitar a perda, Alberto isolou-se no subsolo da residência (a **Oficina Secreta**), tentando transferir ou preservar vestígios de consciência nas máquinas através do sistema **Vilas Boas OS**.
 
 ### Os Finais Possíveis
 

@@ -1,13 +1,14 @@
 import time
 import uuid
-
 from typing import TYPE_CHECKING
-from extensions import db
+
+from flask_sqlalchemy.model import Model
 from sqlalchemy import JSON, Index, func
 
+from extensions import db
+
 if TYPE_CHECKING:
-    from flask_sqlalchemy.model import Model
-    BaseModel = db.Model
+    BaseModel = Model
 else:
     BaseModel = db.Model
 
