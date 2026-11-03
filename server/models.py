@@ -1,11 +1,17 @@
 import time
 import uuid
 
+from typing import TYPE_CHECKING
 from extensions import db
 from sqlalchemy import JSON, Index, func
 
+if TYPE_CHECKING:
+    from flask_sqlalchemy.model import Model
+    BaseModel = db.Model
+else:
+    BaseModel = db.Model
 
-class Jogador(db.Model):
+class Jogador(BaseModel):
     __tablename__ = "jogadores"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -21,7 +27,7 @@ class Jogador(db.Model):
     historico_telemetria = db.relationship("Telemetria", backref="jogador", lazy=True)
 
 
-class SaveJogo(db.Model):
+class SaveJogo(BaseModel):
     __tablename__ = "saves"
 
     __table_args__ = (
@@ -71,7 +77,7 @@ class Telemetria(db.Model):
     timestamp = db.Column(db.Float, default=time.time)
 
 
-class Compartilhamento(db.Model):
+class Compartilhamento(BaseModel):
     __tablename__ = "compartilhamentos"
 
     share_token = db.Column(

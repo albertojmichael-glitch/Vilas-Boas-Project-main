@@ -155,7 +155,7 @@ make format
 <details>
 <summary><strong>⚠️ AVISO DE SPOILER — Clique para expandir os detalhes da história e enredo</strong></summary>
 
-### A Tragédia da Família Vilas Boas
+### A Tragédia do Restaurante Vilas Boas
 
 Na década de 1980, **Alberto Vilas Boas**, um engenheiro brilhante na área de robótica e sistemas embarcados, construiu animatrônicos avançados para o restaurante da família. A tragédia se instalou quando sua filha, **Caroline**, morreu em um acidente envolvendo sua principal criação na sala de peças e serviços.
 
@@ -173,4 +173,4 @@ Consumido pela culpa e pela recusa em aceitar a perda, Alberto isolou-se no subs
 
 ## Licença
 
-Distribuído sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais informações.
+Distribuído sob a licença Apache 2.0. Veja o arquivo [LICENSE](LICENSE) para mais informações.
