@@ -3,7 +3,7 @@
   "version": "1.982.0",
   "private": true,
   "scripts": {
-  "build": "rm -rf dist && tsc -p client/tsconfig.json --outDir dist --rootDir client && cp client/*.html client/*.css dist/ && cp -r client/assets dist/ && pwd && ls -la . dist"
+  "build": "rm -rf dist && tsc -p client/tsconfig.json --outDir dist --rootDir client && cp client/*.html client/*.css dist/ && cp -r client/assets dist/"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
