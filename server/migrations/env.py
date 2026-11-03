@@ -16,6 +16,7 @@ logger = logging.getLogger("alembic.env")
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+
 def get_engine():
     try:
         # this works with Flask-SQLAlchemy<3 and Alchemical

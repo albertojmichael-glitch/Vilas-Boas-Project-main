@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 else:
     BaseModel = db.Model
 
+
 class Jogador(BaseModel):
     __tablename__ = "jogadores"
 
