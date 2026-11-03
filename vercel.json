@@ -1,7 +1,7 @@
 {
   "installCommand": "npm install --include=dev",
   "buildCommand": "npm run build",
-  "outputDirectory": "client",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/api/:path*",
