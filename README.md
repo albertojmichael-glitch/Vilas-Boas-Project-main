@@ -159,6 +159,8 @@ make format
 
 Na década de 1982, **Renato Fidelis Gomes**, um engenheiro brilhante na área de robótica e sistemas embarcados, construiu animatrônicos avançados para o restaurante famoso em Curiiba. Porém, por conta de não haver ajudantes e trabalhadores na area de administração do local, Renato teve que abandonar a robotica e focar em papeis, dinheiro e tempo. O restaurante estava indo muito bem, famoso e tendo proposta de criar filiais, desabou em 1994, onde ocorreu o incidente mais famoso da cidade de Curtiba, o **IPD**, incidente das pessoas desaparecidas, onde 2 funcionarios, incluindo o gerente Renato Fidelis G. E uma cliente, desapareceram como pó ao fim do expediente. Em 1995, sem fluxo de clientes, e com diversas denuncias pela vigilancia sanitaria, o restaurante fechou definitivamente, com decisão de Renato Fidelis Jr, filho do dono, com previsão de abrir novamente nos anos 2000.
 
+Em 2007, o restaurante está abandonado, mas com o Renato e Michel cuidando do restaurante, contratando serviços de limpeza e segurança. **Caroline**, uma estudante universitária, precisando de dinheiro rapido, consegue a vaga de segurança no restaurante, e logo começa a trabalhar. 
+Caroline, após 4 dias sendo segurança, desaparece, e não é achada.
 
 ### Os Finais Possíveis
 
