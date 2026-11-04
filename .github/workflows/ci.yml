@@ -39,6 +39,10 @@ jobs:
       run: |
         PYTHONPATH=server pytest tests/ --cov=server --cov-report=term-missing
 
+    - name: Atualizar setuptools
+      run: |
+        python -m pip install --upgrade "setuptools>=84.1.0"
+
     - name: Auditoria de Segurança (Dependências)
       run: |
         pip-audit --desc on
