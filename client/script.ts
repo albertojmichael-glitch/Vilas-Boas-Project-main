@@ -1097,3 +1097,20 @@ window.ligarTV = ligarTV;
 window.iniciarLoginESalvar = iniciarLoginESalvar;
 window.fecharArcadeModal = fecharArcadeModal;
 window.playBip = playBip;
+
+Object.assign(window, {
+  executarAtalho,
+  openHelp,
+  closeHelp,
+  openSettings,
+  closeSettings,
+  openSaves,
+  closeSaves,
+  abrirModalConquistas,
+  fecharModalConquistas,
+  iniciarLoginESalvar,
+  fecharArcadeModal,
+  exportarSave,
+  gerarLinkCompartilhamentoUI,
+  ligarTV,
+});
