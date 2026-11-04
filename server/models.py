@@ -1,13 +1,19 @@
 import time
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from extensions import db
-from flask_sqlalchemy.model import Model
 from sqlalchemy import JSON, Index, func
 
 if TYPE_CHECKING:
-    BaseModel = Model
+
+    class BaseModel:
+        query: Any
+
+        def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+
+        def __getattr__(self, name: str) -> Any: ...
+
 else:
     BaseModel = db.Model
 
@@ -50,7 +56,7 @@ class SaveJogo(BaseModel):
     )
 
 
-class Telemetria(db.Model):
+class Telemetria(BaseModel):
     __tablename__ = "telemetria"
 
     __table_args__ = (

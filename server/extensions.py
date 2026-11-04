@@ -28,7 +28,7 @@ oauth = OAuth()
 try:
     import redis
 except ImportError:
-    redis = None  # type: ignore
+    redis = None
 
 
 class RedisSessionStore:
@@ -74,7 +74,7 @@ if REDIS_URL and redis is not None:
         logger.info("Conectado ao Redis com sucesso.")
     except Exception:
         logger.exception("Falha ao conectar no Redis — caindo para TTLCache.")
-        MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)  # type: ignore
+        MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
 else:
     logger.info("Usando TTLCache na memória RAM local.")
-    MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)  # type: ignore
+    MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)

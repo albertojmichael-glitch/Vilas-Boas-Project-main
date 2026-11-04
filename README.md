@@ -157,18 +157,21 @@ make format
 
 ### A Tragédia do Restaurante Vilas Boas
 
-Na década de 1982, **Renato Fidelis Gomes**, um engenheiro brilhante na área de robótica e sistemas embarcados, construiu animatrônicos avançados para o restaurante famoso em Curiiba. Porém, por conta de não haver ajudantes e trabalhadores na area de administração do local, Renato teve que abandonar a robotica e focar em papeis, dinheiro e tempo. O restaurante estava indo muito bem, famoso e tendo proposta de criar filiais, desabou em 1994, onde ocorreu o incidente mais famoso da cidade de Curtiba, o **IPD**, incidente das pessoas desaparecidas, onde 2 funcionarios, incluindo o gerente Renato Fidelis G. E uma cliente, desapareceram como pó ao fim do expediente. Em 1995, sem fluxo de clientes, e com diversas denuncias pela vigilancia sanitaria, o restaurante fechou definitivamente, com decisão de Renato Fidelis Jr, filho do dono, com previsão de abrir novamente nos anos 2000.
+Na década de 1982, **Renato Fidelis Gomes**, um engenheiro brilhante na área de robótica e sistemas embarcados, construiu animatrônicos avançados para o restaurante famoso em Curiiba. Porém, por conta de não haver ajudantes e trabalhadores na area de administração do local, Renato teve que abandonar a robotica e focar em papeis, dinheiro e tempo. O restaurante estava indo muito bem, famoso e tendo proposta de criar filiais, desabou em 1994, onde ocorreu o incidente mais famoso da cidade de Curtiba, o **IPD**, incidente das pessoas desaparecidas, onde 2 funcionarios, incluindo o gerente Renato Fidelis G. E uma cliente, desapareceram como pó ao fim do expediente. Em 1995, sem fluxo de clientes, e com diversas denuncias pela vigilancia sanitaria, o restaurante fechou definitivamente, com decisão de **Renato Fidelis Jr**, filho do dono, com previsão de abrir novamente nos anos 2000.
 
-Em 2007, o restaurante está abandonado, mas com o Renato e Michel cuidando do restaurante, contratando serviços de limpeza e segurança. **Caroline A**, uma estudante universitária, precisando de dinheiro rapido, consegue a vaga de segurança no restaurante, e logo começa a trabalhar. 
+Em 2007, o restaurante está abandonado, mas com o *Renato* e *Michel* cuidando do restaurante, contratando serviços de limpeza e segurança. **Caroline A.**, uma estudante universitária, precisando de dinheiro rapido, consegue a vaga de segurança no restaurante, e logo começa a trabalhar. 
 Caroline, após 4 dias sendo segurança, desaparece no restaurante, e não é mais achada. Nesses 4 dias, ela enviava diarimente emails para **Rogerio V.** Seu namorado que estava na cidade vizinha a procura de trabalho. Ao saber do desaparecimento, Rogerio não faz nada, se reclusa em casa, com medo e depressão profundo, covarde.
 
 8 meses após Caroline desaparecer, Rogério não aguenta mais sentir culpa, afundando em suas lagrimas toda noite, e sonhos turbulentos, e vai a procura da sua redenção de seus erros e relapso, ele vai atrás de Caroline no restaurante.
 
-### Os Finais Possíveis
+
+### Os Finais Possíveis: O progresso da história depende de quão fundo o jogador decide ir na investigação:
 
 - **Final Mediocre (`saida`)**: Rogerio, com medo e apavorado com o ambiente do restaurante, foge covardemente, e vai embora novamente para casa. 
-- **Final da Redenção (`final_bom`)**: Após reunir todas as pistas, vencer os terminais de fliperama (*Consertos* e *Julgamento*) e enfrentar a verdade sobre 1982, o jogador liberta as memórias aprisionadas no sistema.
-- **Final da Condenação (`incendio`)**: Uma tentativa precipitada de destruir tudo pelo fogo sem concluir o protocolo de segurança.
+- **Final Neutro (`final_neutro`)**: Rogério sobrevive até de manhã, vencendo a noite na sala de segurança, enfrentando todos os animatronicos, porém, sem pegar o item "fios cortados", ao chegar ao hall de entrada, o animatronico de caroline o cerca, tendo um dialogo profundo, reconhecendo o protagonista, porém, sua raiva sobresai, matando rogerio na sua frente, e o condenando a viver o terror em maquina. O ciclo de almas presas no maquinário permanece intacto.
+- **Final Verdadeiro (`Libertação`)**: Rogerio consegue a chave dos fundos, vence o minigame do minotauro pegando os "fios cortados", vai na sala de fliperamas, faz cada um dos minigames, conseguindo passar na prova final, o julgamento do pianista, recebendo o cartão IV. Indo para sala de segurança, vencendo a noite, e indo ao hall de entrada, ateia fogo no local, e desliga o animatronico onde Caroline está, fazendo ela finalmente se recordar dele. Sem raiva e sem lamento, os dois se despedem, o animatronico pega fogo, e todos os espiritos, incluindo de caroline, descansam em paz.
+- **Morte (`Assasinado`)**: Rogério é encontrado morto no restaurante as 8 da manhã do dia seguinte. Especialistas forenses relatam semelhanças com um ataque brutal feito por um predador, como um urso.
+- **Final Bons Sonhos (`Durma...`)**: Rogério entra na sala de descanso, e decide dormir, preferindo entregar-se à insanidade dos pesadelos, ouvindo a porta da sala abrindo devargarzinho, sentindo braços etereos envolvendo seu pescoço.
 
 </details>
 
