@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from typing import Any
 
 from authlib.integrations.flask_client import OAuth
 from cachetools import TTLCache
@@ -24,48 +25,51 @@ limiter = Limiter(
 )
 oauth = OAuth()
 
-
+redis: Any = None
 try:
-    import redis
+    import redis as _redis
+
+    redis = _redis
 except ImportError:
-    redis = None
+    pass
 
 
 class RedisSessionStore:
-    def __init__(self, client):
+    def __init__(self, client: Any) -> None:
         self.client = client
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         return bool(self.client.exists(key))
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> GameState:
         data = self.client.get(key)
         if data:
             return GameState.from_dict(json.loads(data))
         raise KeyError(key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: GameState) -> None:
         self.client.setex(key, 3600, json.dumps(value.to_dict()))
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         self.client.delete(key)
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: Any = None) -> Any:
         try:
             return self[key]
         except KeyError:
             return default
 
-    def pop(self, key, default=None):
+    def pop(self, key: str, default: Any = None) -> Any:
         val = self.get(key, default)
         self.client.delete(key)
         return val
 
-    def clear(self):
+    def clear(self) -> None:
         if hasattr(self.client, "flushdb"):
             self.client.flushdb()
 
 
+MEMORIA_SESSOES: Any
 if REDIS_URL and redis is not None:
     try:
         redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
