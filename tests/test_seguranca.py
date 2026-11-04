@@ -145,9 +145,6 @@ def test_fluxo_share_generate_e_expiracao(app_ctx, cliente):
     assert cliente.get("/share/generate").status_code == 404
     assert Compartilhamento.query.count() == antes
 
-    # GET em /share/generate deve retornar 405
-    assert cliente.get("/share/generate").status_code == 405
-
     # Sem sessão ativa retorna 401
     assert cliente.post("/share/generate").status_code == 401
 
