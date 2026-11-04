@@ -140,6 +140,11 @@ def test_rotas_admin_auditoria_saves_e_replay(app_ctx, cliente):
 
 
 def test_fluxo_share_generate_e_expiracao(app_ctx, cliente):
+    # GET em /share/generate não gera link: cai em /share/<token> com token inexistente e retorna 404
+    antes = Compartilhamento.query.count()
+    assert cliente.get("/share/generate").status_code == 404
+    assert Compartilhamento.query.count() == antes
+
     # GET em /share/generate deve retornar 405
     assert cliente.get("/share/generate").status_code == 405
 
