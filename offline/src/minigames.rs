@@ -1,45 +1,11 @@
+use crate::actions::{COR_AMARELO, COR_BRANCO, COR_CIANO, COR_VERDE, COR_VERMELHO};
 use crate::audio::AudioManager;
 use crate::data::{MAX_TENTATIVAS_COFRE, SENHA_COFRE};
+use crate::media::MediaManager;
 use crate::state::GameState;
-use crate::ui::{
-    TerminalUI, DOS_AMARELO, DOS_BRANCO, DOS_CIANO, DOS_VERDE, DOS_VERMELHO, RESET,
-};
+use crate::TerminalBuffer;
 use rand::seq::SliceRandom;
 use rand::Rng;
-
-pub const ARTE_COFRE: &str = r#"
-  __________________________
- /  ______________________  \
-|  |  __   __   __   __   |  |
-|  | |  | |  | |  | |  |  |  |
-|  | |__| |__| |__| |__|  |  |
-|  |                      |  |
-|  |       .------.       |  |
-|  |      /        \      |  |
-|  |     |   [**]   |     |  |
-|  |      \        /      |  |
-|  |       `------'       |  |
-|  |                      |  |
-|  |______________________|  |
- \__________________________/
-"#;
-
-pub const ARTE_COFRE_TENSO: &str = r#"
-  __________________________
- /  ______________/\_______  \
-|  |  __   __   __\/  __   |  |
-|  | |  | |  | |  |  |  |  |  |
-|  | |__| |__|/|__|  |__|  |  |
-|  |         /            |  |
-|  |       .------.       |  |
-|  |      /   !!   \      |  |
-|  |     | x [**] x |     |  |
-|  |      \        /      |  |
-|  |       `------'       |  |
-|  |                      |  |
-|  |______________________|  |
- \__________________________/
-"#;
 
 const PISTAS_COFRE: [&str; 3] = [
     "[1º dígito] Um único ponto de luz acende sozinho na unidade, o primeiro som da noite.",
@@ -47,60 +13,51 @@ const PISTAS_COFRE: [&str; 3] = [
     "[4º dígito] Quatro cadeiras na sala do piano. Só uma nunca foi ocupada de novo.",
 ];
 
-pub fn gerar_charada_cofre() -> String {
-    let mut pistas = PISTAS_COFRE.to_vec();
-    let mut rng = rand::thread_rng();
-    pistas.shuffle(&mut rng);
-    pistas
-        .iter()
-        .map(|p| format!("  {}", p))
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
-pub fn imprimir_painel_cofre(jogo: &GameState, ui: &TerminalUI, primeira_vez: bool) {
-    if jogo.cofre_tentativas == 0 {
-        ui.animar(ARTE_COFRE, 0.002, DOS_BRANCO);
-    } else {
-        ui.animar(ARTE_COFRE_TENSO, 0.002, DOS_VERMELHO);
-    }
-
+pub fn imprimir_painel_cofre(
+    jogo: &GameState,
+    term: &mut TerminalBuffer,
+    media: &mut MediaManager,
+    primeira_vez: bool,
+) {
+    let _ = media.acionar_imagem("cofre", false, false);
     if primeira_vez {
-        ui.exibir(&format!(
-            "{}O cofre de ferro possui um teclado numérico antigo, gasto pelo tempo.{}",
-            DOS_BRANCO, RESET
-        ));
-        ui.exibir(&format!(
-            "{}Gravado a canivete embaixo do teclado, quatro frases soltas:{}",
-            DOS_BRANCO, RESET
-        ));
-        ui.exibir(&gerar_charada_cofre());
+        term.push(
+            "O cofre de ferro possui um teclado numérico antigo, gasto pelo tempo.",
+            COR_BRANCO,
+        );
+        term.push(
+            "Gravado a canivete embaixo do teclado, pistas para a senha:",
+            COR_AMARELO,
+        );
+        let mut pistas = PISTAS_COFRE.to_vec();
+        pistas.shuffle(&mut rand::thread_rng());
+        for p in pistas {
+            term.push(&format!("  {}", p), COR_CIANO);
+        }
     }
 
     let restantes = MAX_TENTATIVAS_COFRE - jogo.cofre_tentativas;
     if jogo.cofre_tentativas > 0 {
-        ui.exibir(&format!(
-            "{}Tentativas restantes antes do painel travar: {}{}",
-            DOS_VERMELHO, restantes, RESET
-        ));
+        term.push(
+            &format!("Tentativas restantes antes do bloqueio: {}", restantes),
+            COR_VERMELHO,
+        );
     }
-    ui.exibir(&format!(
-        "{}Digite a senha de 4 dígitos (ou 'sair'): {}",
-        DOS_VERDE, RESET
-    ));
+    term.push("Digite a senha de 4 dígitos (ou 'sair'):", COR_VERDE);
 }
 
 pub fn processar_minigame(
     comando: &str,
     jogo: &mut GameState,
-    ui: &TerminalUI,
+    term: &mut TerminalBuffer,
     audio: &AudioManager,
+    media: &mut MediaManager,
 ) -> bool {
     match jogo.estado_atual.as_str() {
         "MINIGAME_COFRE" => {
             if comando == "sair" || comando == "voltar" {
                 jogo.estado_atual = "JOGO".to_string();
-                ui.exibir("Você se afasta do cofre.");
+                term.push("Você se afasta do cofre.", COR_BRANCO);
                 return true;
             }
             if comando == SENHA_COFRE {
@@ -110,23 +67,23 @@ pub fn processar_minigame(
                 if !jogo.inventario.contains(&"chave mestra".to_string()) {
                     jogo.inventario.push("chave mestra".to_string());
                 }
-                ui.exibir(&format!(
-                    "{}[ CLACK! ] O cofre destranca! Você encontrou a 'chave mestra'!{}",
-                    DOS_VERDE, RESET
-                ));
+                term.push(
+                    "[ CLACK! ] O cofre abriu! Você obteve a 'chave mestra'!",
+                    COR_VERDE,
+                );
             } else {
                 audio.som_metal();
                 jogo.cofre_tentativas += 1;
                 jogo.alterar_barulho(25);
                 if jogo.cofre_tentativas >= MAX_TENTATIVAS_COFRE {
                     jogo.estado_atual = "JOGO".to_string();
-                    ui.exibir(&format!(
-                        "{}[ ALARME! ] O painel do cofre travou emitindo um apito estridente!{}",
-                        DOS_VERMELHO, RESET
-                    ));
+                    term.push(
+                        "[ ALARME! ] O cofre travou disparando um alerta sonoro!",
+                        COR_VERMELHO,
+                    );
                     jogo.alterar_barulho(60);
                 } else {
-                    imprimir_painel_cofre(jogo, ui, false);
+                    imprimir_painel_cofre(jogo, term, media, false);
                 }
             }
             true
@@ -136,10 +93,11 @@ pub fn processar_minigame(
                 jogo.estado_atual = "JOGO".to_string();
                 return true;
             }
-            ui.exibir(&format!(
-                "{}[ FOME DE JON ] Você alimentou Jon com hambúrgueres pixelados! Vitória no fliperama!{}",
-                DOS_VERDE, RESET
-            ));
+            let _ = media.acionar_imagem("jon", true, false);
+            term.push(
+                "[ FOME DE JON ] Você completou o fliperama! Um registro secreto piscou na tela!",
+                COR_VERDE,
+            );
             jogo.desbloquear_conquista("fliperama_jon");
             jogo.estado_atual = "JOGO".to_string();
             true
@@ -149,10 +107,10 @@ pub fn processar_minigame(
                 jogo.estado_atual = "JOGO".to_string();
                 return true;
             }
-            ui.exibir(&format!(
-                "{}[ CONSERTOS ] Você recalibrou os servos cranianos sem levar choque!{}",
-                DOS_VERDE, RESET
-            ));
+            term.push(
+                "[ CONSERTOS ] Você reparou os mecanismos endosqueléticos com sucesso!",
+                COR_VERDE,
+            );
             jogo.estado_atual = "JOGO".to_string();
             true
         }
@@ -161,10 +119,11 @@ pub fn processar_minigame(
                 jogo.estado_atual = "JOGO".to_string();
                 return true;
             }
-            ui.exibir(&format!(
-                "{}[ O JULGAMENTO ] A melodia da partitura ecoa pelo arcade. Segredo liberado!{}",
-                DOS_CIANO, RESET
-            ));
+            let _ = media.acionar_imagem("secret", true, false);
+            term.push(
+                "[ O JULGAMENTO ] As notas da partitura revelam uma imagem oculta nos arquivos!",
+                COR_CIANO,
+            );
             jogo.estado_atual = "JOGO".to_string();
             true
         }
@@ -179,15 +138,18 @@ pub fn processar_minigame(
             if jogo.seguranca_progresso >= 100 {
                 jogo.noite_vencida = true;
                 jogo.estado_atual = "JOGO".to_string();
-                ui.exibir(&format!(
-                    "{}[ 06:00 AM ] Turno de segurança concluído! As portas do Hall foram destravadas!{}",
-                    DOS_VERDE, RESET
-                ));
+                term.push(
+                    "[ 06:00 AM ] Turno encerrado! As travas magnéticas da saída abriram!",
+                    COR_VERDE,
+                );
             } else {
-                ui.exibir(&format!(
-                    "{}[ TERMINAL DE SEGURANÇA ] Progresso da vigília: {}%. Digite 'vigiar', 'fechar porta' ou 'sair'.{}",
-                    DOS_AMARELO, jogo.seguranca_progresso, RESET
-                ));
+                term.push(
+                    &format!(
+                        "[ MONITORAMENTO ] Vigília em {}%. Digite 'vigiar', 'porta' ou 'sair'.",
+                        jogo.seguranca_progresso
+                    ),
+                    COR_AMARELO,
+                );
             }
             true
         }
@@ -208,15 +170,15 @@ pub fn processar_minigame(
             if (x, y) == (2, 2) {
                 jogo.noite_vencida = true;
                 jogo.estado_atual = "JOGO".to_string();
-                ui.exibir(&format!(
-                    "{}[ ENERGIA RESTAURADA ] Você venceu o Labirinto do Minotauro! Saída destrancada!{}",
-                    DOS_VERDE, RESET
-                ));
+                term.push(
+                    "[ ENERGIA RESTABELECIDA ] Labirinto concluído! Saída destrancada!",
+                    COR_VERDE,
+                );
             } else {
-                ui.exibir(&format!(
-                    "{}Posição no circuito: ({}, {}). Chegue até (2, 2) usando w/a/s/d.{}",
-                    DOS_CIANO, x, y, RESET
-                ));
+                term.push(
+                    &format!("Posição no circuito: ({}, {}). Destino: (2, 2).", x, y),
+                    COR_CIANO,
+                );
             }
             true
         }

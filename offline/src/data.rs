@@ -2,7 +2,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+// Embute o game_data.json real do repositório na compilação como garantia,
+// mas também lê qualquer .json da pasta /data em tempo de execução.
+const EMBEDDED_GAME_DATA: &str = include_str!("../../server/data/game_data.json");
 
 pub const VIDA_NORMAL: i32 = 3;
 pub const TURNOS_BATERIA: i32 = 15;
@@ -30,25 +34,35 @@ pub fn salas_seguras_patrulha() -> [&'static str; 7] {
     ]
 }
 
-pub fn chaves_nao_saida() -> [&'static str; 6] {
+pub fn chaves_nao_saida() -> [&'static str; 8] {
     [
         "descrição",
+        "descricao",
         "itens",
         "inspecionaveis",
         "energia",
         "cofre_important",
         "cadeira",
+        "imagem",
     ]
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Sala {
-    #[serde(default, rename = "descrição")]
+    #[serde(default, rename = "descrição", alias = "descricao")]
     pub descricao: String,
     #[serde(default)]
     pub itens: Vec<String>,
     #[serde(default)]
     pub inspecionaveis: HashMap<String, String>,
+    #[serde(default)]
+    pub energia: Option<Value>,
+    #[serde(default)]
+    pub cofre_important: Option<Value>,
+    #[serde(default)]
+    pub cadeira: Option<Value>,
+    #[serde(default)]
+    pub imagem: Option<String>,
     #[serde(flatten)]
     pub conexoes: HashMap<String, Value>,
 }
@@ -79,209 +93,127 @@ impl Sala {
     }
 }
 
-pub fn descricoes_itens() -> HashMap<String, String> {
-    let mut m = HashMap::new();
-    m.insert(
-        "lanterna".to_string(),
-        "Uma lanterna pesada de metal. Essencial para enxergar no escuro.".to_string(),
-    );
-    m.insert(
-        "bateria nova".to_string(),
-        "Pilha alcalina industrial. Recarrega a lanterna (+15 turnos).".to_string(),
-    );
-    m.insert(
-        "bateria".to_string(),
-        "Bateria reserva para a lanterna.".to_string(),
-    );
-    m.insert(
-        "chave de fenda".to_string(),
-        "Ferramenta com cabo isolado. Útil para grades de ventilação ou painéis.".to_string(),
-    );
-    m.insert(
-        "cartao de seguranca".to_string(),
-        "Credencial magnética de nível 2. Libera o terminal da cadeira na sala 01.".to_string(),
-    );
-    m.insert(
-        "moeda velha".to_string(),
-        "Uma ficha oxidada de fliperama dos anos 80.".to_string(),
-    );
-    m.insert(
-        "partitura rasgada".to_string(),
-        "Notas musicais manchadas. Necessária na máquina de Julgamento.".to_string(),
-    );
-    m.insert(
-        "isqueiro".to_string(),
-        "Isqueiro fluido metálico. Pode iniciar um incêndio se houver combustível.".to_string(),
-    );
-    m.insert(
-        "galao de gasolina".to_string(),
-        "Recipiente cheio de combustível inflamável.".to_string(),
-    );
-    m.insert(
-        "alicate".to_string(),
-        "Alicate de corte. Ideal para cortar fios de alta tensão.".to_string(),
-    );
-    m.insert(
-        "chave mestra".to_string(),
-        "Chave pesada que destranca a saída principal no Hall de Entrada.".to_string(),
-    );
-    m.insert(
-        "bolsa".to_string(),
-        "Bolsa lateral que expande a capacidade da sua mochila (+3 espaços).".to_string(),
-    );
-    m
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct DadosJogo {
+    pub mapa: HashMap<String, Sala>,
+    pub descricoes_itens: HashMap<String, String>,
+    pub sinonimos: HashMap<String, String>,
+    pub textos_extras: HashMap<String, Value>,
 }
 
-pub fn carregar_mapa() -> HashMap<String, Sala> {
-    let possiveis_caminhos = [
-        "data/game_data.json",
-        "../server/data/game_data.json",
-        "server/data/game_data.json",
-    ];
+impl DadosJogo {
+    pub fn carregar_da_pasta_data() -> Self {
+        let mut dados = Self::default();
 
-    for caminho in &possiveis_caminhos {
-        if Path::new(caminho).exists() {
-            if let Ok(conteudo) = fs::read_to_string(caminho) {
-                if let Ok(json) = serde_json::from_str::<Value>(&conteudo) {
-                    if let Some(mapa_val) = json.get("mapa").or(Some(&json)) {
-                        if let Ok(mapa) =
-                            serde_json::from_value::<HashMap<String, Sala>>(mapa_val.clone())
-                        {
-                            if !mapa.is_empty() {
-                                return mapa;
+        // 1. Carrega primeiro o JSON real embutido do repositório
+        Self::mesclar_json_str(&mut dados, EMBEDDED_GAME_DATA);
+
+        // 2. Procura pastas /data externas para permitir leitura direta de todos os .json
+        let pastas_data = [
+            PathBuf::from("data"),
+            PathBuf::from("../data"),
+            PathBuf::from("../server/data"),
+            PathBuf::from("server/data"),
+        ];
+
+        for pasta in &pastas_data {
+            if pasta.is_dir() {
+                if let Ok(entradas) = fs::read_dir(pasta) {
+                    for entrada in entradas.flatten() {
+                        let caminho = entrada.path();
+                        if caminho.extension().and_then(|e| e.to_str()) == Some("json") {
+                            if let Ok(conteudo) = fs::read_to_string(&caminho) {
+                                Self::mesclar_json_str(&mut dados, &conteudo);
                             }
                         }
                     }
                 }
             }
         }
+
+        dados
     }
 
-    mapa_padrao_embutido()
+    fn mesclar_json_str(dados: &mut DadosJogo, raw_json: &str) {
+        let Ok(val) = serde_json::from_str::<Value>(raw_json) else {
+            return;
+        };
+
+        // Se o JSON tiver a chave "mapa", importa as salas dela
+        if let Some(mapa_obj) = val.get("mapa") {
+            if let Ok(m) = serde_json::from_value::<HashMap<String, Sala>>(mapa_obj.clone()) {
+                for (k, v) in m {
+                    dados.mapa.insert(k, v);
+                }
+            }
+        } else if let Some(obj) = val.as_object() {
+            // Caso o próprio JSON seja um dicionário de salas (como salas.json ou game_data direto)
+            let parece_mapa = obj
+                .values()
+                .any(|v| v.get("descrição").is_some() || v.get("descricao").is_some());
+            if parece_mapa {
+                for (k, v) in obj {
+                    if let Ok(sala) = serde_json::from_value::<Sala>(v.clone()) {
+                        if !sala.descricao.is_empty() || !sala.conexoes.is_empty() {
+                            dados.mapa.insert(k.clone(), sala);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Descrições de itens se presentes no JSON
+        for chave_itens in ["descricoes_itens", "itens_descricoes", "itens_info"] {
+            if let Some(itens_val) = val.get(chave_itens) {
+                if let Ok(m) =
+                    serde_json::from_value::<HashMap<String, String>>(itens_val.clone())
+                {
+                    dados.descricoes_itens.extend(m);
+                }
+            }
+        }
+
+        // Sinônimos se presentes no JSON
+        if let Some(sin_val) = val.get("sinonimos") {
+            if let Ok(m) = serde_json::from_value::<HashMap<String, String>>(sin_val.clone()) {
+                dados.sinonimos.extend(m);
+            }
+        }
+
+        // Guarda qualquer outra propriedade do JSON para consulta
+        if let Some(obj) = val.as_object() {
+            for (k, v) in obj {
+                if k != "mapa" {
+                    dados.textos_extras.insert(k.clone(), v.clone());
+                }
+            }
+        }
+    }
 }
 
-fn mapa_padrao_embutido() -> HashMap<String, Sala> {
-    let raw = r#"{
-        "01": {
-            "descrição": "Sala de Monitoramento 01. Monitores quebrados cercam uma cadeira giratória e um cofre de ferro no canto.",
-            "frente": "entrada",
-            "direita": "sala de energia",
-            "esquerda": "tubo de ventilação",
-            "itens": ["bateria nova"],
-            "inspecionaveis": {
-                "monitores": "As telas piscam com estática. Uma nota diz: 'Use a cadeira com o Cartão de Segurança'.",
-                "cofre": "Um cofre antigo. Digite 'abrir cofre' para tentar a senha."
-            }
-        },
-        "entrada": {
-            "descrição": "Corredor de Entrada. O ar cheira a mofo e óleo queimado. Há pegadas escuras no piso.",
-            "atrás": "01",
-            "frente": "sala de jantar",
-            "esquerda": "hall de entrada",
-            "direita": "quarto de refrigeração",
-            "itens": ["moeda velha"],
-            "inspecionaveis": {
-                "pegadas": "Marcas pesadas de metal arrastado indo em direção à sala de jantar."
-            }
-        },
-        "sala de jantar": {
-            "descrição": "Salão de Jantar Principal. Mesas longas cobertas com toalhas rasgadas e pratos sujos.",
-            "atrás": "entrada",
-            "frente": "palco",
-            "direita": "cozinha principal",
-            "esquerda": "sala de fliperamas",
-            "itens": ["bolsa"],
-            "inspecionaveis": {
-                "mesas": "Há nove marcas de unha cravadas duas vezes na lateral metálica."
-            }
-        },
-        "palco": {
-            "descrição": "O Palco Central. Cortinas vermelhas pesadas e holofotes apagados. Os animatrônicos costumavam ficar aqui.",
-            "atrás": "sala de jantar",
-            "esquerda": "sala do piano",
-            "itens": ["cartao de seguranca"],
-            "inspecionaveis": {
-                "cortinas": "Atrás das cortinas há cabos soltos e marcas de garras."
-            }
-        },
-        "sala do piano": {
-            "descrição": "Sala do Piano. Um piano de cauda desafinado cercado por quatro cadeiras; apenas uma está intacta.",
-            "direita": "palco",
-            "itens": ["partitura rasgada"],
-            "inspecionaveis": {
-                "piano": "Sobre as teclas há uma partitura rasgada e o número 1 entalhado na cadeira vazia."
-            }
-        },
-        "cozinha principal": {
-            "descrição": "Cozinha Principal. Panelas enferrujadas, fogões industriais e um cheiro forte de gás.",
-            "esquerda": "sala de jantar",
-            "itens": ["isqueiro", "alicate"],
-            "inspecionaveis": {
-                "fogao": "Tubulações antigas vazando resquícios inflamáveis."
-            }
-        },
-        "quarto de refrigeração": {
-            "descrição": "Quarto de Refrigeração. Ganchos pendurados no teto e uma névoa gélida.",
-            "esquerda": "entrada",
-            "itens": ["galao de gasolina"],
-            "inspecionaveis": {
-                "ganchos": "Frios como gelo. Algo pesado esteve pendurado aqui recentemente."
-            }
-        },
-        "sala de fliperamas": {
-            "descrição": "Sala de Fliperamas. Três máquinas ainda brilham na penumbra: 'Fome de Jon', 'Consertos' e 'Julgamento'.",
-            "direita": "sala de jantar",
-            "itens": ["bateria nova"],
-            "inspecionaveis": {
-                "maquinas": "Comandos disponíveis: 'jogar jon', 'jogar consertos' (exige moeda) e 'jogar adivinha' (exige partitura)."
-            }
-        },
-        "sala de energia": {
-            "descrição": "Sala de Energia. O gerador mestre zumbe alto. O terminal do Labirinto do Minotauro controla a tensão.",
-            "esquerda": "01",
-            "itens": [],
-            "inspecionaveis": {
-                "gerador": "Os fios principais da instalação passam por aqui."
-            }
-        },
-        "tubo de ventilação": {
-            "descrição": "Tubo de Ventilação estreito e claustrofóbico. Liga a sala 01 ao Hall de Entrada.",
-            "direita": "01",
-            "frente": "hall de entrada",
-            "itens": ["chave de fenda"],
-            "inspecionaveis": {}
-        },
-        "hall de entrada": {
-            "descrição": "Hall de Entrada da Unidade. A grande porta dupla de aço leva para fora do complexo.",
-            "direita": "entrada",
-            "atrás": "tubo de ventilação",
-            "frente": "saida",
-            "itens": [],
-            "inspecionaveis": {
-                "porta": "Pesada e trancada eletronicamente até que a noite seja vencida ou destrancada."
-            }
-        },
-        "morte": {
-            "descrição": "Fim da linha.",
-            "itens": [],
-            "inspecionaveis": {}
-        },
-        "saida": {
-            "descrição": "O ar frio da madrugada finalmente toca o seu rosto.",
-            "itens": [],
-            "inspecionaveis": {}
-        },
-        "cama": {
-            "descrição": "Você fechou os olhos tentando ignorar o pesadelo.",
-            "itens": [],
-            "inspecionaveis": {}
-        },
-        "final_bom": {
-            "descrição": "O silêncio absoluto.",
-            "itens": [],
-            "inspecionaveis": {}
-        }
-    }"#;
+pub fn localizar_pasta_assets(subpasta: &str) -> Vec<PathBuf> {
+    let candidatos = [
+        format!("assets/{}", subpasta),
+        format!("../client/assets/{}", subpasta),
+        format!("client/assets/{}", subpasta),
+    ];
+    candidatos
+        .into_iter()
+        .map(PathBuf::from)
+        .filter(|p| p.exists())
+        .collect()
+}
 
-    serde_json::from_str(raw).unwrap_or_default()
+pub fn resolver_arquivo_asset(subpasta: &str, nome: &str) -> Option<PathBuf> {
+    for dir in localizar_pasta_assets(subpasta) {
+        let exato = dir.join(nome);
+        if exato.is_file() {
+            return Some(exato);
+        }
+    }
+    let direto = Path::new(nome);
+    if direto.is_file() {
+        return Some(direto.to_path_buf());
+    }
+    None
 }

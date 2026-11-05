@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 pub fn remover_acentos(s: &str) -> String {
     s.chars()
         .map(|c| match c {
@@ -20,7 +22,10 @@ pub fn normalizar(entrada: &str) -> String {
         .join(" ")
 }
 
-pub fn expandir_atalho_direcao(cmd: &str) -> String {
+pub fn expandir_atalho_direcao(cmd: &str, sinonimos: &HashMap<String, String>) -> String {
+    if let Some(mapped) = sinonimos.get(cmd) {
+        return mapped.clone();
+    }
     match cmd {
         "f" | "frente" | "w" | "norte" => "ir frente".to_string(),
         "t" | "atras" | "s" | "sul" => "ir atrás".to_string(),

@@ -1,4 +1,7 @@
-use crate::actions::{imprimir_contexto_sala, processar_comando_acao};
+use crate::actions::{
+    imprimir_contexto_sala, processar_comando_acao, COR_AMARELO, COR_BRANCO, COR_CIANO, COR_CINZA,
+    COR_VERDE, COR_VERMELHO,
+};
 use crate::audio::AudioManager;
 use crate::data::{salas_terminais, BARULHO_ERROS_CONSECUTIVOS, LIMITE_ERROS_DICA};
 use crate::devmode;
@@ -6,86 +9,104 @@ use crate::media::MediaManager;
 use crate::minigames::{imprimir_painel_cofre, processar_minigame};
 use crate::parser::normalizar;
 use crate::state::GameState;
-use crate::ui::{
-    imprimir_menu_configuracoes, imprimir_menu_principal, imprimir_tela_boot, TerminalUI,
-    DOS_AMARELO, DOS_BRANCO, DOS_CIANO, DOS_VERDE, DOS_VERMELHO, RESET,
-};
+use crate::TerminalBuffer;
 use rand::Rng;
 
-fn registrar_conquista_offline(
+pub fn imprimir_boot(term: &mut TerminalBuffer) {
+    term.clear();
+    term.push("VILAS BOAS OS [SISTEMA v20.08 - TERMINAL LOCAL]", COR_VERDE);
+    term.push(
+        "(C) Copyright 1982 Vilas Boas Corp. Todos os direitos reservados.\n",
+        COR_CINZA,
+    );
+    term.push("Digite 'dir' para listar os diretórios do sistema:", COR_VERDE);
+}
+
+pub fn imprimir_menu(term: &mut TerminalBuffer, tem_save: bool) {
+    term.push(
+        "\n================[ DIRETÓRIO C:\\VILAS_BOAS ]================",
+        COR_VERDE,
+    );
+    term.push("  [1] INICIAR NOVA PARTIDA", COR_BRANCO);
+    if tem_save {
+        term.push("  [2] CONTINUAR PARTIDA SALVA", COR_AMARELO);
+    } else {
+        term.push("  [2] CONTINUAR (Nenhum save encontrado)", COR_CINZA);
+    }
+    term.push("  [3] CONQUISTAS E DESAFIOS", COR_BRANCO);
+    term.push("  [4] ARQUIVOS DE IMAGEM E SECRET IMAGES", COR_CIANO);
+    term.push("  [5] CONFIGURAÇÕES DE ÁUDIO E JUMPSCARE", COR_BRANCO);
+    term.push("  [6] ENCERRAR SISTEMA", COR_BRANCO);
+    term.push(
+        "===========================================================",
+        COR_VERDE,
+    );
+}
+
+fn registrar_conquista(
     id: &str,
     jogo: &mut GameState,
     audio: &mut AudioManager,
-    ui: &TerminalUI,
+    term: &mut TerminalBuffer,
 ) {
     if jogo.dev_usado {
         return;
     }
-    let nova_no_jogo = jogo.desbloquear_conquista(id);
-    let mut nova_global = false;
+    let nova = jogo.desbloquear_conquista(id);
     if !audio.config.conquistas_globais.contains(&id.to_string()) {
         audio.config.conquistas_globais.push(id.to_string());
         audio.config.salvar();
-        nova_global = true;
     }
-    if nova_no_jogo || nova_global {
-        ui.exibir(&format!(
-            "\n{}======================================================\n\
-            [ CONQUISTA DESBLOQUEADA: {} ]\n\
-            ======================================================{}",
-            DOS_AMARELO,
-            id.to_uppercase(),
-            RESET
-        ));
+    if nova {
+        term.push(
+            &format!("\n[ 👑 CONQUISTA DESBLOQUEADA: {} ]", id.to_uppercase()),
+            COR_AMARELO,
+        );
     }
 }
 
 pub fn verificar_final_de_jogo(
     jogo: &mut GameState,
-    ui: &TerminalUI,
+    term: &mut TerminalBuffer,
     audio: &mut AudioManager,
-    media: &MediaManager,
+    media: &mut MediaManager,
 ) -> bool {
     if jogo.sala_atual == "hall de entrada" && jogo.noite_vencida && jogo.fios_cortados_inventario {
-        registrar_conquista_offline("final_verdadeiro", jogo, audio, ui);
+        registrar_conquista("final_verdadeiro", jogo, audio, term);
         jogo.estado_atual = "FIM".to_string();
         audio.parar_ambiente();
-        let _ = media.exibir_imagem("final_verdadeiro", true, ui);
-        ui.animar(
-            "\n[ FINAL VERDADEIRO ] Você desativou a rede elétrica e escapou de Vilas Boas para sempre!",
-            0.02,
-            DOS_VERDE,
+        let _ = media.acionar_imagem("final", true, false);
+        term.push(
+            "\n[ FINAL VERDADEIRO ] Você destruiu a fonte de energia e escapou de Vilas Boas!",
+            COR_VERDE,
         );
         return true;
     }
 
     if jogo.sala_atual == "saida" || jogo.sala_atual == "final_bom" {
         if jogo.dificuldade_escolhida == "PESADELO" {
-            registrar_conquista_offline("pesadelo_verdadeiro", jogo, audio, ui);
+            registrar_conquista("pesadelo_verdadeiro", jogo, audio, term);
         } else {
-            registrar_conquista_offline("normal_zerado", jogo, audio, ui);
+            registrar_conquista("normal_zerado", jogo, audio, term);
         }
         jogo.estado_atual = "FIM".to_string();
         audio.parar_ambiente();
-        ui.animar(
-            "\n[ VITÓRIA ] As portas se abriram e você sobreviveu à noite em Vilas Boas!",
-            0.02,
-            DOS_VERDE,
+        term.push(
+            "\n[ VITÓRIA ] Você escapou com vida da unidade Vilas Boas!",
+            COR_VERDE,
         );
         return true;
     }
 
     if jogo.sala_atual == "morte" || jogo.hp <= 0 {
-        registrar_conquista_offline("primeira_morte", jogo, audio, ui);
+        registrar_conquista("primeira_morte", jogo, audio, term);
         jogo.estado_atual = "FIM".to_string();
         audio.parar_ambiente();
-        ui.efeito_jumpscare(audio.config.jumpscare_visual);
         audio.som_grito();
-        let _ = media.exibir_imagem("jumpscare", false, ui);
-        ui.animar(
-            "\n[ VOCÊ MORREU ] O som metálico foi a última coisa que você ouviu no escuro...",
-            0.03,
-            DOS_VERMELHO,
+        let _ = media.acionar_imagem("jumpscare", false, true);
+        term.push(
+            "\n[ SINAL PERDIDO - VOCÊ MORREU ] Digite qualquer tecla para reiniciar o terminal.",
+            COR_VERMELHO,
         );
         return true;
     }
@@ -96,18 +117,18 @@ pub fn verificar_final_de_jogo(
 pub fn aplicar_efeitos_pos_turno(
     jogo: &mut GameState,
     comando_correu: bool,
-    ui: &TerminalUI,
+    term: &mut TerminalBuffer,
     audio: &mut AudioManager,
-    media: &MediaManager,
+    media: &mut MediaManager,
 ) {
     if !jogo.god_mode {
         if jogo.turnos_luz > 0 {
             jogo.turnos_luz -= 1;
             if jogo.turnos_luz == 0 {
-                ui.exibir(&format!(
-                    "{}[!] A bateria da sua lanterna acabou! Use uma bateria reserva imediatamente!{}",
-                    DOS_VERMELHO, RESET
-                ));
+                term.push(
+                    "[!] A bateria da lanterna acabou! Use uma bateria reserva!",
+                    COR_VERMELHO,
+                );
             }
         } else {
             jogo.turnos_no_escuro += 1;
@@ -117,7 +138,7 @@ pub fn aplicar_efeitos_pos_turno(
             if jogo.turnos_no_escuro >= 3 {
                 jogo.hp = 0;
                 jogo.sala_atual = "morte".to_string();
-                let _ = verificar_final_de_jogo(jogo, ui, audio, media);
+                let _ = verificar_final_de_jogo(jogo, term, audio, media);
                 return;
             }
         }
@@ -125,118 +146,37 @@ pub fn aplicar_efeitos_pos_turno(
 
     if comando_correu {
         jogo.nivel_barulho = 100;
-        ui.exibir(&format!(
-            "{}Seus passos apressados ecoaram por toda a estrutura! (Ruído: 100%){}",
-            DOS_AMARELO, RESET
-        ));
+        term.push(
+            "Seus passos correndo ecoaram pelo corredor! (SOM: 100%)",
+            COR_AMARELO,
+        );
     }
 
     let relatorio = jogo.avancar_ia_perseguidor();
     if relatorio.combate_iniciado {
         if jogo.dev_mode {
-            devmode::interceptar_perseguidor(jogo, ui);
+            devmode::interceptar_perseguidor(jogo, term);
         } else {
-            ui.efeito_jumpscare(audio.config.jumpscare_visual);
             audio.som_grito();
-            let _ = media.exibir_imagem("animatronico", false, ui);
-            ui.exibir(&format!(
-                "{}[ PERIGO IMINENTE ] O animatrônico entrou na sala! Digite 'correr <direção>' para fugir!{}",
-                DOS_VERMELHO, RESET
-            ));
+            let _ = media.acionar_imagem("animatronico", false, true);
+            term.push(
+                "[ PERIGO IMINENTE ] O animatrônico está na sala! Digite 'correr <direção>'!",
+                COR_VERMELHO,
+            );
         }
     } else if relatorio.ativa && relatorio.distancia <= 2 {
         audio.som_metal();
-        ui.exibir(&format!(
-            "{}Você ouve passos pesados de metal rangendo bem perto daqui...{}",
-            DOS_VERMELHO, RESET
-        ));
+        term.push(
+            "Passos pesados de metal rangendo se aproximam nas sombras...",
+            COR_VERMELHO,
+        );
     }
-}
-
-fn processar_menu_config(
-    comando: &str,
-    jogo: &mut GameState,
-    ui: &mut TerminalUI,
-    audio: &mut AudioManager,
-    media: &mut MediaManager,
-) {
-    if comando == "voltar" || comando == "sair" {
-        audio.config.salvar();
-        if jogo.sala_atual != "01" || jogo.turnos_luz != 6 {
-            // Se já havia uma partida em andamento e abriu config pelo comando 'config'
-            if jogo.estado_atual == "MENU_CONFIG_JOGO" {
-                jogo.estado_atual = "JOGO".to_string();
-                imprimir_contexto_sala(jogo, ui);
-                return;
-            }
-        }
-        jogo.estado_atual = "MENU".to_string();
-        imprimir_menu_principal(ui, GameState::save_existe());
-        return;
-    }
-
-    if comando == "testar" {
-        ui.efeito_jumpscare(audio.config.jumpscare_visual);
-        audio.som_grito();
-        ui.exibir("Som e efeito de Jumpscare testados!");
-        return;
-    }
-    if comando == "mudo" || comando == "5" {
-        audio.config.mudo = !audio.config.mudo;
-        audio.atualizar_volume_ambiente();
-        audio.config.salvar();
-        imprimir_menu_configuracoes(ui, &audio.config);
-        return;
-    }
-    if comando == "flash" || comando == "6" {
-        audio.config.jumpscare_visual = !audio.config.jumpscare_visual;
-        audio.config.salvar();
-        imprimir_menu_configuracoes(ui, &audio.config);
-        return;
-    }
-    if comando == "animacao" || comando == "7" {
-        audio.config.animacao_texto = !audio.config.animacao_texto;
-        ui.animacao_ativa = audio.config.animacao_texto;
-        audio.config.salvar();
-        imprimir_menu_configuracoes(ui, &audio.config);
-        return;
-    }
-    if comando == "janela" || comando == "8" {
-        audio.config.abrir_janela_externa = !audio.config.abrir_janela_externa;
-        media.abrir_janela_externa = audio.config.abrir_janela_externa;
-        audio.config.salvar();
-        imprimir_menu_configuracoes(ui, &audio.config);
-        return;
-    }
-
-    let partes: Vec<&str> = comando.split_whitespace().collect();
-    if partes.len() == 2 {
-        if let Ok(valor) = partes[1].replace('%', "").parse::<f32>() {
-            let prop = (valor / 100.0).clamp(0.0, 1.0);
-            match partes[0] {
-                "geral" | "1" => audio.config.volume_geral = prop,
-                "jumpscare" | "grito" | "2" => audio.config.volume_jumpscare = prop,
-                "ambiente" | "musica" | "3" => audio.config.volume_ambiente = prop,
-                "efeitos" | "sfx" | "4" => audio.config.volume_efeitos = prop,
-                _ => {
-                    ui.exibir("Opção desconhecida. Use: geral, jumpscare, ambiente ou efeitos <0-100>.");
-                    return;
-                }
-            }
-            audio.atualizar_volume_ambiente();
-            audio.config.salvar();
-            imprimir_menu_configuracoes(ui, &audio.config);
-            return;
-        }
-    }
-
-    imprimir_menu_configuracoes(ui, &audio.config);
 }
 
 pub fn processar_fluxo_jogo(
     comando_bruto: &str,
     jogo: &mut GameState,
-    ui: &mut TerminalUI,
+    term: &mut TerminalBuffer,
     audio: &mut AudioManager,
     media: &mut MediaManager,
 ) {
@@ -247,11 +187,11 @@ pub fn processar_fluxo_jogo(
 
     if devmode::eh_codigo_de_ativacao(&comando) {
         audio.iniciar_ambiente();
-        devmode::ativar_modo_dev(jogo, ui);
+        devmode::ativar_modo_dev(jogo, term, media);
         return;
     }
 
-    if jogo.dev_mode && devmode::processar_comando_dev(&comando, jogo, ui, media) {
+    if jogo.dev_mode && devmode::processar_comando_dev(&comando, jogo, term, media) {
         return;
     }
 
@@ -262,134 +202,108 @@ pub fn processar_fluxo_jogo(
         "AGUARDANDO_DIR" => {
             if comando == "dir" {
                 jogo.estado_atual = "MENU".to_string();
-                imprimir_menu_principal(ui, GameState::save_existe());
+                imprimir_menu(term, GameState::save_existe());
             } else {
-                ui.exibir(&format!(
-                    "{}Bad command or file name{}\n{}Digite {}dir{} para acessar os diretórios:{}",
-                    DOS_VERMELHO, RESET, DOS_VERDE, DOS_BRANCO, DOS_VERDE, RESET
-                ));
+                term.push(
+                    "Comando inválido. Digite 'dir' para acessar os diretórios.",
+                    COR_VERMELHO,
+                );
             }
         }
         "MENU" => match comando.as_str() {
             "1" | "iniciar" | "novo" => {
                 jogo.estado_atual = "MENU_DIFICULDADE".to_string();
-                ui.exibir(&format!(
-                    "\n{}Escolha a dificuldade:\n  [1] NORMAL (3 HP)\n  [2] PESADELO (1 HP)\n  [voltar] Retornar{}",
-                    DOS_BRANCO, RESET
-                ));
+                term.push(
+                    "\nSelecione a dificuldade:\n  [1] NORMAL (3 HP)\n  [2] PESADELO (1 HP)\n  [voltar] Retornar",
+                    COR_BRANCO,
+                );
             }
             "2" | "continuar" | "carregar" => {
                 if let Some(salvo) = GameState::carregar_local() {
                     *jogo = salvo;
                     audio.iniciar_ambiente();
-                    ui.exibir(&format!("{}Save carregado com sucesso!{}", DOS_VERDE, RESET));
-                    imprimir_contexto_sala(jogo, ui);
+                    term.push("Partida salva carregada!", COR_VERDE);
+                    imprimir_contexto_sala(jogo, term, media);
                 } else {
-                    ui.exibir(&format!(
-                        "{}Nenhum arquivo de save encontrado.{}",
-                        DOS_VERMELHO, RESET
-                    ));
+                    term.push("Nenhum save encontrado.", COR_VERMELHO);
                 }
             }
-            "3" | "desafios" | "conquistas" => {
-                jogo.estado_atual = "MENU_DESAFIOS".to_string();
-                let mut todas = audio.config.conquistas_globais.clone();
-                for c in &jogo.conquistas {
-                    if !todas.contains(c) {
-                        todas.push(c.clone());
-                    }
-                }
-                ui.exibir(&format!(
-                    "\n{}=== CONQUISTAS DESBLOQUEADAS ({}) ==={}",
-                    DOS_AMARELO,
-                    todas.len(),
-                    RESET
-                ));
-                if todas.is_empty() {
-                    ui.exibir("Nenhuma conquista registrada ainda.");
+            "3" | "conquistas" | "desafios" => {
+                term.push("\n=== CONQUISTAS REGISTRADAS ===", COR_AMARELO);
+                if audio.config.conquistas_globais.is_empty() {
+                    term.push("Nenhuma conquista desbloqueada ainda.", COR_CINZA);
                 } else {
-                    for c in &todas {
-                        ui.exibir(&format!("  * {}", c));
+                    for c in &audio.config.conquistas_globais {
+                        term.push(&format!("  👑 {}", c), COR_VERDE);
                     }
                 }
-                ui.exibir("Digite 'voltar' para retornar ao menu.");
             }
             "4" | "galeria" | "imagens" | "secret" => {
                 jogo.estado_atual = "MENU_GALERIA".to_string();
-                let normais = media.listar_imagens_disponiveis(false);
-                let secretas = media.listar_imagens_disponiveis(true);
-                ui.exibir(&format!(
-                    "\n{}=== GALERIA DE ARQUIVOS DE IMAGEM ==={}",
-                    DOS_CIANO, RESET
-                ));
-                ui.exibir(&format!("Imagens encontradas: {:?}", normais));
-                ui.exibir(&format!("Secret Images encontradas: {:?}", secretas));
-                ui.exibir("Digite o nome da imagem para visualizar ou 'voltar' para sair.");
+                let imgs: Vec<String> = MediaManager::listar_arquivos(false)
+                    .into_iter()
+                    .map(|(n, _)| n)
+                    .collect();
+                let secrets: Vec<String> = MediaManager::listar_arquivos(true)
+                    .into_iter()
+                    .map(|(n, _)| n)
+                    .collect();
+                term.push("\n=== ARQUIVOS VISUAIS DISPONÍVEIS ===", COR_CIANO);
+                term.push(&format!("Imagens: {:?}", imgs), COR_BRANCO);
+                term.push(&format!("Secret Images: {:?}", secrets), COR_AMARELO);
+                term.push(
+                    "Digite o nome do arquivo para abrir na tela ou 'voltar' para o menu.",
+                    COR_VERDE,
+                );
             }
-            "5" | "config" | "configuracoes" | "opcoes" => {
-                jogo.estado_atual = "MENU_CONFIG".to_string();
-                imprimir_menu_configuracoes(ui, &audio.config);
+            "5" | "config" => {
+                term.push(
+                    "Dica: Você também pode clicar no ícone de Engrenagem [⚙] no canto inferior direito!",
+                    COR_CIANO,
+                );
             }
-            "6" | "sair" | "exit" => {
-                std::process::exit(0);
-            }
-            _ => {
-                imprimir_menu_principal(ui, GameState::save_existe());
-            }
+            "6" | "sair" => std::process::exit(0),
+            _ => imprimir_menu(term, GameState::save_existe()),
         },
-        "MENU_CONFIG" | "MENU_CONFIG_JOGO" => {
-            processar_menu_config(&comando, jogo, ui, audio, media);
-        }
         "MENU_DIFICULDADE" => match comando.as_str() {
             "1" | "normal" => {
                 jogo.reiniciar_partida("NORMAL");
                 audio.iniciar_ambiente();
-                imprimir_contexto_sala(jogo, ui);
+                imprimir_contexto_sala(jogo, term, media);
             }
             "2" | "pesadelo" => {
                 jogo.reiniciar_partida("PESADELO");
                 audio.iniciar_ambiente();
-                imprimir_contexto_sala(jogo, ui);
+                imprimir_contexto_sala(jogo, term, media);
             }
             "voltar" => {
                 jogo.estado_atual = "MENU".to_string();
-                imprimir_menu_principal(ui, GameState::save_existe());
+                imprimir_menu(term, GameState::save_existe());
             }
-            _ => ui.exibir("Digite 1 (Normal), 2 (Pesadelo) ou 'voltar'."),
+            _ => term.push("Escolha 1 (Normal), 2 (Pesadelo) ou 'voltar'.", COR_AMARELO),
         },
-        "MENU_DESAFIOS" => {
-            jogo.estado_atual = "MENU".to_string();
-            imprimir_menu_principal(ui, GameState::save_existe());
-        }
         "MENU_GALERIA" => {
             if comando == "voltar" || comando == "sair" {
                 jogo.estado_atual = "MENU".to_string();
-                imprimir_menu_principal(ui, GameState::save_existe());
-            } else if !media.exibir_imagem(&comando, true, ui) {
-                ui.exibir("Arquivo de imagem não encontrado. Digite outro nome ou 'voltar'.");
+                imprimir_menu(term, GameState::save_existe());
+            } else if !media.acionar_imagem(&comando, true, false) {
+                term.push("Imagem não encontrada. Digite outro nome ou 'voltar'.", COR_VERMELHO);
             }
         }
         "FIM" => {
-            imprimir_tela_boot(ui);
+            media.imagem_atual = None;
+            imprimir_boot(term);
             jogo.estado_atual = "AGUARDANDO_DIR".to_string();
         }
         "JOGO" | "COMBATE_ANIMATRONICO" => {
             if ["cls", "limpar", "clear", "clean"].contains(&comando.as_str()) {
-                ui.limpar();
-                imprimir_contexto_sala(jogo, ui);
-                return;
-            }
-            if comando == "config" || comando == "configuracoes" || comando == "volume" {
-                jogo.estado_atual = "MENU_CONFIG_JOGO".to_string();
-                imprimir_menu_configuracoes(ui, &audio.config);
+                term.clear();
+                imprimir_contexto_sala(jogo, term, media);
                 return;
             }
             if comando == "salvar" {
                 if jogo.salvar_local() {
-                    ui.exibir(&format!(
-                        "{}Progresso salvo em 'savegame.json'!{}",
-                        DOS_VERDE, RESET
-                    ));
+                    term.push("Jogo salvo localmente em 'savegame.json'.", COR_VERDE);
                 }
                 return;
             }
@@ -397,25 +311,22 @@ pub fn processar_fluxo_jogo(
             if comando == "abrir cofre" && jogo.sala_atual == "01" {
                 jogo.estado_atual = "MINIGAME_COFRE".to_string();
                 jogo.cofre_tentativas = 0;
-                imprimir_painel_cofre(jogo, ui, true);
+                imprimir_painel_cofre(jogo, term, media, true);
                 return;
             }
             if comando == "cadeira" && jogo.sala_atual == "01" {
                 if jogo
                     .inventario
                     .iter()
-                    .any(|i| normalizar(i) == "cartao de seguranca")
+                    .any(|i| normalizar(i).contains("cartao"))
                 {
                     jogo.estado_atual = "MINIGAME_SEGURANCA".to_string();
-                    ui.exibir(&format!(
-                        "{}[ TERMINAL DA CADEIRA ATIVADO ] Digite 'vigiar' para avançar o turno até as 6AM.{}",
-                        DOS_VERDE, RESET
-                    ));
+                    term.push(
+                        "[ TERMINAL DE SEGURANÇA ] Digite 'vigiar' para avançar o turno até as 6AM.",
+                        COR_VERDE,
+                    );
                 } else {
-                    ui.exibir(&format!(
-                        "{}Acesso negado: exige o Cartão de Segurança.{}",
-                        DOS_VERMELHO, RESET
-                    ));
+                    term.push("Acesso negado: exige o Cartão de Segurança.", COR_VERMELHO);
                 }
                 return;
             }
@@ -423,26 +334,23 @@ pub fn processar_fluxo_jogo(
                 && jogo.sala_atual == "sala de fliperamas"
             {
                 jogo.estado_atual = "MINIGAME_JON".to_string();
-                ui.exibir(&format!(
-                    "{}[ FLIPERAMA: FOME DE JON ] Digite 'comer' para jogar ou 'sair'.{}",
-                    DOS_AMARELO, RESET
-                ));
+                term.push("[ FLIPERAMA: FOME DE JON ] Digite 'comer' ou 'sair'.", COR_AMARELO);
                 return;
             }
             if comando == "jogar consertos" && jogo.sala_atual == "sala de fliperamas" {
                 if let Some(pos) = jogo
                     .inventario
                     .iter()
-                    .position(|i| normalizar(i) == "moeda velha")
+                    .position(|i| normalizar(i).contains("moeda"))
                 {
                     jogo.inventario.remove(pos);
                     jogo.estado_atual = "MINIGAME_CONSERTOS_CABECA".to_string();
-                    ui.exibir(&format!(
-                        "{}[ FLIPERAMA: CONSERTOS ] Ficha consumida! Digite 'consertar' para iniciar.{}",
-                        DOS_AMARELO, RESET
-                    ));
+                    term.push(
+                        "[ FLIPERAMA: CONSERTOS ] Moeda inserida! Digite 'consertar'.",
+                        COR_AMARELO,
+                    );
                 } else {
-                    ui.exibir("Você precisa de uma ficha ('moeda velha') para jogar Consertos.");
+                    term.push("Você precisa da 'moeda velha' para jogar.", COR_VERMELHO);
                 }
                 return;
             }
@@ -450,15 +358,15 @@ pub fn processar_fluxo_jogo(
                 if jogo
                     .inventario
                     .iter()
-                    .any(|i| normalizar(i) == "partitura rasgada")
+                    .any(|i| normalizar(i).contains("partitura"))
                 {
                     jogo.estado_atual = "MINIGAME_JULGAMENTO_Q1".to_string();
-                    ui.exibir(&format!(
-                        "{}[ FLIPERAMA: O JULGAMENTO ] Digite as notas ou 'tocar' para responder.{}",
-                        DOS_CIANO, RESET
-                    ));
+                    term.push(
+                        "[ FLIPERAMA: O JULGAMENTO ] Digite as notas ou 'tocar'.",
+                        COR_CIANO,
+                    );
                 } else {
-                    ui.exibir("Falta a 'partitura rasgada' para iniciar este fliperama.");
+                    term.push("Exige a 'partitura rasgada'.", COR_VERMELHO);
                 }
                 return;
             }
@@ -482,23 +390,24 @@ pub fn processar_fluxo_jogo(
 
             if estado_antes == "COMBATE_ANIMATRONICO" && !jogador_correu {
                 if jogo.dev_mode {
-                    devmode::interceptar_perseguidor(jogo, ui);
+                    devmode::interceptar_perseguidor(jogo, term);
                 } else {
                     jogo.hp = 0;
                     jogo.sala_atual = "morte".to_string();
-                    let _ = verificar_final_de_jogo(jogo, ui, audio, media);
+                    let _ = verificar_final_de_jogo(jogo, term, audio, media);
                 }
                 return;
             }
 
-            let resultado_acao = processar_comando_acao(&comando_exec, jogo, ui, audio, media);
+            let resultado_acao =
+                processar_comando_acao(&comando_exec, jogo, term, audio, media);
 
             let mut foi_largar = false;
             if let Some(tipo) = resultado_acao {
                 jogo.erros_consecutivos = 0;
                 foi_largar = tipo == "largar";
                 if jogo.estado_atual == "JOGO" && tipo != "olhar" {
-                    aplicar_efeitos_pos_turno(jogo, jogador_correu, ui, audio, media);
+                    aplicar_efeitos_pos_turno(jogo, jogador_correu, term, audio, media);
                     let _ = jogo.salvar_local();
                 }
             } else {
@@ -509,10 +418,9 @@ pub fn processar_fluxo_jogo(
                 if jogo.erros_consecutivos >= LIMITE_ERROS_DICA {
                     jogo.alterar_barulho(BARULHO_ERROS_CONSECUTIVOS);
                     jogo.ai_alvo = Some(jogo.sala_atual.clone());
-                    ui.animar(
-                        "Seus tropeços no escuro estão chamando muita atenção...",
-                        0.02,
-                        DOS_AMARELO,
+                    term.push(
+                        "O barulho dos seus tropeços no escuro atraiu algo...",
+                        COR_AMARELO,
                     );
                     jogo.erros_consecutivos = 0;
                 }
@@ -526,41 +434,40 @@ pub fn processar_fluxo_jogo(
             }
 
             if jogo.estado_atual == "FIM" && jogo.incendio {
-                registrar_conquista_offline("final_verdadeiro", jogo, audio, ui);
+                registrar_conquista("final_verdadeiro", jogo, audio, term);
                 audio.parar_ambiente();
-                let _ = media.exibir_imagem("incendio", true, ui);
-                ui.animar(
-                    "\n[ FINAL VERDADEIRO ] O fogo purificou os segredos de Vilas Boas!",
-                    0.02,
-                    DOS_VERDE,
+                let _ = media.acionar_imagem("incendio", true, false);
+                term.push(
+                    "\n[ FINAL VERDADEIRO ] O fogo consumiu os horrores de Vilas Boas!",
+                    COR_VERDE,
                 );
                 return;
             }
 
             if jogo.atingiu_meta_acumulador() {
-                registrar_conquista_offline("acumulador", jogo, audio, ui);
+                registrar_conquista("acumulador", jogo, audio, term);
             }
 
-            if !verificar_final_de_jogo(jogo, ui, audio, media) && jogo.estado_atual == "JOGO" {
+            if !verificar_final_de_jogo(jogo, term, audio, media) && jogo.estado_atual == "JOGO" {
                 if resultado_acao.is_some() && resultado_acao != Some("olhar") {
-                    imprimir_contexto_sala(jogo, ui);
+                    imprimir_contexto_sala(jogo, term, media);
                 }
             }
 
             if jogo.dev_mode && estado_antes != "FIM" {
-                devmode::pos_turno(jogo, snapshot, foi_largar, ui);
+                devmode::pos_turno(jogo, snapshot, foi_largar, term);
             }
         }
         _ => {
             let antes = jogo.conquistas.len();
-            let _ = processar_minigame(&comando, jogo, ui, audio);
+            let _ = processar_minigame(&comando, jogo, term, audio, media);
             if jogo.conquistas.len() > antes {
                 if let Some(ultima) = jogo.conquistas.last().cloned() {
-                    registrar_conquista_offline(&ultima, jogo, audio, ui);
+                    registrar_conquista(&ultima, jogo, audio, term);
                 }
             }
             if jogo.estado_atual == "JOGO" {
-                imprimir_contexto_sala(jogo, ui);
+                imprimir_contexto_sala(jogo, term, media);
             }
         }
     }

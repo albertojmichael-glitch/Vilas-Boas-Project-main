@@ -1,5 +1,5 @@
 use crate::data::{
-    carregar_mapa, chaves_nao_saida, salas_seguras_patrulha, Sala, CHANCE_MOVER_PATRULHA,
+    chaves_nao_saida, salas_seguras_patrulha, DadosJogo, Sala, CHANCE_MOVER_PATRULHA,
     LIMIAR_ALERTA, LIMIAR_CACA, VIDA_NORMAL,
 };
 use rand::seq::SliceRandom;
@@ -48,6 +48,10 @@ pub struct GameState {
     pub minotauro_pos: (usize, usize),
     pub seguranca_progresso: i32,
     pub mapa: HashMap<String, Sala>,
+    #[serde(default)]
+    pub descricoes_itens: HashMap<String, String>,
+    #[serde(default)]
+    pub sinonimos: HashMap<String, String>,
 }
 
 impl Default for GameState {
@@ -58,17 +62,35 @@ impl Default for GameState {
 
 impl GameState {
     pub fn new() -> Self {
+        let dados = DadosJogo::carregar_da_pasta_data();
+        let sala_inicial = if dados.mapa.contains_key("01") {
+            "01".to_string()
+        } else {
+            dados
+                .mapa
+                .keys()
+                .next()
+                .cloned()
+                .unwrap_or_else(|| "01".to_string())
+        };
+
+        let sala_ia_inicial = if dados.mapa.contains_key("palco") {
+            "palco".to_string()
+        } else {
+            "entrada".to_string()
+        };
+
         Self {
             hp: VIDA_NORMAL,
             inventario: vec!["lanterna".to_string()],
             turnos_luz: 6,
             turnos_no_escuro: 0,
             turnos_enjoado: 0,
-            sala_atual: "01".to_string(),
+            sala_atual: sala_inicial,
             estado_atual: "AGUARDANDO_DIR".to_string(),
             dificuldade_escolhida: "NORMAL".to_string(),
             nivel_barulho: 0,
-            ai_sala: "palco".to_string(),
+            ai_sala: sala_ia_inicial,
             ai_estado: "PATRULHA".to_string(),
             ai_alvo: None,
             bolsas_coletadas: 0,
@@ -87,7 +109,9 @@ impl GameState {
             dev_radar: true,
             minotauro_pos: (0, 0),
             seguranca_progresso: 0,
-            mapa: carregar_mapa(),
+            mapa: dados.mapa,
+            descricoes_itens: dados.descricoes_itens,
+            sinonimos: dados.sinonimos,
         }
     }
 
@@ -104,7 +128,6 @@ impl GameState {
             VIDA_NORMAL
         };
         self.estado_atual = "JOGO".to_string();
-        self.sala_atual = "01".to_string();
         self.conquistas = conquistas_atuais;
         self.dev_mode = dev_mode;
         self.god_mode = god_mode;

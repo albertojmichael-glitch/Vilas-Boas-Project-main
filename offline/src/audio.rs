@@ -1,8 +1,8 @@
+use crate::data::resolver_arquivo_asset;
 use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink, Source};
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::BufReader;
-use std::path::{Path, PathBuf};
 
 pub const ARQUIVO_CONFIG: &str = "config.json";
 
@@ -15,21 +15,19 @@ pub struct Configuracoes {
     pub mudo: bool,
     pub jumpscare_visual: bool,
     pub animacao_texto: bool,
-    pub abrir_janela_externa: bool,
     pub conquistas_globais: Vec<String>,
 }
 
 impl Default for Configuracoes {
     fn default() -> Self {
         Self {
-            volume_geral: 1.0,      // 100%
-            volume_ambiente: 0.35,  // 35%
-            volume_efeitos: 0.80,   // 80%
-            volume_jumpscare: 1.0,  // 100%
+            volume_geral: 1.0,
+            volume_ambiente: 0.40,
+            volume_efeitos: 0.80,
+            volume_jumpscare: 1.0,
             mudo: false,
             jumpscare_visual: true,
             animacao_texto: true,
-            abrir_janela_externa: false,
             conquistas_globais: Vec::new(),
         }
     }
@@ -56,7 +54,6 @@ pub struct AudioManager {
     _stream: Option<OutputStream>,
     handle: Option<OutputStreamHandle>,
     ambient_sink: Option<Sink>,
-    base_dirs: Vec<PathBuf>,
     pub config: Configuracoes,
 }
 
@@ -67,32 +64,12 @@ impl AudioManager {
             Err(_) => (None, None),
         };
 
-        let base_dirs = vec![
-            PathBuf::from("assets/audio"),
-            PathBuf::from("../client/assets/audio"),
-            PathBuf::from("client/assets/audio"),
-        ];
-
         Self {
             _stream: stream,
             handle,
             ambient_sink: None,
-            base_dirs,
             config: Configuracoes::carregar(),
         }
-    }
-
-    fn resolver_caminho(&self, nome_arquivo: &str) -> Option<PathBuf> {
-        for dir in &self.base_dirs {
-            let caminho = dir.join(nome_arquivo);
-            if caminho.exists() {
-                return Some(caminho);
-            }
-        }
-        if Path::new(nome_arquivo).exists() {
-            return Some(PathBuf::from(nome_arquivo));
-        }
-        None
     }
 
     fn calcular_volume(&self, canal: f32) -> f32 {
@@ -115,7 +92,7 @@ impl AudioManager {
             return;
         }
         let Some(ref handle) = self.handle else { return };
-        let Some(caminho) = self.resolver_caminho("ambiente.mp3") else { return };
+        let Some(caminho) = resolver_arquivo_asset("audio", "ambiente.mp3") else { return };
 
         if let Ok(file) = File::open(caminho) {
             if let Ok(source) = Decoder::new(BufReader::new(file)) {
@@ -140,7 +117,7 @@ impl AudioManager {
             return;
         }
         let Some(ref handle) = self.handle else { return };
-        let Some(caminho) = self.resolver_caminho(nome_arquivo) else { return };
+        let Some(caminho) = resolver_arquivo_asset("audio", nome_arquivo) else { return };
 
         if let Ok(file) = File::open(caminho) {
             if let Ok(source) = Decoder::new(BufReader::new(file)) {
@@ -162,7 +139,7 @@ impl AudioManager {
     }
 
     pub fn som_randomico(&self) {
-        self.tocar_efeito("sonsrandomicos.mp3", self.config.volume_efeitos * 0.8);
+        self.tocar_efeito("sonsrandomicos.mp3", self.config.volume_efeitos * 0.85);
     }
 
     pub fn som_grito(&self) {
