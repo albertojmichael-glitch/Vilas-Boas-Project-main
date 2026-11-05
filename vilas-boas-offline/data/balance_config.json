@@ -1,0 +1,79 @@
+{
+  "inventario": {
+    "max_inicial": 3,
+    "slots_por_bolsa": 3,
+    "meta_conquista_acumulador": 9
+  },
+  "status_jogador": {
+    "vida_normal": 3,
+    "vida_pesadelo": 2,
+    "vida_god_mode": 9999,
+    "turnos_bateria": 12,
+    "turnos_luz_inicial": 3,
+    "isqueiro_turnos_bonus": 2,
+    "isqueiro_limite_luz_uso": 2,
+    "isqueiro_barulho_extra": 10
+  },
+  "barulho_e_ia": {
+    "reducao_passiva_turno": 5,
+    "limiar_caca": 80,
+    "limiar_alerta": 50,
+    "chance_mover_patrulha": 0.5,
+    "barulho_correr": 100,
+    "turnos_enjoado_correr": 2,
+    "chance_perder_item_correr": 0.25,
+    "barulho_ir_abrir": 15,
+    "reducao_olhar_esperar": 10,
+    "barulho_acao_comum": 5,
+    "barulho_erros_consecutivos": 30,
+    "limite_erros_dica": 3,
+    "limite_barulho_desafio_fantasma": 50
+  },
+  "exploracao": {
+    "chance_tropeco_escuro_pct": 10,
+    "chance_evento_aleatorio": 0.25,
+    "cofre_senha": "1994",
+    "max_tentativas_cofre": 3,
+    "tempo_speedrun_verdadeiro_seg": 360.0,
+    "tempo_speedrun_neutro_seg": 300.0
+  },
+  "dificuldades": {
+    "NORMAL": {
+      "hp": 3,
+      "furia_noite": 1,
+      "energia_min_noite": 100,
+      "energia_max_noite": 100
+    },
+    "PESADELO": {
+      "hp": 2,
+      "furia_noite": 2,
+      "energia_min_noite": 70,
+      "energia_max_noite": 82
+    }
+  },
+  "minigame_seguranca": {
+    "turno_final": 24,
+    "turno_inicio_calor": 12,
+    "turno_critico": 22,
+    "custo_extra_meio": 1,
+    "custo_extra_critico": 3,
+    "custo_porta": 2,
+    "custo_base_info_pesado": 1,
+    "custo_base_motor": 2,
+    "limite_usos_sistema": 2,
+    "gerador_duracao_turnos": 2,
+    "chance_interferencia_mov": 0.10,
+    "chance_rick_recuar": 0.25,
+    "chance_rick_avanca_de_3": 0.80,
+    "chance_indio_janela": 30,
+    "chance_alberto_troll": 20,
+    "chance_anomalia_camera": 1
+  },
+  "minigame_minotauro": {
+    "bateria_inicial": 30,
+    "chance_padrao_sprint": 60,
+    "distancia_perigo": 1,
+    "dano_bateria_armadilha": 3,
+    "qtd_armadilhas": 4
+  }
+}
