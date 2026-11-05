@@ -1,0 +1,13 @@
+[package]
+name = "vilas_boas"
+version = "1.982.0"
+edition = "2021"
+description = "Vilas Boas OS - Versão Executável Offline"
+
+[dependencies]
+crossterm = "0.28"
+image = "0.25"
+rand = "0.8"
+rodio = "0.19"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

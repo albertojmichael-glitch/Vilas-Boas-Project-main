@@ -1,0 +1,48 @@
+name: Build Executaveis Offline (Windows & Linux)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'offline/**'
+      - '.github/workflows/build_offline.yml'
+  workflow_dispatch:
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar codigo do repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar dependencias de audio e compilador Windows (MinGW)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libasound2-dev pkg-config mingw-w64 zip
+
+      - name: Configurar Rust e target Windows
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-gnu
+
+      - name: Compilar para Linux e Windows
+        working-directory: offline
+        run: |
+          cargo build --release
+          cargo build --release --target x86_64-pc-windows-gnu
+
+      - name: Empacotar executaveis com audios, imagens e dados
+        working-directory: offline
+        run: |
+          mkdir -p dist/assets dist/data
+          cp target/release/vilas_boas dist/vilas_boas_linux
+          cp target/x86_64-pc-windows-gnu/release/vilas_boas.exe dist/vilas_boas_windows.exe
+          cp -r ../client/assets/* dist/assets/ 2>/dev/null || true
+          cp ../server/data/game_data.json dist/data/ 2>/dev/null || true
+
+      - name: Publicar executaveis para download no GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vilas-Boas-Offline-Windows-Linux
+          path: offline/dist/
