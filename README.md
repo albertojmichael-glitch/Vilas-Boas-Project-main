@@ -1,6 +1,6 @@
 # Vilas Boas OS (v1.982)
 
-![Status](https://img.shields.io/badge/Status-Finalizado-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Desenvolvimento-red?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.11+-blue?style=for-the-badge&logo=python&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.x-black?style=for-the-badge&logo=flask&logoColor=white)
