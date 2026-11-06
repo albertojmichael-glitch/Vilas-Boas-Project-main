@@ -1,6 +1,6 @@
 [package]
 name = "vilas_boas"
-version = "20.08.0"
+version = "20.08"
 edition = "2021"
 description = "Vilas Boas - Terminal v20.08 Offline"
 
