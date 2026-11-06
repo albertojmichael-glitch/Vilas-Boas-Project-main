@@ -11,20 +11,33 @@ on:
 jobs:
   build-release:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Baixar codigo do repositorio
         uses: actions/checkout@v4
 
-      - name: Instalar dependencias de audio e compilador Windows (MinGW)
+      - name: Instalar dependencias de audio, video e compilador Windows (MinGW)
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libasound2-dev pkg-config mingw-w64 zip
+          sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer || true
+          sudo systemctl kill --kill-who=all apt-daily.service apt-daily-upgrade.service || true
+          sudo apt-get -o DPkg::Lock::Timeout=60 update
+          sudo apt-get -o DPkg::Lock::Timeout=60 install -y --no-install-recommends \
+            libasound2-dev pkg-config gcc-mingw-w64-x86-64 zip \
+            libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
+            libxkbcommon-dev libssl-dev libgtk-3-dev
 
       - name: Configurar Rust e target Windows
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-gnu
+
+      - name: Cache de dependencias do Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "offline -> target"
 
       - name: Compilar para Linux e Windows
         working-directory: offline
@@ -32,14 +45,20 @@ jobs:
           cargo build --release
           cargo build --release --target x86_64-pc-windows-gnu
 
-      - name: Empacotar executaveis com audios, imagens e dados
+      - name: Empacotar executaveis com as 4 pastas de assets e dados
         working-directory: offline
         run: |
-          mkdir -p dist/assets dist/data
+          mkdir -p dist/assets/audio dist/assets/images dist/assets/secret_images dist/assets/static/images dist/data
           cp target/release/vilas_boas dist/vilas_boas_linux
           cp target/x86_64-pc-windows-gnu/release/vilas_boas.exe dist/vilas_boas_windows.exe
-          cp -r ../client/assets/* dist/assets/ 2>/dev/null || true
-          cp ../server/data/game_data.json dist/data/ 2>/dev/null || true
+          cp -r ../client/assets/audio/* dist/assets/audio/ 2>/dev/null || true
+          cp -r ../client/assets/images/* dist/assets/images/ 2>/dev/null || true
+          cp -r ../client/assets/secret_images/* dist/assets/secret_images/ 2>/dev/null || true
+          cp -r "../client/assets/secret images/"* dist/assets/secret_images/ 2>/dev/null || true
+          cp -r ../client/assets/static/images/* dist/assets/static/images/ 2>/dev/null || true
+          cp -r ../client/static/images/* dist/assets/static/images/ 2>/dev/null || true
+          cp -r ../server/static/images/* dist/assets/static/images/ 2>/dev/null || true
+          find ../ -name "*.json" -path "*/data/*" -exec cp {} dist/data/ \; 2>/dev/null || true
 
       - name: Publicar executaveis para download no GitHub
         uses: actions/upload-artifact@v4
