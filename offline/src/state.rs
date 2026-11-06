@@ -1,6 +1,6 @@
 use crate::data::{
-    chaves_nao_saida, salas_seguras_patrulha, DadosJogo, Sala, CHANCE_MOVER_PATRULHA,
-    LIMIAR_ALERTA, LIMIAR_CACA, VIDA_NORMAL,
+    chaves_nao_saida, salas_seguras_patrulha, ConquistaDef, DadosJogo, Sala,
+    CHANCE_MOVER_PATRULHA, LIMIAR_ALERTA, LIMIAR_CACA, VIDA_NORMAL,
 };
 use rand::seq::SliceRandom;
 use rand::Rng;
@@ -9,6 +9,13 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 
 pub const ARQUIVO_SAVE: &str = "savegame.json";
+pub const DOS_VERDE: &str = "\x1b[92m";
+pub const DOS_VERMELHO: &str = "\x1b[91m";
+pub const DOS_AMARELO: &str = "\x1b[93m";
+pub const DOS_BRANCO: &str = "\x1b[97m";
+pub const DOS_CIANO: &str = "\x1b[96m";
+pub const DOS_CINZA: &str = "\x1b[90m";
+pub const RESET: &str = "\x1b[0m";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RelatorioIA {
@@ -24,6 +31,14 @@ pub struct GameState {
     pub turnos_luz: i32,
     pub turnos_no_escuro: i32,
     pub turnos_enjoado: i32,
+    pub turnos_mesma_sala: i32,
+    pub turnos_perseguidor_aviso: i32,
+    pub turnos_perseguidor_morte: i32,
+    pub turnos_fuga: i32,
+    pub posicao_perseguidor: String,
+    pub amanheceu: bool,
+    pub texto_rapido: bool,
+    pub modo_desafio: Option<String>,
     pub sala_atual: String,
     pub estado_atual: String,
     pub dificuldade_escolhida: String,
@@ -52,6 +67,10 @@ pub struct GameState {
     pub descricoes_itens: HashMap<String, String>,
     #[serde(default)]
     pub sinonimos: HashMap<String, String>,
+    #[serde(default)]
+    pub ascii_arts: HashMap<String, String>,
+    #[serde(default)]
+    pub catalogo_conquistas: Vec<ConquistaDef>,
 }
 
 impl Default for GameState {
@@ -62,7 +81,7 @@ impl Default for GameState {
 
 impl GameState {
     pub fn new() -> Self {
-        let dados = DadosJogo::carregar_da_pasta_data();
+        let dados = DadosJogo::carregar_tudo();
         let sala_inicial = if dados.mapa.contains_key("01") {
             "01".to_string()
         } else {
@@ -74,23 +93,25 @@ impl GameState {
                 .unwrap_or_else(|| "01".to_string())
         };
 
-        let sala_ia_inicial = if dados.mapa.contains_key("palco") {
-            "palco".to_string()
-        } else {
-            "entrada".to_string()
-        };
-
         Self {
             hp: VIDA_NORMAL,
             inventario: vec!["lanterna".to_string()],
             turnos_luz: 6,
             turnos_no_escuro: 0,
             turnos_enjoado: 0,
+            turnos_mesma_sala: 0,
+            turnos_perseguidor_aviso: 3,
+            turnos_perseguidor_morte: 5,
+            turnos_fuga: 6,
+            posicao_perseguidor: "palco".to_string(),
+            amanheceu: false,
+            texto_rapido: false,
+            modo_desafio: None,
             sala_atual: sala_inicial,
             estado_atual: "AGUARDANDO_DIR".to_string(),
             dificuldade_escolhida: "NORMAL".to_string(),
             nivel_barulho: 0,
-            ai_sala: sala_ia_inicial,
+            ai_sala: "palco".to_string(),
             ai_estado: "PATRULHA".to_string(),
             ai_alvo: None,
             bolsas_coletadas: 0,
@@ -112,6 +133,8 @@ impl GameState {
             mapa: dados.mapa,
             descricoes_itens: dados.descricoes_itens,
             sinonimos: dados.sinonimos,
+            ascii_arts: dados.ascii_arts,
+            catalogo_conquistas: dados.conquistas,
         }
     }
 
@@ -146,7 +169,7 @@ impl GameState {
     }
 
     pub fn desbloquear_conquista(&mut self, id: &str) -> bool {
-        if self.dev_usado {
+        if self.dev_usado && id != "trapaceiro" {
             return false;
         }
         if !self.conquistas.contains(&id.to_string()) {
@@ -169,7 +192,12 @@ impl GameState {
 
     pub fn carregar_local() -> Option<Self> {
         let conteudo = fs::read_to_string(ARQUIVO_SAVE).ok()?;
-        serde_json::from_str(&conteudo).ok()
+        let mut carregado: Self = serde_json::from_str(&conteudo).ok()?;
+        let dados = DadosJogo::carregar_tudo();
+        if carregado.ascii_arts.is_empty() {
+            carregado.ascii_arts = dados.ascii_arts;
+        }
+        Some(carregado)
     }
 
     pub fn save_existe() -> bool {

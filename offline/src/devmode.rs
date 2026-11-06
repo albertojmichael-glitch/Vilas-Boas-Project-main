@@ -1,5 +1,5 @@
 use crate::actions::{
-    imprimir_contexto_sala, COR_AMARELO, COR_CIANO, COR_VERDE, COR_VERMELHO,
+    imprimir_contexto_sala, COR_AMARELO, COR_BRANCO, COR_CIANO, COR_VERDE, COR_VERMELHO,
 };
 use crate::data::{salas_seguras_patrulha, TURNOS_BATERIA, VIDA_NORMAL};
 use crate::media::MediaManager;
@@ -144,11 +144,24 @@ pub fn processar_comando_dev(
             - dev radar on/off   : Ativa/desativa radar automático\n\
             - dev ia on/off      : Solta ou congela a IA\n\
             - gerar <item|tudo>  : Adiciona itens ao inventário\n\
-            - dev imagem <nome>  : Abre qualquer imagem ou secret_image na tela\n\
+            - dev ascii          : Lista e exibe todos os desenhos ASCII do data.py\n\
+            - dev imagem <nome>  : Abre qualquer imagem das 4 pastas de assets\n\
             - dev mapa           : Lista todas as salas carregadas da pasta /data\n\
             - dev off            : Desativa o Modo Desenvolvedor",
             COR_AMARELO,
         );
+        return true;
+    }
+
+    if comando == "dev ascii" {
+        term.push(
+            &format!("=== DESENHOS ASCII DO DATA.PY ({}) ===", jogo.ascii_arts.len()),
+            COR_AMARELO,
+        );
+        for (nome, arte) in &jogo.ascii_arts {
+            term.push(&format!("\n[ {} ]", nome), COR_CIANO);
+            term.push(arte, COR_BRANCO);
+        }
         return true;
     }
 
@@ -266,7 +279,7 @@ pub fn processar_comando_dev(
 
     if let Some(img) = comando.strip_prefix("dev imagem ") {
         if !media.acionar_imagem(img.trim(), true, false) {
-            term.push("Imagem não encontrada em assets/.", COR_VERMELHO);
+            term.push("Imagem não encontrada nas 4 pastas de assets.", COR_VERMELHO);
         }
         return true;
     }

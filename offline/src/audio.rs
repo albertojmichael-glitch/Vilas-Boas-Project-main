@@ -5,6 +5,13 @@ use std::fs::{self, File};
 use std::io::BufReader;
 
 pub const ARQUIVO_CONFIG: &str = "config.json";
+pub const DOS_VERDE: &str = "\x1b[92m";
+pub const DOS_VERMELHO: &str = "\x1b[91m";
+pub const DOS_AMARELO: &str = "\x1b[93m";
+pub const DOS_BRANCO: &str = "\x1b[97m";
+pub const DOS_CIANO: &str = "\x1b[96m";
+pub const DOS_CINZA: &str = "\x1b[90m";
+pub const RESET: &str = "\x1b[0m";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Configuracoes {
@@ -47,6 +54,16 @@ impl Configuracoes {
         if let Ok(json) = serde_json::to_string_pretty(self) {
             let _ = fs::write(ARQUIVO_CONFIG, json);
         }
+    }
+    pub fn registrar_final(&mut self, id_final: &str) -> bool {
+        if !self.conquistas_globais.contains(&id_final.to_string()) {
+            self.conquistas_globais.push(id_final.to_string());
+            self.salvar();
+        }
+        let todos = ["mediocre", "bons_sonhos", "bom", "verdadeiro"];
+        todos
+            .iter()
+            .all(|f| self.conquistas_globais.iter().any(|c| c == f))
     }
 }
 

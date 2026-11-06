@@ -1,7 +1,4 @@
-use crate::actions::{
-    imprimir_contexto_sala, processar_comando_acao, COR_AMARELO, COR_BRANCO, COR_CIANO, COR_CINZA,
-    COR_VERDE, COR_VERMELHO,
-};
+use crate::actions::{processar_comando_acao, COR_AMARELO, COR_BRANCO, COR_VERDE, COR_VERMELHO};
 use crate::audio::AudioManager;
 use crate::data::{salas_terminais, BARULHO_ERROS_CONSECUTIVOS, LIMITE_ERROS_DICA};
 use crate::devmode;
@@ -9,59 +6,45 @@ use crate::media::MediaManager;
 use crate::minigames::{imprimir_painel_cofre, processar_minigame};
 use crate::parser::normalizar;
 use crate::state::GameState;
+use crate::utils::{atualizar_eventos_de_tempo, CONQUISTAS_DB};
+use crate::views::{
+    dar_tela_de_morte, dar_tela_kernel_panic, imprimir_contexto_sala, imprimir_menu_dificuldade,
+    imprimir_tela_boot, imprimir_tutorial, rodar_final,
+};
 use crate::TerminalBuffer;
-use rand::Rng;
 
-pub fn imprimir_boot(term: &mut TerminalBuffer) {
-    term.clear();
-    term.push("VILAS BOAS OS [SISTEMA v20.08 - TERMINAL LOCAL]", COR_VERDE);
-    term.push(
-        "(C) Copyright 1982 Vilas Boas Corp. Todos os direitos reservados.\n",
-        COR_CINZA,
-    );
-    term.push("Digite 'dir' para listar os diretórios do sistema:", COR_VERDE);
-}
+pub const DOS_VERDE: &str = "\x1b[92m";
+pub const DOS_VERMELHO: &str = "\x1b[91m";
+pub const DOS_AMARELO: &str = "\x1b[93m";
+pub const DOS_BRANCO: &str = "\x1b[97m";
+pub const DOS_CIANO: &str = "\x1b[96m";
+pub const DOS_CINZA: &str = "\x1b[90m";
+pub const RESET: &str = "\x1b[0m";
 
-pub fn imprimir_menu(term: &mut TerminalBuffer, tem_save: bool) {
-    term.push(
-        "\n================[ DIRETÓRIO C:\\VILAS_BOAS ]================",
-        COR_VERDE,
-    );
-    term.push("  [1] INICIAR NOVA PARTIDA", COR_BRANCO);
-    if tem_save {
-        term.push("  [2] CONTINUAR PARTIDA SALVA", COR_AMARELO);
-    } else {
-        term.push("  [2] CONTINUAR (Nenhum save encontrado)", COR_CINZA);
-    }
-    term.push("  [3] CONQUISTAS E DESAFIOS", COR_BRANCO);
-    term.push("  [4] ARQUIVOS DE IMAGEM E SECRET IMAGES", COR_CIANO);
-    term.push("  [5] CONFIGURAÇÕES DE ÁUDIO E JUMPSCARE", COR_BRANCO);
-    term.push("  [6] ENCERRAR SISTEMA", COR_BRANCO);
-    term.push(
-        "===========================================================",
-        COR_VERDE,
-    );
-}
-
-fn registrar_conquista(
+fn destravar_conquista(
     id: &str,
     jogo: &mut GameState,
     audio: &mut AudioManager,
     term: &mut TerminalBuffer,
 ) {
-    if jogo.dev_usado {
-        return;
-    }
     let nova = jogo.desbloquear_conquista(id);
     if !audio.config.conquistas_globais.contains(&id.to_string()) {
         audio.config.conquistas_globais.push(id.to_string());
         audio.config.salvar();
     }
     if nova {
-        term.push(
-            &format!("\n[ 👑 CONQUISTA DESBLOQUEADA: {} ]", id.to_uppercase()),
-            COR_AMARELO,
-        );
+        if let Some(info) = CONQUISTAS_DB
+            .iter()
+            .find(|c| c.id == id || c.chave_db == id)
+        {
+            term.push(
+                &format!(
+                    "\n[ {} CONQUISTA DESBLOQUEADA: {} — {} ]",
+                    info.icone, info.nome, info.desc
+                ),
+                COR_AMARELO,
+            );
+        }
     }
 }
 
@@ -72,105 +55,64 @@ pub fn verificar_final_de_jogo(
     media: &mut MediaManager,
 ) -> bool {
     if jogo.sala_atual == "hall de entrada" && jogo.noite_vencida && jogo.fios_cortados_inventario {
-        registrar_conquista("final_verdadeiro", jogo, audio, term);
-        jogo.estado_atual = "FIM".to_string();
-        audio.parar_ambiente();
-        let _ = media.acionar_imagem("final", true, false);
-        term.push(
-            "\n[ FINAL VERDADEIRO ] Você destruiu a fonte de energia e escapou de Vilas Boas!",
-            COR_VERDE,
-        );
+        destravar_conquista("final_verdadeiro", jogo, audio, term);
+        if jogo.dificuldade_escolhida == "PESADELO" {
+            destravar_conquista("pesadelo_verdadeiro", jogo, audio, term);
+        }
+        rodar_final("verdadeiro", jogo, term, audio, media);
         return true;
     }
 
-    if jogo.sala_atual == "saida" || jogo.sala_atual == "final_bom" {
+    if jogo.sala_atual == "final_bom" {
+        destravar_conquista("final_bom", jogo, audio, term);
         if jogo.dificuldade_escolhida == "PESADELO" {
-            registrar_conquista("pesadelo_verdadeiro", jogo, audio, term);
-        } else {
-            registrar_conquista("normal_zerado", jogo, audio, term);
+            destravar_conquista("pesadelo_neutro", jogo, audio, term);
         }
-        jogo.estado_atual = "FIM".to_string();
-        audio.parar_ambiente();
-        term.push(
-            "\n[ VITÓRIA ] Você escapou com vida da unidade Vilas Boas!",
-            COR_VERDE,
-        );
+        rodar_final("final_bom", jogo, term, audio, media);
+        return true;
+    }
+
+    if jogo.sala_atual == "cama" {
+        rodar_final("cama", jogo, term, audio, media);
+        return true;
+    }
+
+    if jogo.sala_atual == "saida" {
+        if jogo.dificuldade_escolhida == "NORMAL" {
+            destravar_conquista("normal_zerado", jogo, audio, term);
+        }
+        rodar_final("saida", jogo, term, audio, media);
         return true;
     }
 
     if jogo.sala_atual == "morte" || jogo.hp <= 0 {
-        registrar_conquista("primeira_morte", jogo, audio, term);
-        jogo.estado_atual = "FIM".to_string();
-        audio.parar_ambiente();
-        audio.som_grito();
-        let _ = media.acionar_imagem("jumpscare", false, true);
-        term.push(
-            "\n[ SINAL PERDIDO - VOCÊ MORREU ] Digite qualquer tecla para reiniciar o terminal.",
-            COR_VERMELHO,
-        );
+        destravar_conquista("primeira_morte", jogo, audio, term);
+        dar_tela_de_morte(jogo, term, audio, media);
         return true;
     }
 
     false
 }
 
-pub fn aplicar_efeitos_pos_turno(
+pub fn iniciar_partida_com_tutorial(
+    dificuldade: &str,
+    texto_rapido: bool,
+    modo_desafio: Option<&str>,
     jogo: &mut GameState,
-    comando_correu: bool,
     term: &mut TerminalBuffer,
     audio: &mut AudioManager,
     media: &mut MediaManager,
 ) {
-    if !jogo.god_mode {
-        if jogo.turnos_luz > 0 {
-            jogo.turnos_luz -= 1;
-            if jogo.turnos_luz == 0 {
-                term.push(
-                    "[!] A bateria da lanterna acabou! Use uma bateria reserva!",
-                    COR_VERMELHO,
-                );
-            }
-        } else {
-            jogo.turnos_no_escuro += 1;
-            if rand::thread_rng().gen_bool(0.4) {
-                audio.som_randomico();
-            }
-            if jogo.turnos_no_escuro >= 3 {
-                jogo.hp = 0;
-                jogo.sala_atual = "morte".to_string();
-                let _ = verificar_final_de_jogo(jogo, term, audio, media);
-                return;
-            }
-        }
+    jogo.reiniciar_partida(dificuldade);
+    jogo.texto_rapido = texto_rapido;
+    jogo.modo_desafio = modo_desafio.map(|s| s.to_string());
+    if modo_desafio == Some("breu_total") {
+        jogo.turnos_luz = 0;
     }
-
-    if comando_correu {
-        jogo.nivel_barulho = 100;
-        term.push(
-            "Seus passos correndo ecoaram pelo corredor! (SOM: 100%)",
-            COR_AMARELO,
-        );
-    }
-
-    let relatorio = jogo.avancar_ia_perseguidor();
-    if relatorio.combate_iniciado {
-        if jogo.dev_mode {
-            devmode::interceptar_perseguidor(jogo, term);
-        } else {
-            audio.som_grito();
-            let _ = media.acionar_imagem("animatronico", false, true);
-            term.push(
-                "[ PERIGO IMINENTE ] O animatrônico está na sala! Digite 'correr <direção>'!",
-                COR_VERMELHO,
-            );
-        }
-    } else if relatorio.ativa && relatorio.distancia <= 2 {
-        audio.som_metal();
-        term.push(
-            "Passos pesados de metal rangendo se aproximam nas sombras...",
-            COR_VERMELHO,
-        );
-    }
+    audio.iniciar_ambiente();
+    term.limpar();
+    imprimir_tutorial(term, jogo);
+    imprimir_contexto_sala(jogo, term, media);
 }
 
 pub fn processar_fluxo_jogo(
@@ -181,6 +123,14 @@ pub fn processar_fluxo_jogo(
     media: &mut MediaManager,
 ) {
     let comando = normalizar(comando_bruto);
+
+    if jogo.estado_atual == "FIM" {
+        media.imagem_atual = None;
+        imprimir_tela_boot(term);
+        jogo.estado_atual = "AGUARDANDO_DIR".to_string();
+        return;
+    }
+
     if comando.is_empty() {
         return;
     }
@@ -188,6 +138,7 @@ pub fn processar_fluxo_jogo(
     if devmode::eh_codigo_de_ativacao(&comando) {
         audio.iniciar_ambiente();
         devmode::ativar_modo_dev(jogo, term, media);
+        destravar_conquista("trapaceiro", jogo, audio, term);
         return;
     }
 
@@ -201,109 +152,126 @@ pub fn processar_fluxo_jogo(
     match jogo.estado_atual.as_str() {
         "AGUARDANDO_DIR" => {
             if comando == "dir" {
-                jogo.estado_atual = "MENU".to_string();
-                imprimir_menu(term, GameState::save_existe());
+                jogo.estado_atual = "MENU_DIFICULDADE".to_string();
+                term.limpar();
+                imprimir_menu_dificuldade(
+                    term,
+                    GameState::save_existe(),
+                    &audio.config.conquistas_globais,
+                );
             } else {
                 term.push(
-                    "Comando inválido. Digite 'dir' para acessar os diretórios.",
+                    "Bad command or file name. Digite 'dir' para acessar os diretórios.",
                     COR_VERMELHO,
                 );
             }
         }
-        "MENU" => match comando.as_str() {
-            "1" | "iniciar" | "novo" => {
-                jogo.estado_atual = "MENU_DIFICULDADE".to_string();
+        "MENU_DIFICULDADE" => match comando.as_str() {
+            "1" => iniciar_partida_com_tutorial("NORMAL", false, None, jogo, term, audio, media),
+            "2" => iniciar_partida_com_tutorial("NORMAL", true, None, jogo, term, audio, media),
+            "3" => iniciar_partida_com_tutorial("PESADELO", false, None, jogo, term, audio, media),
+            "4" => iniciar_partida_com_tutorial("PESADELO", true, None, jogo, term, audio, media),
+            "5" => {
+                jogo.estado_atual = "MENU_DESAFIOS".to_string();
                 term.push(
-                    "\nSelecione a dificuldade:\n  [1] NORMAL (3 HP)\n  [2] PESADELO (1 HP)\n  [voltar] Retornar",
-                    COR_BRANCO,
+                    "\n=== MODOS DE DESAFIO ===\n\
+                    [1] SPEEDRUN (Menos de 5 minutos)\n\
+                    [2] FANTASMA (Barulho nunca pode passar de 50%)\n\
+                    [3] BREU TOTAL (Sem lanterna desde o início)\n\
+                    [voltar] Retornar ao menu",
+                    COR_AMARELO,
                 );
             }
-            "2" | "continuar" | "carregar" => {
+            "6" => {
+                jogo.estado_atual = "MENU_PERSONALIZADO".to_string();
+                term.push(
+                    "\n=== MODO PERSONALIZADO ===\n\
+                    Digite 'iniciar' para começar com parâmetros customizados ou 'voltar'.",
+                    COR_AMARELO,
+                );
+            }
+            "7" if GameState::save_existe() => {
                 if let Some(salvo) = GameState::carregar_local() {
                     *jogo = salvo;
                     audio.iniciar_ambiente();
-                    term.push("Partida salva carregada!", COR_VERDE);
+                    term.limpar();
+                    term.push("[ AUTOSAVE CARREGADO COM SUCESSO ]", COR_VERDE);
                     imprimir_contexto_sala(jogo, term, media);
-                } else {
-                    term.push("Nenhum save encontrado.", COR_VERMELHO);
                 }
             }
-            "3" | "conquistas" | "desafios" => {
-                term.push("\n=== CONQUISTAS REGISTRADAS ===", COR_AMARELO);
-                if audio.config.conquistas_globais.is_empty() {
-                    term.push("Nenhuma conquista desbloqueada ainda.", COR_CINZA);
-                } else {
-                    for c in &audio.config.conquistas_globais {
-                        term.push(&format!("  👑 {}", c), COR_VERDE);
-                    }
-                }
+            "2007" => {
+                dar_tela_kernel_panic(jogo, term);
             }
-            "4" | "galeria" | "imagens" | "secret" => {
-                jogo.estado_atual = "MENU_GALERIA".to_string();
-                let imgs: Vec<String> = MediaManager::listar_arquivos(false)
-                    .into_iter()
-                    .map(|(n, _)| n)
-                    .collect();
-                let secrets: Vec<String> = MediaManager::listar_arquivos(true)
-                    .into_iter()
-                    .map(|(n, _)| n)
-                    .collect();
-                term.push("\n=== ARQUIVOS VISUAIS DISPONÍVEIS ===", COR_CIANO);
-                term.push(&format!("Imagens: {:?}", imgs), COR_BRANCO);
-                term.push(&format!("Secret Images: {:?}", secrets), COR_AMARELO);
-                term.push(
-                    "Digite o nome do arquivo para abrir na tela ou 'voltar' para o menu.",
-                    COR_VERDE,
+            _ => {
+                imprimir_menu_dificuldade(
+                    term,
+                    GameState::save_existe(),
+                    &audio.config.conquistas_globais,
                 );
             }
-            "5" | "config" => {
-                term.push(
-                    "Dica: Você também pode clicar no ícone de Engrenagem [⚙] no canto inferior direito!",
-                    COR_CIANO,
+        },
+        "MENU_DESAFIOS" => match comando.as_str() {
+            "1" => iniciar_partida_com_tutorial(
+                "NORMAL",
+                true,
+                Some("speedrun"),
+                jogo,
+                term,
+                audio,
+                media,
+            ),
+            "2" => iniciar_partida_com_tutorial(
+                "NORMAL",
+                true,
+                Some("fantasma"),
+                jogo,
+                term,
+                audio,
+                media,
+            ),
+            "3" => iniciar_partida_com_tutorial(
+                "NORMAL",
+                true,
+                Some("breu_total"),
+                jogo,
+                term,
+                audio,
+                media,
+            ),
+            _ => {
+                jogo.estado_atual = "MENU_DIFICULDADE".to_string();
+                imprimir_menu_dificuldade(
+                    term,
+                    GameState::save_existe(),
+                    &audio.config.conquistas_globais,
                 );
             }
-            "6" | "sair" => std::process::exit(0),
-            _ => imprimir_menu(term, GameState::save_existe()),
         },
-        "MENU_DIFICULDADE" => match comando.as_str() {
-            "1" | "normal" => {
-                jogo.reiniciar_partida("NORMAL");
-                audio.iniciar_ambiente();
-                imprimir_contexto_sala(jogo, term, media);
+        "MENU_PERSONALIZADO" => {
+            if comando == "voltar" {
+                jogo.estado_atual = "MENU_DIFICULDADE".to_string();
+                imprimir_menu_dificuldade(
+                    term,
+                    GameState::save_existe(),
+                    &audio.config.conquistas_globais,
+                );
+            } else {
+                iniciar_partida_com_tutorial("PESADELO", false, None, jogo, term, audio, media);
             }
-            "2" | "pesadelo" => {
-                jogo.reiniciar_partida("PESADELO");
-                audio.iniciar_ambiente();
-                imprimir_contexto_sala(jogo, term, media);
-            }
-            "voltar" => {
-                jogo.estado_atual = "MENU".to_string();
-                imprimir_menu(term, GameState::save_existe());
-            }
-            _ => term.push("Escolha 1 (Normal), 2 (Pesadelo) ou 'voltar'.", COR_AMARELO),
-        },
-        "MENU_GALERIA" => {
-            if comando == "voltar" || comando == "sair" {
-                jogo.estado_atual = "MENU".to_string();
-                imprimir_menu(term, GameState::save_existe());
-            } else if !media.acionar_imagem(&comando, true, false) {
-                term.push("Imagem não encontrada. Digite outro nome ou 'voltar'.", COR_VERMELHO);
-            }
-        }
-        "FIM" => {
-            media.imagem_atual = None;
-            imprimir_boot(term);
-            jogo.estado_atual = "AGUARDANDO_DIR".to_string();
         }
         "JOGO" | "COMBATE_ANIMATRONICO" => {
             if ["cls", "limpar", "clear", "clean"].contains(&comando.as_str()) {
-                term.clear();
+                term.limpar();
                 imprimir_contexto_sala(jogo, term, media);
+                return;
+            }
+            if comando == "ajuda" || comando == "help" {
+                imprimir_tutorial(term, jogo);
                 return;
             }
             if comando == "salvar" {
                 if jogo.salvar_local() {
-                    term.push("Jogo salvo localmente em 'savegame.json'.", COR_VERDE);
+                    term.push("Jogo salvo em 'savegame.json'.", COR_VERDE);
                 }
                 return;
             }
@@ -334,7 +302,10 @@ pub fn processar_fluxo_jogo(
                 && jogo.sala_atual == "sala de fliperamas"
             {
                 jogo.estado_atual = "MINIGAME_JON".to_string();
-                term.push("[ FLIPERAMA: FOME DE JON ] Digite 'comer' ou 'sair'.", COR_AMARELO);
+                term.push(
+                    "[ FLIPERAMA: FOME DE JON ] Digite 'f', 'e', 'd' ou 'sair'.",
+                    COR_AMARELO,
+                );
                 return;
             }
             if comando == "jogar consertos" && jogo.sala_atual == "sala de fliperamas" {
@@ -363,7 +334,7 @@ pub fn processar_fluxo_jogo(
                     jogo.estado_atual = "MINIGAME_JULGAMENTO_Q1".to_string();
                     term.push(
                         "[ FLIPERAMA: O JULGAMENTO ] Digite as notas ou 'tocar'.",
-                        COR_CIANO,
+                        COR_BRANCO,
                     );
                 } else {
                     term.push("Exige a 'partitura rasgada'.", COR_VERMELHO);
@@ -399,15 +370,38 @@ pub fn processar_fluxo_jogo(
                 return;
             }
 
+            let sala_anterior = jogo.sala_atual.clone();
             let resultado_acao =
                 processar_comando_acao(&comando_exec, jogo, term, audio, media);
+
+            if jogo.sala_atual != sala_anterior {
+                jogo.turnos_mesma_sala = 0;
+            }
 
             let mut foi_largar = false;
             if let Some(tipo) = resultado_acao {
                 jogo.erros_consecutivos = 0;
                 foi_largar = tipo == "largar";
                 if jogo.estado_atual == "JOGO" && tipo != "olhar" {
-                    aplicar_efeitos_pos_turno(jogo, jogador_correu, term, audio, media);
+                    if jogador_correu {
+                        jogo.nivel_barulho = 100;
+                    }
+                    atualizar_eventos_de_tempo(jogo, term);
+                    let rel = jogo.avancar_ia_perseguidor();
+                    if rel.combate_iniciado {
+                        if jogo.dev_mode {
+                            devmode::interceptar_perseguidor(jogo, term);
+                        } else {
+                            audio.som_grito();
+                            let _ = media.acionar_imagem("animatronico", false, true);
+                            term.push(
+                                "[ PERIGO IMINENTE ] O animatrônico entrou na sala! Digite 'correr <direção>'!",
+                                COR_VERMELHO,
+                            );
+                        }
+                    } else if rel.ativa && rel.distancia <= 2 {
+                        audio.som_metal();
+                    }
                     let _ = jogo.salvar_local();
                 }
             } else {
@@ -419,7 +413,7 @@ pub fn processar_fluxo_jogo(
                     jogo.alterar_barulho(BARULHO_ERROS_CONSECUTIVOS);
                     jogo.ai_alvo = Some(jogo.sala_atual.clone());
                     term.push(
-                        "O barulho dos seus tropeços no escuro atraiu algo...",
+                        "Seus tropeços no escuro estão fazendo barulho...",
                         COR_AMARELO,
                     );
                     jogo.erros_consecutivos = 0;
@@ -433,19 +427,17 @@ pub fn processar_fluxo_jogo(
                 jogo.sala_atual = "01".to_string();
             }
 
-            if jogo.estado_atual == "FIM" && jogo.incendio {
-                registrar_conquista("final_verdadeiro", jogo, audio, term);
-                audio.parar_ambiente();
-                let _ = media.acionar_imagem("incendio", true, false);
-                term.push(
-                    "\n[ FINAL VERDADEIRO ] O fogo consumiu os horrores de Vilas Boas!",
-                    COR_VERDE,
-                );
+            if jogo.estado_atual == "DIALOGO_FINAL" && jogo.incendio {
+                destravar_conquista("final_verdadeiro", jogo, audio, term);
+                if jogo.dificuldade_escolhida == "PESADELO" {
+                    destravar_conquista("pesadelo_verdadeiro", jogo, audio, term);
+                }
+                rodar_final("verdadeiro", jogo, term, audio, media);
                 return;
             }
 
             if jogo.atingiu_meta_acumulador() {
-                registrar_conquista("acumulador", jogo, audio, term);
+                destravar_conquista("acumulador", jogo, audio, term);
             }
 
             if !verificar_final_de_jogo(jogo, term, audio, media) && jogo.estado_atual == "JOGO" {
@@ -463,7 +455,13 @@ pub fn processar_fluxo_jogo(
             let _ = processar_minigame(&comando, jogo, term, audio, media);
             if jogo.conquistas.len() > antes {
                 if let Some(ultima) = jogo.conquistas.last().cloned() {
-                    registrar_conquista(&ultima, jogo, audio, term);
+                    if ultima == "mestre_cofre" && jogo.cofre_tentativas == 0 {
+                        destravar_conquista("mente_brilhante", jogo, audio, term);
+                    } else if ultima == "engenheiro_eletrico" {
+                        destravar_conquista("labirinto", jogo, audio, term);
+                    } else {
+                        destravar_conquista(&ultima, jogo, audio, term);
+                    }
                 }
             }
             if jogo.estado_atual == "JOGO" {
