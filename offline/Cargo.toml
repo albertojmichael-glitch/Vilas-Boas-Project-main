@@ -3,7 +3,6 @@ name = "vilas_boas"
 version = "20.8.0"
 edition = "2021"
 description = "Vilas Boas - Terminal v20.08 Offline"
-build = "build.rs"
 
 [dependencies]
 eframe = "0.29"

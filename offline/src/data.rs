@@ -4,8 +4,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-// Embute o game_data.json real do repositório na compilação como garantia,
-// mas também lê qualquer .json da pasta /data em tempo de execução.
+const SERVER_BUNDLE_JSON: &str = include_str!(concat!(env!("OUT_DIR"), "/server_bundle.json"));
 const EMBEDDED_GAME_DATA: &str = include_str!("../../server/data/game_data.json");
 
 pub const VIDA_NORMAL: i32 = 3;
@@ -45,6 +44,20 @@ pub fn chaves_nao_saida() -> [&'static str; 8] {
         "cadeira",
         "imagem",
     ]
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ConquistaDef {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default, alias = "titulo", alias = "title", alias = "name")]
+    pub nome: String,
+    #[serde(default, alias = "description", alias = "desc")]
+    pub descricao: String,
+    #[serde(default, alias = "icon")]
+    pub icone: String,
+    #[serde(default, alias = "secret", alias = "oculta")]
+    pub secreta: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -95,24 +108,34 @@ impl Sala {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct DadosJogo {
+    #[serde(default)]
     pub mapa: HashMap<String, Sala>,
+    #[serde(default)]
     pub descricoes_itens: HashMap<String, String>,
+    #[serde(default)]
     pub sinonimos: HashMap<String, String>,
-    pub textos_extras: HashMap<String, Value>,
+    #[serde(default)]
+    pub ascii_arts: HashMap<String, String>,
+    #[serde(default)]
+    pub conquistas: Vec<ConquistaDef>,
 }
 
 impl DadosJogo {
-    pub fn carregar_da_pasta_data() -> Self {
+    pub fn carregar_tudo() -> Self {
         let mut dados = Self::default();
 
-        // 1. Carrega primeiro o JSON real embutido do repositório
+        if let Ok(b) = serde_json::from_str::<DadosJogo>(SERVER_BUNDLE_JSON) {
+            dados = b;
+        }
+
         Self::mesclar_json_str(&mut dados, EMBEDDED_GAME_DATA);
 
-        // 2. Procura pastas /data externas para permitir leitura direta de todos os .json
         let pastas_data = [
             PathBuf::from("data"),
             PathBuf::from("../data"),
             PathBuf::from("../server/data"),
+            PathBuf::from("../server/villas_boas/data"),
+            PathBuf::from("../server/vilas_boas/data"),
             PathBuf::from("server/data"),
         ];
 
@@ -131,7 +154,12 @@ impl DadosJogo {
             }
         }
 
+        dados.preencher_padroes_se_vazio();
         dados
+    }
+
+    pub fn carregar_da_pasta_data() -> Self {
+        Self::carregar_tudo()
     }
 
     fn mesclar_json_str(dados: &mut DadosJogo, raw_json: &str) {
@@ -139,7 +167,6 @@ impl DadosJogo {
             return;
         };
 
-        // Se o JSON tiver a chave "mapa", importa as salas dela
         if let Some(mapa_obj) = val.get("mapa") {
             if let Ok(m) = serde_json::from_value::<HashMap<String, Sala>>(mapa_obj.clone()) {
                 for (k, v) in m {
@@ -147,7 +174,6 @@ impl DadosJogo {
                 }
             }
         } else if let Some(obj) = val.as_object() {
-            // Caso o próprio JSON seja um dicionário de salas (como salas.json ou game_data direto)
             let parece_mapa = obj
                 .values()
                 .any(|v| v.get("descrição").is_some() || v.get("descricao").is_some());
@@ -162,50 +188,115 @@ impl DadosJogo {
             }
         }
 
-        // Descrições de itens se presentes no JSON
         for chave_itens in ["descricoes_itens", "itens_descricoes", "itens_info"] {
             if let Some(itens_val) = val.get(chave_itens) {
-                if let Ok(m) =
-                    serde_json::from_value::<HashMap<String, String>>(itens_val.clone())
+                if let Ok(m) = serde_json::from_value::<HashMap<String, String>>(itens_val.clone())
                 {
                     dados.descricoes_itens.extend(m);
                 }
             }
         }
 
-        // Sinônimos se presentes no JSON
         if let Some(sin_val) = val.get("sinonimos") {
             if let Ok(m) = serde_json::from_value::<HashMap<String, String>>(sin_val.clone()) {
                 dados.sinonimos.extend(m);
             }
         }
+    }
 
-        // Guarda qualquer outra propriedade do JSON para consulta
-        if let Some(obj) = val.as_object() {
-            for (k, v) in obj {
-                if k != "mapa" {
-                    dados.textos_extras.insert(k.clone(), v.clone());
-                }
-            }
-        }
+    fn preencher_padroes_se_vazio(&mut self) {
+        self.ascii_arts
+            .entry("ARTE_COFRE".to_string())
+            .or_insert_with(|| {
+                r#"
+  __________________________
+ /  ______________________  \
+|  |  __   __   __   __   |  |
+|  | |  | |  | |  | |  |  |  |
+|  | |__| |__| |__| |__|  |  |
+|  |                      |  |
+|  |       .------.       |  |
+|  |      /        \      |  |
+|  |     |   [**]   |     |  |
+|  |      \        /      |  |
+|  |       `------'       |  |
+|  |                      |  |
+|  |______________________|  |
+ \__________________________/
+"#
+                .to_string()
+            });
+
+        self.ascii_arts
+            .entry("ARTE_COFRE_TENSO".to_string())
+            .or_insert_with(|| {
+                r#"
+  __________________________
+ /  ______________/\_______  \
+|  |  __   __   __\/  __   |  |
+|  | |  | |  | |  |  |  |  |  |
+|  | |__| |__|/|__|  |__|  |  |
+|  |         /            |  |
+|  |       .------.       |  |
+|  |      /   !!   \      |  |
+|  |     | x [**] x |     |  |
+|  |      \        /      |  |
+|  |       `------'       |  |
+|  |                      |  |
+|  |______________________|  |
+ \__________________________/
+"#
+                .to_string()
+            });
     }
 }
 
-pub fn localizar_pasta_assets(subpasta: &str) -> Vec<PathBuf> {
-    let candidatos = [
-        format!("assets/{}", subpasta),
-        format!("../client/assets/{}", subpasta),
-        format!("client/assets/{}", subpasta),
+pub fn localizar_pastas_assets(tipo: &str) -> Vec<PathBuf> {
+    let subpastas: Vec<&str> = match tipo {
+        "audio" => vec!["audio", "static/audio"],
+        "secret_images" => vec![
+            "secret_images",
+            "secret images",
+            "static/secret_images",
+            "static/secret images",
+        ],
+        "images" => vec!["images", "static/images", "img"],
+        "todas_imagens" => vec![
+            "images",
+            "static/images",
+            "secret_images",
+            "secret images",
+            "static/secret_images",
+        ],
+        outro => vec![outro],
+    };
+
+    let prefixos = [
+        "assets",
+        "../client/assets",
+        "client/assets",
+        "../client",
+        "client",
+        "../server",
+        "../server/villas_boas",
+        "../server/vilas_boas",
+        ".",
     ];
-    candidatos
-        .into_iter()
-        .map(PathBuf::from)
-        .filter(|p| p.exists())
-        .collect()
+
+    let mut caminhos = Vec::new();
+    for pref in &prefixos {
+        for sub in &subpastas {
+            let p = Path::new(pref).join(sub);
+            if p.exists() && !caminhos.contains(&p) {
+                caminhos.push(p);
+            }
+        }
+    }
+    caminhos
 }
 
-pub fn resolver_arquivo_asset(subpasta: &str, nome: &str) -> Option<PathBuf> {
-    for dir in localizar_pasta_assets(subpasta) {
+pub fn resolver_arquivo_asset(tipo: &str, nome: &str) -> Option<PathBuf> {
+    for dir in localizar_pastas_assets(tipo) {
         let exato = dir.join(nome);
         if exato.is_file() {
             return Some(exato);

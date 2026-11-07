@@ -1,5 +1,5 @@
 use crate::state::GameState;
-use crate::ui::{DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET};
+use crate::ui::{DOS_AMARELO, DOS_VERMELHO, RESET};
 use crate::TerminalBuffer;
 use rand::seq::SliceRandom;
 use rand::Rng;

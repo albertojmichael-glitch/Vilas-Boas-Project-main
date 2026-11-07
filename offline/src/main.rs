@@ -239,7 +239,7 @@ impl eframe::App for VilasBoasApp {
                 egui::Frame::none()
                     .fill(Color32::BLACK)
                     .inner_margin(egui::Margin::symmetric(16.0, 16.0))
-                    .stroke(Stroke::new(1.5, cor_borda_painel)),
+                    .stroke(Stroke::new(1.5_f32, cor_borda_painel)),
             )
             .show(ctx, |ui| {
                 // Rodapé fixo com os 4 botões grandes (50x50)
@@ -262,7 +262,7 @@ impl eframe::App for VilasBoasApp {
                                     )
                                     .fill(Color32::BLACK)
                                     .rounding(Rounding::same(5.0))
-                                    .stroke(Stroke::new(2.0, COR_AMARELO)),
+                                    .stroke(Stroke::new(2.0_f32, COR_AMARELO)),
                                 )
                                 .on_hover_text("Conquistas e Desafios")
                                 .clicked()
@@ -280,7 +280,7 @@ impl eframe::App for VilasBoasApp {
                                     )
                                     .fill(Color32::BLACK)
                                     .rounding(Rounding::same(5.0))
-                                    .stroke(Stroke::new(2.0, COR_VERDE)),
+                                    .stroke(Stroke::new(2.0_f32, COR_VERDE)),
                                 )
                                 .on_hover_text("Alternar Tela Cheia")
                                 .clicked()
@@ -301,7 +301,7 @@ impl eframe::App for VilasBoasApp {
                                     )
                                     .fill(Color32::BLACK)
                                     .rounding(Rounding::same(5.0))
-                                    .stroke(Stroke::new(2.0, COR_VERDE)),
+                                    .stroke(Stroke::new(2.0_f32, COR_VERDE)),
                                 )
                                 .on_hover_text("Configurações de Áudio e Jumpscare")
                                 .clicked()
@@ -320,7 +320,7 @@ impl eframe::App for VilasBoasApp {
                                     )
                                     .fill(Color32::BLACK)
                                     .rounding(Rounding::same(5.0))
-                                    .stroke(Stroke::new(2.0, COR_VERDE)),
+                                    .stroke(Stroke::new(2.0_f32, COR_VERDE)),
                                 )
                                 .on_hover_text("Manual de Sobrevivência")
                                 .clicked()
@@ -418,7 +418,7 @@ impl eframe::App for VilasBoasApp {
                 if let Some(img_info) = self.media.imagem_atual.clone() {
                     egui::Frame::none()
                         .stroke(Stroke::new(
-                            1.5,
+                            1.5_f32,
                             if img_info.secreta || img_info.eh_jumpscare {
                                 COR_VERMELHO
                             } else {
@@ -505,7 +505,7 @@ impl eframe::App for VilasBoasApp {
                                             .color(COR_VERDE),
                                     )
                                     .fill(Color32::from_rgb(0, 30, 0))
-                                    .stroke(Stroke::new(1.0, COR_VERDE)),
+                                    .stroke(Stroke::new(1.0_f32, COR_VERDE)),
                                 )
                                 .clicked();
 
