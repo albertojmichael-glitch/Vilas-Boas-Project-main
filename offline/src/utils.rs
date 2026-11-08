@@ -1,5 +1,9 @@
+use crate::audio::AudioManager;
+use crate::media::MediaManager;
+use crate::parser::normalizar as normalizar_parser;
 use crate::state::GameState;
-use crate::ui::{DOS_AMARELO, DOS_VERMELHO, RESET};
+use crate::ui::{DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET};
+use crate::views;
 use crate::TerminalBuffer;
 use rand::seq::SliceRandom;
 use rand::Rng;
@@ -115,27 +119,48 @@ pub const CONQUISTAS_DB: [ConquistaInfo; 14] = [
     },
 ];
 
-pub fn remover_acentos(s: &str) -> String {
-    s.chars()
-        .map(|c| match c {
-            'á' | 'à' | 'â' | 'ã' | 'ä' | 'Á' | 'À' | 'Â' | 'Ã' | 'Ä' => 'a',
-            'é' | 'è' | 'ê' | 'ë' | 'É' | 'È' | 'Ê' | 'Ë' => 'e',
-            'í' | 'ì' | 'î' | 'ï' | 'Í' | 'Ì' | 'Î' | 'Ï' => 'i',
-            'ó' | 'ò' | 'ô' | 'õ' | 'ö' | 'Ó' | 'Ò' | 'Ô' | 'Õ' | 'Ö' => 'o',
-            'ú' | 'ù' | 'û' | 'ü' | 'Ú' | 'Ù' | 'Û' | 'Ü' => 'u',
-            'ç' | 'Ç' => 'c',
-            _ => c,
-        })
-        .collect()
+pub fn desbloquear_conquista(
+    id: &str,
+    jogo: &mut GameState,
+    ui: &mut TerminalBuffer,
+    audio: &mut AudioManager,
+) {
+    let mut chave_canonica = id.to_string();
+    let mut info_achada = None;
+    for info in &CONQUISTAS_DB {
+        if info.id == id || info.chave_db == id {
+            chave_canonica = info.chave_db.to_string();
+            info_achada = Some(info.clone());
+            break;
+        }
+    }
+
+    let nova_sessao = jogo.desbloquear_conquista(&chave_canonica);
+    let mut nova_global = false;
+    if !audio.config.conquistas_globais.contains(&chave_canonica) {
+        audio.config.conquistas_globais.push(chave_canonica.clone());
+        audio.config.salvar();
+        nova_global = true;
+    }
+
+    if nova_sessao || nova_global {
+        if let Some(info) = info_achada {
+            ui.exibir(&format!(
+                "\n{}🏆 CONQUISTA DESBLOQUEADA: {} — {}{}",
+                DOS_AMARELO, info.nome, info.desc, RESET
+            ));
+        } else {
+            ui.exibir(&format!(
+                "\n{}🏆 CONQUISTA DESBLOQUEADA: {}{}",
+                DOS_AMARELO, chave_canonica, RESET
+            ));
+        }
+        audio.tocar_bipe(880.0, 120, 0.08);
+    }
 }
 
 pub fn normalizar(texto: &str) -> String {
-    remover_acentos(texto)
-        .trim()
-        .to_lowercase()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ")
+    normalizar_parser(texto)
 }
 
 pub fn extrair_argumentos(comando_bruto: &str) -> Vec<String> {
@@ -229,6 +254,22 @@ pub fn corromper_texto(texto: &str, intensidade: f64) -> String {
     resultado
 }
 
+/// Port fiel de `texto_cintilante` do utils.py
+pub fn texto_cintilante(texto: &str) -> String {
+    let cores = [DOS_VERMELHO, DOS_AMARELO, DOS_VERDE, DOS_BRANCO];
+    let mut resultado = String::new();
+    for (i, ch) in texto.chars().enumerate() {
+        if !ch.is_whitespace() {
+            resultado.push_str(cores[i % cores.len()]);
+            resultado.push(ch);
+        } else {
+            resultado.push(ch);
+        }
+    }
+    resultado.push_str(RESET);
+    resultado
+}
+
 /// Port fiel de `processar_perseguidores_por_tempo` do utils.py
 pub fn processar_perseguidores_por_tempo(jogo: &mut GameState, ui: &mut TerminalBuffer) {
     let salas_seguras_ia = [
@@ -240,7 +281,7 @@ pub fn processar_perseguidores_por_tempo(jogo: &mut GameState, ui: &mut Terminal
         "01",
     ];
 
-    if jogo.dificuldade_escolhida == "NORMAL" {
+    if jogo.dificuldade_escolhida == "NORMAL" || jogo.dificuldade == "NORMAL" {
         if !salas_seguras_ia.contains(&jogo.sala_atual.as_str()) {
             jogo.turnos_mesma_sala += 1;
             if jogo.turnos_mesma_sala == jogo.turnos_perseguidor_aviso {
@@ -248,7 +289,7 @@ pub fn processar_perseguidores_por_tempo(jogo: &mut GameState, ui: &mut Terminal
                     "\n{}Você escuta ruídos metálicos pesados ecoando no corredor próximo...{}",
                     DOS_AMARELO, RESET
                 ));
-            } else if jogo.turnos_mesma_sala >= jogo.turnos_perseguidor_morte {
+            } else if jogo.turnos_mesma_sala == jogo.turnos_perseguidor_morte {
                 ui.exibir(&format!(
                     "\n{}\n{}Você ficou muito tempo parado. Algo entrou na sua sala...\n{}{}",
                     "=".repeat(50),
@@ -263,20 +304,20 @@ pub fn processar_perseguidores_por_tempo(jogo: &mut GameState, ui: &mut Terminal
                     ));
                     jogo.turnos_mesma_sala = 0;
                 } else {
+                    ui.pausa(4.0);
                     jogo.sala_atual = "morte".to_string();
                 }
             }
         } else {
             jogo.turnos_mesma_sala = 0;
         }
-    } else if jogo.dificuldade_escolhida == "PESADELO"
+    } else if (jogo.dificuldade_escolhida == "PESADELO" || jogo.dificuldade == "PESADELO")
         && jogo.posicao_perseguidor != "morte"
         && !salas_seguras_ia.contains(&jogo.sala_atual.as_str())
     {
         let mut conexoes = Vec::new();
         if let Some(sala_monstro) = jogo.mapa.get(&jogo.posicao_perseguidor) {
-            for (d, dest) in sala_monstro.saidas_validas(&jogo.mapa) {
-                let _ = d;
+            for (_d, dest) in sala_monstro.saidas_validas(&jogo.mapa) {
                 if !salas_seguras_ia.contains(&dest.as_str()) {
                     conexoes.push(dest);
                 }
@@ -301,10 +342,11 @@ pub fn processar_perseguidores_por_tempo(jogo: &mut GameState, ui: &mut Terminal
                 "{}A porta quebra. Ela te encontrou{}",
                 DOS_VERMELHO, RESET
             ));
+            ui.pausa(3.0);
             jogo.sala_atual = "morte".to_string();
         } else if let Some(sala_jog) = jogo.mapa.get(&jogo.sala_atual) {
             let vizinhos: Vec<String> = sala_jog
-                .saidas_validas(&jogo.mapa)
+                .saidas_listadas()
                 .into_iter()
                 .map(|(_, dest)| dest)
                 .collect();
@@ -319,7 +361,12 @@ pub fn processar_perseguidores_por_tempo(jogo: &mut GameState, ui: &mut Terminal
 }
 
 /// Port fiel de `atualizar_eventos_de_tempo` do utils.py
-pub fn atualizar_eventos_de_tempo(jogo: &mut GameState, ui: &mut TerminalBuffer) {
+pub fn atualizar_eventos_de_tempo(
+    jogo: &mut GameState,
+    ui: &mut TerminalBuffer,
+    audio: &mut AudioManager,
+    media: &mut MediaManager,
+) {
     if jogo.god_mode {
         jogo.hp = 9999;
         jogo.turnos_luz = 9999;
@@ -333,11 +380,9 @@ pub fn atualizar_eventos_de_tempo(jogo: &mut GameState, ui: &mut TerminalBuffer)
         "sala de fliperamas",
         "hall de entrada",
         "sala de refrigeração",
-        "quarto de refrigeração",
         "01",
         "balcão",
         "mesas de jantar",
-        "sala de jantar",
     ];
 
     if jogo.amanheceu || salas_iluminadas.contains(&jogo.sala_atual.as_str()) {
@@ -362,6 +407,7 @@ pub fn atualizar_eventos_de_tempo(jogo: &mut GameState, ui: &mut TerminalBuffer)
                 "\n{}A escuridão volta a dominar... Sua fonte de luz se apagou{}",
                 DOS_VERMELHO, RESET
             ));
+            ui.pausa(1.5);
         }
     } else {
         jogo.turnos_no_escuro += 1;
@@ -425,4 +471,8 @@ pub fn atualizar_eventos_de_tempo(jogo: &mut GameState, ui: &mut TerminalBuffer)
     }
 
     processar_perseguidores_por_tempo(jogo, ui);
+
+    if jogo.sala_atual == "morte" || jogo.hp <= 0 {
+        views::dar_tela_de_morte(jogo, ui, audio, media);
+    }
 }

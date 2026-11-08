@@ -1,0 +1,11 @@
+C:\Users\Alberto\Desktop\coisanovas\Vilas-Boas-Project-main\offline\target\debug\deps\claxon-acebcb688e62c416.d: C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\lib.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\crc.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\error.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\frame.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\input.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\metadata.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\subframe.rs
+
+C:\Users\Alberto\Desktop\coisanovas\Vilas-Boas-Project-main\offline\target\debug\deps\libclaxon-acebcb688e62c416.rmeta: C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\lib.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\crc.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\error.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\frame.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\input.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\metadata.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\subframe.rs
+
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\lib.rs:
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\crc.rs:
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\error.rs:
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\frame.rs:
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\input.rs:
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\metadata.rs:
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\claxon-0.4.3\src\subframe.rs:

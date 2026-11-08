@@ -1,0 +1,9 @@
+C:\Users\Alberto\Desktop\coisanovas\Vilas-Boas-Project-main\offline\target\debug\deps\immutable_chunkmap-134a72a919e1c999.d: C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\lib.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\avl.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\chunk.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\map.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\set.rs
+
+C:\Users\Alberto\Desktop\coisanovas\Vilas-Boas-Project-main\offline\target\debug\deps\libimmutable_chunkmap-134a72a919e1c999.rmeta: C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\lib.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\avl.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\chunk.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\map.rs C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\set.rs
+
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\lib.rs:
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\avl.rs:
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\chunk.rs:
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\map.rs:
+C:\Users\Alberto\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\immutable-chunkmap-2.1.5\src\set.rs:

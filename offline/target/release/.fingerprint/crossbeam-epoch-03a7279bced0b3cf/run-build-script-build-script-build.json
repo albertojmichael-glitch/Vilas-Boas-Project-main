@@ -1,0 +1,1 @@
+{"rustc":4713182338527526517,"features":"","declared_features":"","target":0,"profile":0,"path":0,"deps":[[2543204310390312751,"build_script_build",false,1896434518796054629]],"local":[{"RerunIfChanged":{"output":"release\\build\\crossbeam-epoch-03a7279bced0b3cf\\output","paths":["build.rs"]}}],"rustflags":["-C","dlltool=llvm-dlltool.exe"],"config":0,"compile_kind":0}

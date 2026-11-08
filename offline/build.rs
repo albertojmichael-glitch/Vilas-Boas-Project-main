@@ -5,7 +5,7 @@ use std::process::Command;
 
 fn main() {
     println!("cargo:rerun-if-changed=../server");
-    println!("cargo:rerun-if-changed=../data");
+    println!("cargo:rerun-if-changed=../client");
 
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("server_bundle.json");
@@ -19,6 +19,7 @@ import glob
 bundle = {
     "mapa": {},
     "descricoes_itens": {},
+    "eventos_aleatorios": [],
     "sinonimos": {},
     "ascii_arts": {},
 }
@@ -34,15 +35,14 @@ for jpath in json_candidates:
         with open(jpath, "r", encoding="utf-8") as f:
             data = json.load(f)
         if isinstance(data, dict):
-            if "mapa" in data and isinstance(data["mapa"], dict):
-                bundle["mapa"].update(data["mapa"])
-            elif any(isinstance(v, dict) and ("descrição" in v or "descricao" in v) for v in data.values()):
-                for k, v in data.items():
-                    if isinstance(v, dict):
-                        bundle["mapa"][k] = v
+            for map_key in ("mapa_original", "mapa"):
+                if map_key in data and isinstance(data[map_key], dict):
+                    bundle["mapa"].update(data[map_key])
             for k in ("descricoes_itens", "itens_descricoes", "itens_info"):
                 if k in data and isinstance(data[k], dict):
                     bundle["descricoes_itens"].update(data[k])
+            if "eventos_aleatorios" in data and isinstance(data["eventos_aleatorios"], list):
+                bundle["eventos_aleatorios"] = data["eventos_aleatorios"]
             if "sinonimos" in data and isinstance(data["sinonimos"], dict):
                 bundle["sinonimos"].update(data["sinonimos"])
     except Exception:
@@ -72,10 +72,6 @@ for pyf in sorted(glob.glob("../server/**/*.py", recursive=True)):
                             for k, v in val.items():
                                 if isinstance(v, str):
                                     bundle["descricoes_itens"][str(k)] = v
-                        elif isinstance(val, dict) and "SINONIMO" in name.upper():
-                            for k, v in val.items():
-                                if isinstance(v, str):
-                                    bundle["sinonimos"][str(k)] = v
     except Exception:
         pass
 

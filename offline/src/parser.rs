@@ -15,23 +15,33 @@ pub fn remover_acentos(s: &str) -> String {
 }
 
 pub fn normalizar(entrada: &str) -> String {
-    let sem_acento = remover_acentos(entrada).to_lowercase();
-    sem_acento
-        .split_whitespace()
-        .collect::<Vec<&str>>()
-        .join(" ")
+    let limpo: String = remover_acentos(entrada)
+        .to_lowercase()
+        .chars()
+        .filter(|c| !matches!(c, '.' | ',' | '!' | '?' | '"' | '\''))
+        .collect();
+    limpo.split_whitespace().collect::<Vec<&str>>().join(" ")
+}
+
+pub fn atalho_direcao(cmd: &str) -> Option<&'static str> {
+    match cmd {
+        "f" | "frente" | "n" | "norte" => Some("ir frente"),
+        "t" | "tras" | "atras" | "atrás" | "s" | "sul" => Some("ir atrás"),
+        "e" | "esquerda" | "w" | "oeste" => Some("ir esquerda"),
+        "d" | "direita" | "leste" => Some("ir direita"),
+        _ => None,
+    }
 }
 
 pub fn expandir_atalho_direcao(cmd: &str, sinonimos: &HashMap<String, String>) -> String {
     if let Some(mapped) = sinonimos.get(cmd) {
         return mapped.clone();
     }
+    if let Some(at) = atalho_direcao(cmd) {
+        return at.to_string();
+    }
     match cmd {
-        "f" | "frente" | "w" | "norte" => "ir frente".to_string(),
-        "t" | "atras" | "s" | "sul" => "ir atrás".to_string(),
-        "e" | "esquerda" | "a" | "oeste" => "ir esquerda".to_string(),
-        "d" | "direita" | "leste" => "ir direita".to_string(),
-        "ir t" | "ir atras" => "ir atrás".to_string(),
+        "ir t" | "ir tras" | "ir atras" => "ir atrás".to_string(),
         "ir f" => "ir frente".to_string(),
         "ir e" => "ir esquerda".to_string(),
         "ir d" => "ir direita".to_string(),

@@ -1,0 +1,1 @@
+{"rustc":4713182338527526517,"features":"","declared_features":"","target":0,"profile":0,"path":0,"deps":[[6305327886559338045,"build_script_build",false,5562080140478287508]],"local":[{"RerunIfChanged":{"output":"release\\build\\winit-bba8ea09698901c0\\output","paths":["build.rs"]}}],"rustflags":["-C","dlltool=llvm-dlltool.exe"],"config":0,"compile_kind":0}

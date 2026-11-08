@@ -180,3 +180,49 @@ Caroline, após 4 dias sendo segurança, desaparece no restaurante, e não é ma
 ## Licença
 
 Distribuído sob a licença Apache 2.0. Veja o arquivo [LICENSE](LICENSE) para mais informações.
+
+
+---
+
+## Versão Desktop Offline (Rust — Windows `.exe` & Linux)
+
+Além da versão web cliente-servidor (Python/Flask + TypeScript), o projeto conta com uma **reescrita nativa 1:1 em Rust** localizada na pasta `offline/`, compilada como um executável autônomo (*standalone*) que roda **100% sem necessidade de internet, navegador ou servidor Python**.
+
+### Principais Funcionalidades da Edição Offline em Rust
+
+- **Paridade 1:1 com a Engine Web**:
+  - Todo o mapa, descrições, eventos aleatórios e artes ASCII de `server/data.py` são extraídos automaticamente em tempo de compilação pelo `offline/build.rs` e embutidos diretamente no binário.
+  - Sistema completo de **IA de Perseguição por grafo (BFS)** com estados de Patrulha, Alerta e Caça, mecânica de barulho, tropeços no escuro e fuga (`correr <direção>`).
+  - Parser de linguagem natural tolerante a erros de digitação (*fuzzy matching* por similaridade de subsequência), remoção de acentuação e *stopwords*, além de atalhos rápidos (`f`, `a`, `e`, `d`, `p`, `l`, `u`, `c`, `x`, `i`).
+  - **Todos os 6 Minigames completos**:
+    1. **Cofre Eletrônico (`MINIGAME_COFRE`)**: Pistas embaralhadas, senha de 4 dígitos e bloqueio com alarme após 3 erros.
+    2. **A Fome de Jon (`MINIGAME_JON`)**: Fliperama de navegação sensorial nos dutos com pistas falsas (`[SENSÓRIO CONFUSO]`).
+    3. **Consertos & Sorrisos (`MINIGAME_CONSERTOS`)**: Montagem de animatrônico em 3 etapas com recompensa bônus na combinação perfeita.
+    4. **O Julgamento do Pianista (`MINIGAME_JULGAMENTO`)**: Interrogatório sobre a lore de 1982/1995 e as vítimas presas nas máquinas.
+    5. **Labirinto de Alta Tensão do Minotauro (`MINIGAME_MINOTAURO`)**: Grid 5x5 com radar ASCII dinâmico, armadilhas elétricas, dicas direcionais por áudio/texto e corte dos cabos de alta tensão.
+    6. **Turno da Noite na Sala de Segurança (`MINIGAME_SEGURANCA`)**: Sobrevivência das 12:00 AM às 06:00 AM (24 turnos) contra Rick, Jon, Caroline, Índio Jones e Alberto, incluindo câmeras, tubulação, gerador auxiliar, calor e reinicialização de sistemas via **CAPTCHAs no VILAS-BOAS OS (BSOD)**.
+  - **Todos os 4 Finais + Easter Eggs**: Final Medíocre (`saida`), Final Bons Sonhos (`cama`), Final Neutro (`final_bom`) e Final Verdadeiro (`verdadeiro`), além do Kernel Panic (`del caroline.sys` / `format a:`), leitura dos 3 disquetes com flashes subliminares, código `2007` (Modo Deus) e código `1980` (Slideshow secreto).
+- **Assets 100% Embutidos no Executável (`include_bytes!`)**:
+  - Os 6 arquivos de áudio `.mp3` e todas as 33 imagens (incluindo a moldura da TV retrô, jumpscares, telas de pânico e as 21 imagens secretas) são compilados dentro do próprio binário, permitindo executar o `.exe` isoladamente em qualquer pasta.
+- **Interface Gráfica Retrô (`eframe` / `egui`) e Sintetizador de Áudio (`rodio`)**:
+  - **Intro da TV de Tubo**: Sequência interativa com botão Power, LED, chiado de estática analógica, barras de cor com tom de teste de 1000Hz e tela `VIDEO 2`.
+  - **Efeito Typewriter & Bipes Mecânicos**: Impressão letra por letra com velocidade ajustável (`Instantâneo`, `0.5x`, `1x`, `2x`) e síntese de ondas sonoras em tempo real para teclas, alertas e erros.
+  - **HUD `[ SISTEMA v20.08 ]`**: Indicadores de HP em blocos (`[███]`), LUZ, SOM, slots visuais de inventário (`[■][□]`), botões de uso rápido e D-Pad direcional clicável.
+  - **Efeito CRT Scanlines, Toasts de Conquistas e Legendas de Acessibilidade**: Filtro visual de monitor antigo e legendas em tempo real (`[ Áudio: ... ]`) para todos os efeitos sonoros.
+  - **Gerenciador de Saves e Quadro de Líderes Offline**: Autosave automático em `savegame.json`, importação/exportação de estado em JSON, ranking local persistente em `config.json` e geração de Card de Resumo copiável para a área de transferência.
+  - **Modo Desenvolvedor Completo (`sudo admin 1982`)**: Comandos `tp`, `tp ia`, `gerar <item|tudo>`, `radar`, `dev radar on/off`, `dev ia on/off`, `dev mapa`, `dev status`, `dev dificuldade`, `dev ascii` e `dev imagem`.
+
+### Como Compilar e Executar a Versão Offline
+
+```bash
+cd offline
+
+# Executar diretamente em modo de desenvolvimento
+cargo run --release
+
+# Gerar o executável otimizado para o sistema atual
+cargo build --release
+```
+
+- **Windows**: O executável independente será gerado em `offline/target/release/vilas_boas_offline.exe`.
+- **Linux**: O binário nativo será gerado em `offline/target/release/vilas_boas_offline`.

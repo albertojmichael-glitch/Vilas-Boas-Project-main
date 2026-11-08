@@ -7,7 +7,7 @@ description = "Vilas Boas - Terminal v20.08 Offline"
 [dependencies]
 eframe = "0.29"
 egui = "0.29"
-egui_extras = { version = "0.29", features = ["all_loaders"] }
+egui_extras = { version = "0.29", features = ["file", "image"] }
 image = { version = "0.25", features = ["jpeg", "png", "webp", "bmp", "gif"] }
 rand = "0.8"
 rodio = "0.19"

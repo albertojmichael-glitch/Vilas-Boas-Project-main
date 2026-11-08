@@ -1,0 +1,1 @@
+{"rustc":4713182338527526517,"features":"","declared_features":"","target":0,"profile":0,"path":0,"deps":[[16991438365634268121,"build_script_build",false,6461800109968292450]],"local":[{"RerunIfChanged":{"output":"release\\build\\rustversion-13a1be510b363dea\\output","paths":["build/build.rs"]}}],"rustflags":["-C","dlltool=llvm-dlltool.exe"],"config":0,"compile_kind":0}

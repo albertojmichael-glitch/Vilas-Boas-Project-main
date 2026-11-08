@@ -1,0 +1,1 @@
+{"rustc":4713182338527526517,"features":"[]","declared_features":"[]","target":7845153393992308883,"profile":17078157726716824978,"path":4766942722269511066,"deps":[],"local":[{"CheckDepInfo":{"dep_info":"release\\.fingerprint\\xml-rs-a38c7421f349b7aa\\dep-lib-xml","checksum":false}}],"rustflags":["-C","dlltool=llvm-dlltool.exe"],"config":9396254390672932401,"compile_kind":0}
