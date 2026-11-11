@@ -1,6 +1,10 @@
 import logging
 import os
+import sys
 from logging.handlers import RotatingFileHandler
+
+# Garante que os módulos locais (app_factory, config, routes, villas_boas) sejam encontrados na Vercel
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from app_factory import create_app
 from flask import jsonify
@@ -11,8 +15,9 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
 
+# Na Vercel apenas /tmp permite escrita de arquivos
 try:
-    log_dir = "/tmp" if os.environ.get("VERCEL") else app.config.get("BASE_DIR", ".")
+    log_dir = "/tmp" if os.environ.get("VERCEL") else app.config.get("BASE_DIR", "/tmp")
     log_file = os.path.join(log_dir, "villas_boas.log")
     file_handler = RotatingFileHandler(
         log_file, maxBytes=10_000_000, backupCount=5, encoding="utf-8"
@@ -22,7 +27,7 @@ try:
     )
     logging.getLogger().addHandler(file_handler)
 except OSError:
-    logging.warning("Sistema de arquivos somente leitura; usando apenas stdout.")
+    logging.warning("Ambiente somente leitura detectado; usando apenas stdout.")
 
 
 @app.route("/")
