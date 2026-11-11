@@ -1,9 +1,7 @@
-import logging
 import os
 import secrets
 from typing import ClassVar
 
-logger = logging.getLogger(__name__)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -16,6 +14,14 @@ def is_production() -> bool:
         os.environ.get("FLASK_ENV") == "production"
         or os.environ.get("PROD", "").strip().lower() in ("1", "true", "yes", "on")
     )
+
+
+def _obter_database_url() -> str | None:
+    for chave in ("DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL"):
+        val = os.environ.get(chave, "").strip()
+        if val and not val.startswith("${{"):
+            return val
+    return None
 
 
 class Config:
@@ -37,46 +43,38 @@ class Config:
     ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
     FRONTEND_URL = os.environ.get("FRONTEND_URL")
     ALLOWED_ORIGINS_ENV = os.environ.get("ALLOWED_ORIGINS", "")
-    DATABASE_URL = os.environ.get("DATABASE_URL")
-    REDIS_URL = os.environ.get("REDIS_URL")
+    DATABASE_URL = _obter_database_url()
+    REDIS_URL = os.environ.get("REDIS_URL") or os.environ.get("KV_URL")
     SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN") or None
     SESSION_COOKIE_SAMESITE = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax")
 
     @classmethod
     def validar_e_configurar(cls):
         cls.IS_PRODUCTION = is_production()
-        cls.SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get(
-            "FLASK_SECRET_KEY"
+        cls.SECRET_KEY = (
+            os.environ.get("SECRET_KEY")
+            or os.environ.get("FLASK_SECRET_KEY")
+            or "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
         )
         cls.SAVE_ENCRYPTION_KEY = (
-            os.environ.get("SAVE_ENCRYPTION_KEY") or cls.SECRET_KEY
+            os.environ.get("SAVE_ENCRYPTION_KEY")
+            or cls.SECRET_KEY
         )
-        cls.ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
-        cls.FRONTEND_URL = os.environ.get("FRONTEND_URL")
+        cls.ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN") or secrets.token_hex(16)
+        cls.FRONTEND_URL = os.environ.get("FRONTEND_URL") or "http://localhost:5000"
         cls.ALLOWED_ORIGINS_ENV = os.environ.get("ALLOWED_ORIGINS", "")
-        cls.DATABASE_URL = os.environ.get("DATABASE_URL")
-        cls.REDIS_URL = os.environ.get("REDIS_URL")
+        cls.DATABASE_URL = _obter_database_url()
+        cls.REDIS_URL = os.environ.get("REDIS_URL") or os.environ.get("KV_URL")
         cls.SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN") or None
         cls.SESSION_COOKIE_SAMESITE = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax")
 
-        if not cls.SECRET_KEY:
-            cls.SECRET_KEY = "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
-        if not cls.SAVE_ENCRYPTION_KEY:
-            cls.SAVE_ENCRYPTION_KEY = "DEV_SAVE_KEY_DO_NOT_USE_IN_PROD_1982"
-
-        cls.FRONTEND_URL = cls.FRONTEND_URL or "http://localhost:5000"
-
         if not cls.DATABASE_URL:
-            db_path = "/tmp/local_testes.db" if os.environ.get("VERCEL") else "local_testes.db"
-            cls.DATABASE_URL = f"sqlite:///{db_path}"
-            logger.warning("Aviso: DATABASE_URL ausente. Usando SQLite.")
+            cls.DATABASE_URL = "sqlite:////tmp/local_testes.db"
+            print("⚠️ Aviso: DATABASE_URL ausente. Usando SQLite em /tmp.")
         elif cls.DATABASE_URL.startswith("postgres://"):
             cls.DATABASE_URL = cls.DATABASE_URL.replace(
                 "postgres://", "postgresql://", 1
             )
-
-        if not cls.ADMIN_TOKEN:
-            cls.ADMIN_TOKEN = secrets.token_hex(16)
 
         if cls.ALLOWED_ORIGINS_ENV:
             cls.ALLOWED_ORIGINS = [
