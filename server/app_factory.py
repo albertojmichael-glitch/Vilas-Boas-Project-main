@@ -76,18 +76,20 @@ def create_app():
     )
 
     with app.app_context():
-        from routes.admin import admin_bp
-        from routes.auth import auth_bp
-        from routes.game import game_bp
+      import models  # noqa: F401
+      from routes.admin import admin_bp
+      from routes.auth import auth_bp
+      from routes.game import game_bp
+      from sqlalchemy.exc import SQLAlchemyError
 
-        app.register_blueprint(game_bp)
-        app.register_blueprint(admin_bp)
-        app.register_blueprint(auth_bp)
+      app.register_blueprint(game_bp)
+      app.register_blueprint(admin_bp)
+      app.register_blueprint(auth_bp)
 
-        try:
-            db.create_all()
-        except SQLAlchemyError as e:
-            app.logger.warning(f"Aviso ao inicializar tabelas do banco: {e}")
+      try:
+          db.create_all()
+      except SQLAlchemyError as e:
+          app.logger.warning(f"Aviso ao inicializar tabelas do banco: {e}")
 
     if not os.environ.get("VERCEL"):
         from services.telemetry_service import worker_telemetria
