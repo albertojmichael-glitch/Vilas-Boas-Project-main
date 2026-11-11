@@ -1,10 +1,10 @@
 import logging
 import os
 from logging.handlers import RotatingFileHandler
-from werkzeug.exceptions import HTTPException
 
 from app_factory import create_app
 from flask import jsonify
+from werkzeug.exceptions import HTTPException
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,7 @@ def page_not_found(e):
 @app.errorhandler(405)
 def method_not_allowed(e):
     return jsonify({"erro": "Método não permitido."}), 405
+
 
 @app.errorhandler(Exception)
 def handle_unexpected_error(e):

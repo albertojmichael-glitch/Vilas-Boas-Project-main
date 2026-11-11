@@ -87,6 +87,10 @@ class Config:
             cls.DATABASE_URL = cls.DATABASE_URL.replace(
                 "postgres://", "postgresql://", 1
             )
+        elif cls.DATABASE_URL.startswith("postgresql+psycopg://"):
+            cls.DATABASE_URL = cls.DATABASE_URL.replace(
+                "postgresql+psycopg://", "postgresql+psycopg2://", 1
+            )
 
         if cls.ALLOWED_ORIGINS_ENV:
             cls.ALLOWED_ORIGINS = [
