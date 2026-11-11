@@ -5,7 +5,6 @@ from datetime import timedelta
 from config import Config
 from extensions import cors, db, limiter, migrate, oauth
 from flask import Flask
-from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 

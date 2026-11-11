@@ -78,7 +78,11 @@ class Config:
         cls.SESSION_COOKIE_SAMESITE = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax")
 
         if not cls.DATABASE_URL:
-            cls.DATABASE_URL = "sqlite:////tmp/local_testes.db"
+            cls.DATABASE_URL = (
+                "sqlite:////tmp/local_testes.db"
+                if os.environ.get("VERCEL")
+                else "sqlite:///local_testes.db"
+            )
         elif cls.DATABASE_URL.startswith("postgres://"):
             cls.DATABASE_URL = cls.DATABASE_URL.replace(
                 "postgres://", "postgresql://", 1
@@ -101,16 +105,13 @@ class Config:
 
         cls.SQLALCHEMY_DATABASE_URI = cls.DATABASE_URL
         cls.SQLALCHEMY_TRACK_MODIFICATIONS = False
-        if cls.DATABASE_URL.startswith("sqlite"):
-            cls.SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
-        else:
-            cls.SQLALCHEMY_ENGINE_OPTIONS = {
-                "pool_pre_ping": True,
-                "pool_recycle": int(os.environ.get("DB_POOL_RECYCLE", "300")),
-                "pool_size": int(os.environ.get("DB_POOL_SIZE", "5")),
-                "max_overflow": int(os.environ.get("DB_MAX_OVERFLOW", "10")),
-                "pool_timeout": int(os.environ.get("DB_POOL_TIMEOUT", "30")),
-            }
+        cls.SQLALCHEMY_ENGINE_OPTIONS = {
+            "pool_pre_ping": True,
+            "pool_recycle": int(os.environ.get("DB_POOL_RECYCLE", "300")),
+            "pool_size": int(os.environ.get("DB_POOL_SIZE", "5")),
+            "max_overflow": int(os.environ.get("DB_MAX_OVERFLOW", "10")),
+            "pool_timeout": int(os.environ.get("DB_POOL_TIMEOUT", "30")),
+        }
 
 
 Config.validar_e_configurar()
