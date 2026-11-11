@@ -5,6 +5,7 @@ from datetime import timedelta
 from config import Config
 from extensions import cors, db, limiter, migrate, oauth
 from flask import Flask
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
@@ -83,7 +84,10 @@ def create_app():
         app.register_blueprint(admin_bp)
         app.register_blueprint(auth_bp)
 
-    from services.telemetry_service import worker_telemetria
+        try:
+            db.create_all()
+        except Exception as e:  # noqa: BLE001
+            app.logger.warning(f"Aviso ao inicializar tabelas do banco: {e}")
 
     if not os.environ.get("VERCEL"):
         from services.telemetry_service import worker_telemetria
