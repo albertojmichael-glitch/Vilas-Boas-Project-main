@@ -60,11 +60,10 @@ function playBip(tipo: TipoBeep = 'sucesso'): void {
 
 // Sanitiza HTML recebido do servidor permitindo apenas spans de cor do terminal
 function sanitizarHTMLServidor(raw: string): string {
-    return raw.replace(/<\/?(?!span\b)[^>]*>/gi, (tag) =>
+    return raw.replace(/<(?!\/?span\b)[^>]*>/gi, (tag) =>
         tag.replace(/</g, '&lt;').replace(/>/g, '&gt;')
     );
 }
-
 // 1. Sistema de conquistas
 
 function abrirModalConquistas(): void {
