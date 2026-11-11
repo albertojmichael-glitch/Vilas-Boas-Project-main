@@ -15,9 +15,7 @@ logging.basicConfig(
 )
 
 try:
-    log_dir = (
-        "/tmp" if os.environ.get("VERCEL") else app.config.get("BASE_DIR", "/tmp")
-    )
+    log_dir = "/tmp" if os.environ.get("VERCEL") else app.config.get("BASE_DIR", "/tmp")
     log_file = os.path.join(log_dir, "villas_boas.log")
     file_handler = RotatingFileHandler(
         log_file, maxBytes=10_000_000, backupCount=5, encoding="utf-8"

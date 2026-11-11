@@ -57,8 +57,7 @@ class Config:
             or "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
         )
         cls.SAVE_ENCRYPTION_KEY = (
-            os.environ.get("SAVE_ENCRYPTION_KEY")
-            or cls.SECRET_KEY
+            os.environ.get("SAVE_ENCRYPTION_KEY") or cls.SECRET_KEY
         )
         cls.ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN") or secrets.token_hex(16)
         cls.FRONTEND_URL = os.environ.get("FRONTEND_URL") or "http://localhost:5000"
