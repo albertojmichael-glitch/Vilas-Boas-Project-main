@@ -86,7 +86,7 @@ def create_app():
 
         try:
             db.create_all()
-        except Exception as e:  # noqa: BLE001
+        except SQLAlchemyError as e:
             app.logger.warning(f"Aviso ao inicializar tabelas do banco: {e}")
 
     if not os.environ.get("VERCEL"):

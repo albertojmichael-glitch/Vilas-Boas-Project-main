@@ -1,4 +1,6 @@
 import base64
+import binascii
+import contextlib
 import hashlib
 import os
 import secrets
@@ -28,12 +30,10 @@ def _obter_database_url() -> str | None:
 
 def _garantir_fernet_key(raw_key: str) -> str:
     """Garante que a chave tenha 32 bytes em urlsafe base64 para o Fernet."""
-    try:
+    with contextlib.suppress(binascii.Error, ValueError):
         decodificada = base64.urlsafe_b64decode(raw_key.encode("utf-8"))
         if len(decodificada) == 32:
             return raw_key
-    except Exception:
-        pass
     digest = hashlib.sha256(raw_key.encode("utf-8")).digest()
     return base64.urlsafe_b64encode(digest).decode("utf-8")
 
