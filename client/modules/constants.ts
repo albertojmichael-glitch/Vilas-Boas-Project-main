@@ -1,6 +1,6 @@
 import type { Conquista } from './types.js';
 
-export const API_URL = "https://vilas-boas-project-main.up.railway.app";
+export const API_URL = "/api";
 export const SAVE_VERSION = 1.0;
 export const LIMITE_LINHAS = 50;
 
