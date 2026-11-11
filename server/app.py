@@ -7,17 +7,22 @@ from flask import jsonify
 
 app = create_app()
 
-# logging em arquivo
-
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
-log_file = os.path.join(app.config.get("BASE_DIR"), "villas_boas.log")
-file_handler = RotatingFileHandler(
-    log_file, maxBytes=10_000_000, backupCount=5, encoding="utf-8"
-)
-file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
-logging.getLogger().addHandler(file_handler)
+
+try:
+    log_dir = "/tmp" if os.environ.get("VERCEL") else app.config.get("BASE_DIR", ".")
+    log_file = os.path.join(log_dir, "villas_boas.log")
+    file_handler = RotatingFileHandler(
+        log_file, maxBytes=10_000_000, backupCount=5, encoding="utf-8"
+    )
+    file_handler.setFormatter(
+        logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    )
+    logging.getLogger().addHandler(file_handler)
+except OSError:
+    logging.warning("Sistema de arquivos somente leitura; usando apenas stdout.")
 
 
 @app.route("/")
@@ -42,5 +47,4 @@ def method_not_allowed(e):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5000"))
-
     app.run(host="0.0.0.0", port=port)

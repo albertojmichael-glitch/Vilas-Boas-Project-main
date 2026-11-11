@@ -85,8 +85,11 @@ def create_app():
 
     from services.telemetry_service import worker_telemetria
 
-    thread = threading.Thread(target=worker_telemetria, args=(app,), daemon=True)
-    thread.start()
+    if not os.environ.get("VERCEL"):
+        from services.telemetry_service import worker_telemetria
+
+        thread = threading.Thread(target=worker_telemetria, args=(app,), daemon=True)
+        thread.start()
 
     @app.after_request
     def aplicar_headers_de_seguranca(response):
