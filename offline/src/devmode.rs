@@ -19,11 +19,7 @@ pub fn eh_codigo_de_ativacao(comando_normalizado: &str) -> bool {
     comando_normalizado == normalizar(CODIGO_PADRAO)
 }
 
-pub fn ativar_modo_dev(
-    jogo: &mut GameState,
-    ui: &mut TerminalBuffer,
-    media: &mut MediaManager,
-) {
+pub fn ativar_modo_dev(jogo: &mut GameState, ui: &mut TerminalBuffer, media: &mut MediaManager) {
     let era_menu = !["JOGO", "COMBATE_ANIMATRONICO"].contains(&jogo.estado_atual.as_str())
         && !jogo.estado_atual.starts_with("MINIGAME_");
 
@@ -130,8 +126,7 @@ pub fn pos_turno(
     if jogo.dev_mode && !foi_largar {
         for item in snapshot.inventario {
             if !jogo.inventario.contains(&item) {
-                if item == "tesoura" && jogo.inventario.contains(&"tesoura quebrada".to_string())
-                {
+                if item == "tesoura" && jogo.inventario.contains(&"tesoura quebrada".to_string()) {
                     continue;
                 }
                 jogo.inventario.push(item);
@@ -298,8 +293,8 @@ pub fn processar_comando_dev(
         }
 
         let opcoes_itens: Vec<String> = jogo.descricoes_itens.keys().cloned().collect();
-        let item_real = encontrar_melhor_match(alvo, &opcoes_itens, 0.70)
-            .unwrap_or_else(|| alvo.to_string());
+        let item_real =
+            encontrar_melhor_match(alvo, &opcoes_itens, 0.70).unwrap_or_else(|| alvo.to_string());
         if !jogo.inventario.contains(&item_real) {
             jogo.inventario.push(item_real.clone());
         }

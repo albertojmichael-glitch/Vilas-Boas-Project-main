@@ -9,7 +9,9 @@ mod engine;
 mod media;
 mod minigames;
 mod parser;
+mod seguranca;
 mod state;
+mod storage;
 mod ui;
 mod utils;
 mod views;
@@ -26,7 +28,6 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 use state::GameState;
 use std::collections::VecDeque;
-use std::fs;
 use std::time::{Duration, Instant};
 use ui::{COR_AMARELO, COR_BRANCO, COR_CIANO, COR_CINZA, COR_VERDE, COR_VERMELHO};
 use utils::CONQUISTAS_DB;
@@ -54,7 +55,7 @@ pub enum ItemFilaTerminal {
     Limpar,
     Linha {
         linha: LinhaTerminal,
-        animada: bool,
+        intervalo: Option<Duration>,
     },
     Pausa(f32),
     Efeito(String),
@@ -75,12 +76,17 @@ impl TerminalBuffer {
     }
 
     pub fn exibir(&mut self, msg: &str) {
-        self.enfileirar_ansi(msg, COR_BRANCO, false);
+        self.enfileirar_ansi(msg, COR_BRANCO, None);
     }
 
     pub fn animar(&mut self, msg: &str, cor_padrao_ansi: &str) {
+        self.animar_com_intervalo(msg, cor_padrao_ansi, 0.015);
+    }
+
+    pub fn animar_com_intervalo(&mut self, msg: &str, cor_padrao_ansi: &str, segundos: f32) {
         let padrao = Self::cor_de_codigo(cor_padrao_ansi, COR_BRANCO);
-        self.enfileirar_ansi(msg, padrao, true);
+        let intervalo = (segundos > 0.0).then(|| Duration::from_secs_f32(segundos));
+        self.enfileirar_ansi(msg, padrao, intervalo);
     }
 
     pub fn pausa(&mut self, segundos: f32) {
@@ -88,7 +94,7 @@ impl TerminalBuffer {
     }
 
     pub fn push(&mut self, texto: &str, cor_padrao: Color32) {
-        self.enfileirar_ansi(texto, cor_padrao, false);
+        self.enfileirar_ansi(texto, cor_padrao, None);
     }
 
     pub fn buffer_efeito(&mut self, marcador: &str) {
@@ -108,11 +114,10 @@ impl TerminalBuffer {
         }
     }
 
-    pub fn enfileirar_ansi(&mut self, texto: &str, cor_inicial: Color32, animada: bool) {
-        let limpo = texto.replace("@@TYPE@@", "").replace("@@CLEAR@@", "");
-        for raw_line in limpo.split('\n') {
+    fn enfileirar_ansi(&mut self, texto: &str, cor_inicial: Color32, intervalo: Option<Duration>) {
+        let mut cor_atual = cor_inicial;
+        for raw_line in texto.split('\n') {
             let mut segmentos = Vec::new();
-            let mut cor_atual = cor_inicial;
             let mut resto = raw_line;
 
             while let Some(pos) = resto.find("\x1b[") {
@@ -145,7 +150,7 @@ impl TerminalBuffer {
 
             self.fila.push_back(ItemFilaTerminal::Linha {
                 linha: LinhaTerminal { segmentos },
-                animada,
+                intervalo,
             });
         }
     }
@@ -165,12 +170,13 @@ struct LinhaEmDigitacao {
     chars_visiveis: usize,
     total_chars: usize,
     ultimo_tick: Instant,
+    intervalo: Duration,
 }
 
 struct VilasBoasApp {
     jogo: GameState,
     term: TerminalBuffer,
-    linhas_visiveis: Vec<LinhaTerminal>,
+    linhas_visiveis: VecDeque<LinhaTerminal>,
     linha_digitando: Option<LinhaEmDigitacao>,
     pausa_ate: Option<Instant>,
     entrada: String,
@@ -198,7 +204,8 @@ struct VilasBoasApp {
     jumpscare_overlay_ate: Option<(Instant, String)>,
     bsod_overlay_ate: Option<(Instant, String)>,
     panic_ativo: bool,
-    flash_secrets_ativo: bool,
+    proximo_flash_secreto: Option<Instant>,
+    flash_secreto: Option<(Instant, &'static str)>,
     slideshow_1980: Option<(usize, Instant)>,
     conquistas_conhecidas: usize,
     toast_conquista: Option<(String, String, Instant)>,
@@ -207,6 +214,18 @@ struct VilasBoasApp {
 impl VilasBoasApp {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
         egui_extras::install_image_loaders(&cc.egui_ctx);
+
+        let mut fonts = egui::FontDefinitions::default();
+        fonts.font_data.insert(
+            "VT323".to_string(),
+            egui::FontData::from_static(include_bytes!("../fonts/VT323-Regular.ttf")),
+        );
+        fonts
+            .families
+            .entry(FontFamily::Monospace)
+            .or_default()
+            .insert(0, "VT323".to_string());
+        cc.egui_ctx.set_fonts(fonts);
 
         let mut visuals = egui::Visuals::dark();
         visuals.panel_fill = Color32::BLACK;
@@ -225,7 +244,7 @@ impl VilasBoasApp {
         Self {
             jogo,
             term,
-            linhas_visiveis: Vec::new(),
+            linhas_visiveis: VecDeque::new(),
             linha_digitando: None,
             pausa_ate: None,
             entrada: String::new(),
@@ -249,7 +268,8 @@ impl VilasBoasApp {
             jumpscare_overlay_ate: None,
             bsod_overlay_ate: None,
             panic_ativo: false,
-            flash_secrets_ativo: false,
+            proximo_flash_secreto: None,
+            flash_secreto: None,
             slideshow_1980: None,
             conquistas_conhecidas: qtd_conquistas,
             toast_conquista: None,
@@ -259,30 +279,41 @@ impl VilasBoasApp {
     fn aplicar_efeito(&mut self, marcador: &str, ctx: &egui::Context) {
         let mut rng = rand::thread_rng();
         match marcador {
+            "@@PASSO@@" => self.audio.som_metal(),
+            "@@PORTA@@" => self.audio.som_porta(),
             "@@JUMPSCARE@@" => {
+                self.audio.som_grito();
                 self.media.flash_ticks = 18;
                 let img = if rng.gen::<bool>() {
                     "JUMPSCARE1.jpg"
                 } else {
                     "JUMPSCARE2.jpg"
                 };
-                self.jumpscare_overlay_ate =
-                    Some((Instant::now() + Duration::from_millis(1250), img.to_string()));
+                self.jumpscare_overlay_ate = Some((
+                    Instant::now() + Duration::from_millis(2500),
+                    img.to_string(),
+                ));
             }
             "@@BSOD@@" => {
                 let opcoes = ["JAPONESMEDO.jpg", "SHEISHERE1.jpg", "SHEISHERE2.jpg"];
                 let img = *opcoes.choose(&mut rng).unwrap_or(&"SHEISHERE1.jpg");
-                self.bsod_overlay_ate =
-                    Some((Instant::now() + Duration::from_millis(1450), img.to_string()));
+                self.audio.som_erro();
+                self.bsod_overlay_ate = Some((
+                    Instant::now() + Duration::from_millis(2500),
+                    img.to_string(),
+                ));
             }
             "@@PANIC@@" => {
                 self.panic_ativo = true;
             }
             "@@START_FLASH_SECRETS@@" => {
-                self.flash_secrets_ativo = true;
+                self.proximo_flash_secreto =
+                    Some(Instant::now() + Duration::from_millis(rng.gen_range(800..2300)));
+                self.flash_secreto = None;
             }
             "@@STOP_FLASH_SECRETS@@" => {
-                self.flash_secrets_ativo = false;
+                self.proximo_flash_secreto = None;
+                self.flash_secreto = None;
             }
             "@@PLAY_1980_SLIDESHOW@@" => {
                 self.audio.som_chiado_tv();
@@ -314,7 +345,8 @@ impl VilasBoasApp {
         self.media.imagem_atual = None;
         self.modo_energia = "NORMAL".to_string();
         self.panic_ativo = false;
-        self.flash_secrets_ativo = false;
+        self.proximo_flash_secreto = None;
+        self.flash_secreto = None;
         self.jumpscare_overlay_ate = None;
         self.bsod_overlay_ate = None;
         self.slideshow_1980 = None;
@@ -322,18 +354,22 @@ impl VilasBoasApp {
         self.linha_digitando = None;
         self.term.fila.clear();
         imprimir_tela_boot(&mut self.term);
-        self.jogo.estado_atual = "AGUARDANDO_DIR".to_string();
+        self.jogo.resetar_para_novo_jogo();
+        self.audio.iniciar_ambiente();
+        self.pausa_ate = None;
+        self.entrada.clear();
+        self.pontuacao_pendente = None;
     }
 
     fn descarregar_fila_instantaneamente(&mut self, ctx: &egui::Context) {
         if let Some(atual) = self.linha_digitando.take() {
-            self.linhas_visiveis.push(atual.linha);
+            self.adicionar_linha(atual.linha);
         }
         self.pausa_ate = None;
         while let Some(item) = self.term.fila.pop_front() {
             match item {
                 ItemFilaTerminal::Limpar => self.linhas_visiveis.clear(),
-                ItemFilaTerminal::Linha { linha, .. } => self.linhas_visiveis.push(linha),
+                ItemFilaTerminal::Linha { linha, .. } => self.adicionar_linha(linha),
                 ItemFilaTerminal::Pausa(_) => {}
                 ItemFilaTerminal::Efeito(ef) => self.aplicar_efeito(&ef, ctx),
             }
@@ -363,7 +399,8 @@ impl VilasBoasApp {
         }
 
         if let Some(ref mut atual) = self.linha_digitando {
-            let intervalo_ms = (14.0 / vel_config.max(0.25)) as u64;
+            let intervalo_ms =
+                (atual.intervalo.as_secs_f32() * 1000.0 / vel_config.max(0.25)).max(1.0) as u64;
             let decorrido = atual.ultimo_tick.elapsed().as_millis() as u64;
             if decorrido >= intervalo_ms {
                 let avanco = ((decorrido / intervalo_ms.max(1)) as usize).clamp(1, 6);
@@ -374,7 +411,7 @@ impl VilasBoasApp {
 
             if atual.chars_visiveis >= atual.total_chars {
                 let concluida = self.linha_digitando.take().unwrap();
-                self.linhas_visiveis.push(concluida.linha);
+                self.adicionar_linha(concluida.linha);
             } else {
                 ctx.request_repaint_after(Duration::from_millis(16));
                 return;
@@ -390,28 +427,36 @@ impl VilasBoasApp {
                     self.aplicar_efeito(&ef, ctx);
                 }
                 ItemFilaTerminal::Pausa(segs) => {
-                    let dur = Duration::from_secs_f32((segs / vel_config.max(0.5)).min(3.0));
+                    let dur = Duration::from_secs_f32(segs / vel_config.max(0.5));
                     self.pausa_ate = Some(Instant::now() + dur);
                     ctx.request_repaint_after(Duration::from_millis(30));
                     break;
                 }
-                ItemFilaTerminal::Linha { linha, animada } => {
+                ItemFilaTerminal::Linha { linha, intervalo } => {
                     let total = linha.total_chars();
-                    if !animada || total == 0 {
-                        self.linhas_visiveis.push(linha);
-                    } else {
+                    if let Some(intervalo) = intervalo.filter(|_| total > 0) {
                         self.linha_digitando = Some(LinhaEmDigitacao {
                             linha,
                             chars_visiveis: 1,
                             total_chars: total,
                             ultimo_tick: Instant::now(),
+                            intervalo,
                         });
                         ctx.request_repaint_after(Duration::from_millis(16));
                         break;
                     }
+                    self.adicionar_linha(linha);
                 }
             }
         }
+    }
+
+    fn adicionar_linha(&mut self, linha: LinhaTerminal) {
+        const LIMITE_LINHAS: usize = 50;
+        if self.linhas_visiveis.len() >= LIMITE_LINHAS {
+            self.linhas_visiveis.pop_front();
+        }
+        self.linhas_visiveis.push_back(linha);
     }
 
     fn verificar_novas_conquistas_e_finais(&mut self) {
@@ -467,13 +512,7 @@ impl VilasBoasApp {
             self.indice_historico = None;
         }
 
-        let finais_antes = self.audio.config.finais_desbloqueados.len();
         let estado_antes = self.jogo.estado_atual.clone();
-
-        if estado_antes == "FIM" {
-            self.panic_ativo = false;
-            self.pontuacao_pendente = None;
-        }
 
         processar_fluxo_jogo(
             &cmd_trim,
@@ -484,12 +523,20 @@ impl VilasBoasApp {
         );
 
         self.verificar_novas_conquistas_e_finais();
+        if estado_antes == "FIM" && self.jogo.estado_atual != "FIM" {
+            self.panic_ativo = false;
+            self.modo_energia = "NORMAL".to_string();
+            self.pontuacao_pendente = None;
+        }
 
-        // Se acabou de terminar um final vitorioso (não morte/panic), prepara pontuação para o Placar Local
         if self.jogo.estado_atual == "FIM"
             && estado_antes != "FIM"
-            && self.jogo.sala_atual != "morte"
-            && !self.panic_ativo
+            && matches!(
+                self.jogo.sala_atual.as_str(),
+                "saida" | "cama" | "hall de entrada"
+            )
+            && !self.jogo.dev_usado
+            && !self.jogo.god_mode
         {
             let tipo_final = if self.jogo.fios_cortados_inventario
                 && (self.jogo.sala_atual == "hall" || self.jogo.sala_atual == "hall de entrada")
@@ -510,7 +557,6 @@ impl VilasBoasApp {
                 tipo_final.to_string(),
                 tempo,
             ));
-            let _ = finais_antes;
         }
     }
 
@@ -540,14 +586,14 @@ impl VilasBoasApp {
                 match self.intro_tv.clone() {
                     EstadoIntroTv::Estatica(inicio) => {
                         ctx.request_repaint_after(Duration::from_millis(40));
-                        if agora.duration_since(inicio) >= Duration::from_millis(1700) {
+                        if agora.duration_since(inicio) >= Duration::from_millis(1500) {
                             self.audio.som_apito_tv();
                             self.intro_tv = EstadoIntroTv::BarrasCor(agora);
                         }
                     }
                     EstadoIntroTv::BarrasCor(inicio) => {
                         ctx.request_repaint_after(Duration::from_millis(40));
-                        if agora.duration_since(inicio) >= Duration::from_millis(1600) {
+                        if agora.duration_since(inicio) >= Duration::from_millis(1500) {
                             self.intro_tv = EstadoIntroTv::Video2(agora);
                         }
                     }
@@ -563,11 +609,14 @@ impl VilasBoasApp {
 
                 // Atalho para pular ou ligar com Enter/Espaço
                 if ctx.input(|i| i.key_pressed(Key::Escape)) {
+                    self.audio.iniciar_ambiente();
                     self.intro_tv = EstadoIntroTv::Concluida;
+                    ctx.request_repaint();
                     return;
                 }
                 if ctx.input(|i| i.key_pressed(Key::Enter) || i.key_pressed(Key::Space)) {
                     if self.intro_tv == EstadoIntroTv::Desligada {
+                        self.audio.iniciar_ambiente();
                         self.audio.som_chiado_tv();
                         self.intro_tv = EstadoIntroTv::Estatica(Instant::now());
                     } else {
@@ -583,7 +632,10 @@ impl VilasBoasApp {
                 // Área da tela interna do tubo da TV
                 let screen_rect = Rect::from_min_max(
                     Pos2::new(tv_rect.left() + tv_w * 0.11, tv_rect.top() + tv_h * 0.11),
-                    Pos2::new(tv_rect.right() - tv_w * 0.22, tv_rect.bottom() - tv_h * 0.13),
+                    Pos2::new(
+                        tv_rect.right() - tv_w * 0.22,
+                        tv_rect.bottom() - tv_h * 0.13,
+                    ),
                 );
 
                 match &self.intro_tv {
@@ -600,8 +652,11 @@ impl VilasBoasApp {
                                 Color32::WHITE,
                             );
                         } else {
-                            ui.painter()
-                                .rect_filled(screen_rect, 8.0, Color32::from_rgb(90, 90, 90));
+                            ui.painter().rect_filled(
+                                screen_rect,
+                                8.0,
+                                Color32::from_rgb(90, 90, 90),
+                            );
                         }
                     }
                     EstadoIntroTv::BarrasCor(_) => {
@@ -660,12 +715,11 @@ impl VilasBoasApp {
                     Pos2::new(rect.center().x, tv_rect.bottom() + 28.0),
                     Vec2::new(560.0, 44.0),
                 );
-                ui.allocate_ui_at_rect(controles_rect, |ui| {
+                ui.allocate_new_ui(egui::UiBuilder::new().max_rect(controles_rect), |ui| {
                     ui.horizontal_centered(|ui| {
                         let (led_rect, _) =
                             ui.allocate_exact_size(Vec2::new(14.0, 14.0), Sense::hover());
-                        ui.painter()
-                            .circle_filled(led_rect.center(), 6.0, cor_led);
+                        ui.painter().circle_filled(led_rect.center(), 6.0, cor_led);
                         ui.add_space(8.0);
 
                         if !ligada {
@@ -682,6 +736,7 @@ impl VilasBoasApp {
                                 )
                                 .clicked()
                             {
+                                self.audio.iniciar_ambiente();
                                 self.audio.som_chiado_tv();
                                 self.intro_tv = EstadoIntroTv::Estatica(Instant::now());
                             }
@@ -706,7 +761,9 @@ impl VilasBoasApp {
                             )
                             .clicked()
                         {
+                            self.audio.iniciar_ambiente();
                             self.intro_tv = EstadoIntroTv::Concluida;
+                            ctx.request_repaint();
                         }
                     });
                 });
@@ -725,16 +782,7 @@ impl VilasBoasApp {
                     .fixed_pos(Pos2::ZERO)
                     .show(ctx, |ui| {
                         let screen = ctx.screen_rect();
-                        let pisca = (agora.elapsed().subsec_millis() / 45) % 2 == 0;
-                        ui.painter().rect_filled(
-                            screen,
-                            0.0,
-                            if pisca {
-                                Color32::from_rgb(160, 0, 0)
-                            } else {
-                                Color32::BLACK
-                            },
-                        );
+                        ui.painter().rect_filled(screen, 0.0, Color32::BLACK);
                         if let Some(tex) = self.media.obter_textura(ctx, &nome_img) {
                             ui.painter().image(
                                 tex.id(),
@@ -760,65 +808,71 @@ impl VilasBoasApp {
                         let screen = ctx.screen_rect();
                         ui.painter()
                             .rect_filled(screen, 0.0, Color32::from_rgb(0, 0, 170));
-                        let msg = "VILAS-BOAS OS\n\n\
-                            Ocorreu uma exceção fatal 0E em 0028:C0011E36 no VXD VMM(01).\n\
-                            O módulo de segurança secundário parou de responder.\n\n\
-                            * Iniciando protocolo de calibração manual (CAPTCHA)...\n\
-                            * NÃO DESLIGUE O TERMINAL.";
-                        ui.painter().text(
-                            Pos2::new(screen.left() + 80.0, screen.top() + 120.0),
-                            egui::Align2::LEFT_TOP,
-                            msg,
-                            FontId::new(20.0, FontFamily::Monospace),
-                            Color32::WHITE,
-                        );
-                        // Nos últimos 450ms pisca a imagem subliminar de terror
-                        if ate.duration_since(agora) < Duration::from_millis(450)
-                            && self.audio.config.jumpscare_visual
-                        {
+                        let decorrido = 2500_u128.saturating_sub(ate.duration_since(agora).as_millis());
+                        let opacidade = match decorrido {
+                            300..400 => 153,
+                            700..800 => 230,
+                            _ => 0,
+                        };
+                        if opacidade > 0 && self.audio.config.jumpscare_visual {
                             if let Some(tex) = self.media.obter_textura(ctx, &nome_img) {
-                                let r = Rect::from_center_size(
-                                    screen.center(),
-                                    Vec2::new(420.0, 420.0),
-                                );
                                 ui.painter().image(
-                                    tex.id(),
-                                    r,
+                                    tex.id(), screen,
                                     Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                                    Color32::from_rgba_unmultiplied(255, 255, 255, 210),
+                                    Color32::from_white_alpha(opacidade),
                                 );
                             }
                         }
+                        let msg = "VILAS-BOAS OS\n\n\
+                            A fatal exception 0E has occurred at 0028:C0011E36 in VXD CAROLINE(01) + 00010E36.\n\
+                            The current application will be terminated.\n\n\
+                            * Press any key to terminate the current application.\n\
+                            * Press CTRL+ALT+DEL again to restart your computer.\n\
+                            * You cannot escape.\n\n\
+                            Press any key to continue _";
+                        ui.painter().text(
+                            Pos2::new(screen.left() + 50.0, screen.top() + 50.0),
+                            egui::Align2::LEFT_TOP, msg,
+                            FontId::new(19.0, FontFamily::Monospace), Color32::WHITE,
+                        );
                     });
             } else {
                 self.bsod_overlay_ate = None;
             }
         }
 
-        // 3. Flash de Imagens Secretas (Disquete 3)
-        if self.flash_secrets_ativo && self.linha_digitando.is_some() {
-            ctx.request_repaint_after(Duration::from_millis(80));
-            let mut rng = rand::thread_rng();
-            if rng.gen::<f64>() < 0.35 && self.audio.config.jumpscare_visual {
-                if let Some((nome, _)) = IMAGENS_SECRETAS_EMBUTIDAS.choose(&mut rng) {
-                    if let Some(tex) = self.media.obter_textura(ctx, nome) {
-                        egui::Area::new(egui::Id::new("overlay_flash_secrets"))
-                            .order(Order::Foreground)
-                            .fixed_pos(Pos2::ZERO)
-                            .show(ctx, |ui| {
-                                let screen = ctx.screen_rect();
-                                let r = Rect::from_center_size(
-                                    screen.center(),
-                                    Vec2::new(360.0, 360.0),
-                                );
-                                ui.painter().image(
-                                    tex.id(),
-                                    r,
-                                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                                    Color32::from_rgba_unmultiplied(255, 180, 180, 170),
-                                );
-                            });
-                    }
+        if let Some(proximo) = self.proximo_flash_secreto {
+            if agora >= proximo {
+                let mut rng = rand::thread_rng();
+                self.proximo_flash_secreto =
+                    Some(agora + Duration::from_millis(rng.gen_range(800..2300)));
+                if let Some(&(nome, _)) = IMAGENS_SECRETAS_EMBUTIDAS.choose(&mut rng) {
+                    self.flash_secreto =
+                        Some((agora + Duration::from_millis(rng.gen_range(50..300)), nome));
+                }
+                ctx.request_repaint();
+            } else {
+                ctx.request_repaint_after(proximo.duration_since(agora));
+            }
+        }
+        if let Some((ate, nome)) = self.flash_secreto.filter(|(ate, _)| agora < *ate) {
+            ctx.request_repaint_after(ate.duration_since(agora));
+            if self.audio.config.jumpscare_visual {
+                if let Some(tex) = self.media.obter_textura(ctx, nome) {
+                    let screen = ctx.screen_rect();
+                    let tamanho = tex.size_vec2();
+                    let escala = (screen.width() / tamanho.x).min(screen.height() / tamanho.y);
+                    let rect = Rect::from_center_size(screen.center(), tamanho * escala);
+                    let layer = ctx.layer_painter(egui::LayerId::new(
+                        Order::Foreground,
+                        egui::Id::new("overlay_flash_secrets"),
+                    ));
+                    layer.image(
+                        tex.id(),
+                        rect,
+                        Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                        Color32::WHITE,
+                    );
                 }
             }
         }
@@ -826,10 +880,9 @@ impl VilasBoasApp {
         // 4. Slideshow Secreto de 1980
         if let Some((mut idx, mut ultimo)) = self.slideshow_1980 {
             ctx.request_repaint_after(Duration::from_millis(50));
-            if agora.duration_since(ultimo) >= Duration::from_millis(1200) {
+            if agora.duration_since(ultimo) >= Duration::from_millis(2200) {
                 idx += 1;
                 ultimo = agora;
-                self.audio.som_tecla();
             }
             if idx >= IMAGENS_SECRETAS_EMBUTIDAS.len()
                 || ctx.input(|i| i.key_pressed(Key::Escape) || i.key_pressed(Key::Enter))
@@ -844,11 +897,16 @@ impl VilasBoasApp {
                     .show(ctx, |ui| {
                         let screen = ctx.screen_rect();
                         ui.painter().rect_filled(screen, 0.0, Color32::BLACK);
-                        if let Some(tex) = self.media.obter_textura(ctx, nome_img) {
-                            let img_rect = Rect::from_center_size(
-                                screen.center(),
-                                Vec2::new(screen.width() * 0.7, screen.height() * 0.72),
-                            );
+                        if let Some(tex) = self
+                            .media
+                            .obter_textura(ctx, nome_img)
+                            .filter(|_| agora.duration_since(ultimo) < Duration::from_millis(2000))
+                        {
+                            let tamanho = tex.size_vec2();
+                            let escala =
+                                (screen.width() / tamanho.x).min(screen.height() / tamanho.y);
+                            let img_rect =
+                                Rect::from_center_size(screen.center(), tamanho * escala);
                             ui.painter().image(
                                 tex.id(),
                                 img_rect,
@@ -856,17 +914,6 @@ impl VilasBoasApp {
                                 Color32::WHITE,
                             );
                         }
-                        ui.painter().text(
-                            Pos2::new(screen.center().x, screen.top() + 34.0),
-                            egui::Align2::CENTER_CENTER,
-                            format!(
-                                "[ ARQUIVO DE MEMÓRIA 1980 — REGISTRO {:02}/{} ] (ESC/ENTER para fechar)",
-                                idx + 1,
-                                IMAGENS_SECRETAS_EMBUTIDAS.len()
-                            ),
-                            FontId::new(16.0, FontFamily::Monospace),
-                            COR_VERMELHO,
-                        );
                     });
             }
         }
@@ -902,8 +949,8 @@ impl eframe::App for VilasBoasApp {
             return;
         }
 
-        let mono = FontId::new(15.5, FontFamily::Monospace);
-        let mono_hud = FontId::new(14.5, FontFamily::Monospace);
+        let mono = FontId::new(21.0, FontFamily::Monospace);
+        let mono_hud = FontId::new(19.0, FontFamily::Monospace);
 
         let em_jogo = self.jogo.estado_atual == "JOGO"
             || self.jogo.estado_atual == "COMBATE_ANIMATRONICO"
@@ -1048,9 +1095,7 @@ impl eframe::App for VilasBoasApp {
                                 .add_sized(
                                     btn_size,
                                     egui::Button::new(
-                                        RichText::new("❐")
-                                            .font(icon_font.clone())
-                                            .color(COR_VERDE),
+                                        RichText::new("❐").font(icon_font.clone()).color(COR_VERDE),
                                     )
                                     .fill(Color32::BLACK)
                                     .rounding(Rounding::same(4.0))
@@ -1069,9 +1114,7 @@ impl eframe::App for VilasBoasApp {
                                 .add_sized(
                                     btn_size,
                                     egui::Button::new(
-                                        RichText::new("⚙")
-                                            .font(icon_font.clone())
-                                            .color(COR_VERDE),
+                                        RichText::new("⚙").font(icon_font.clone()).color(COR_VERDE),
                                     )
                                     .fill(Color32::BLACK)
                                     .rounding(Rounding::same(4.0))
@@ -1141,7 +1184,10 @@ impl eframe::App for VilasBoasApp {
                         } else {
                             COR_VERDE
                         };
-                        (format!("[{}{}] ({}/{})", cheios, vazios, atual, max_hp), cor)
+                        (
+                            format!("[{}{}] ({}/{})", cheios, vazios, atual, max_hp),
+                            cor,
+                        )
                     };
 
                     ui.label(
@@ -1852,8 +1898,11 @@ impl eframe::App for VilasBoasApp {
                                     .strong(),
                             );
                             ui.label(
-                                RichText::new(format!("    {}", c.desc))
-                                    .color(if desbloqueada { COR_BRANCO } else { COR_CINZA }),
+                                RichText::new(format!("    {}", c.desc)).color(if desbloqueada {
+                                    COR_BRANCO
+                                } else {
+                                    COR_CINZA
+                                }),
                             );
                             ui.add_space(6.0);
                         }
@@ -1875,12 +1924,12 @@ impl eframe::App for VilasBoasApp {
             .default_width(520.0)
             .open(&mut self.modal_saves)
             .show(ctx, |ui| {
-                let existe = GameState::save_existe();
+                let existe = storage::ler(state::ARQUIVO_SAVE, &["autosave.json", "savegame.json"]).is_ok();
                 ui.label(
                     RichText::new(if existe {
-                        "Status do Autosave Local (savegame.json): ENCONTRADO ✔"
+                        "Autosave local encontrado"
                     } else {
-                        "Status do Autosave Local (savegame.json): NENHUM SAVE SALVO"
+                        "Nenhum autosave local"
                     })
                     .color(if existe { COR_VERDE } else { COR_AMARELO })
                     .strong(),
@@ -1889,13 +1938,12 @@ impl eframe::App for VilasBoasApp {
 
                 ui.horizontal(|ui| {
                     if ui.button("💾 Salvar Jogo Atual").clicked() {
-                        if self.jogo.salvar_local() {
-                            self.feedback_save = Some((
-                                "Progresso salvo em savegame.json!".to_string(),
-                                COR_VERDE,
-                                Instant::now(),
-                            ));
-                        }
+                        let (mensagem, cor) = if self.jogo.salvar_local() {
+                            ("Progresso salvo localmente.", COR_VERDE)
+                        } else {
+                            ("Não foi possível salvar esta partida.", COR_VERMELHO)
+                        };
+                        self.feedback_save = Some((mensagem.to_string(), cor, Instant::now()));
                     }
 
                     if ui
@@ -1916,6 +1964,8 @@ impl eframe::App for VilasBoasApp {
                                 COR_VERDE,
                                 Instant::now(),
                             ));
+                        } else {
+                            self.feedback_save = Some(("Não foi possível ler o autosave.".to_string(), COR_VERMELHO, Instant::now()));
                         }
                     }
 
@@ -1923,12 +1973,11 @@ impl eframe::App for VilasBoasApp {
                         .add_enabled(existe, egui::Button::new("🗑 Apagar Save Local"))
                         .clicked()
                     {
-                        let _ = fs::remove_file(state::ARQUIVO_SAVE);
-                        self.feedback_save = Some((
-                            "Arquivo savegame.json removido.".to_string(),
-                            COR_AMARELO,
-                            Instant::now(),
-                        ));
+                        let (mensagem, cor) = match GameState::apagar_local() {
+                            Ok(()) => ("Autosave removido.".to_string(), COR_AMARELO),
+                            Err(erro) => (format!("Falha ao remover o autosave: {erro}"), COR_VERMELHO),
+                        };
+                        self.feedback_save = Some((mensagem, cor, Instant::now()));
                     }
                 });
 
@@ -1957,12 +2006,9 @@ impl eframe::App for VilasBoasApp {
                     }
 
                     if ui.button("📥 Importar JSON Abaixo").clicked() {
-                        match serde_json::from_str::<GameState>(&self.json_save_buffer) {
-                            Ok(mut novo) => {
-                                novo.ascii_arts = data::carregar_ascii_arts();
-                                novo.sinonimos = data::sinonimos_padrao();
+                        match GameState::from_json_str(&self.json_save_buffer) {
+                            Some(novo) if novo.salvar_local() => {
                                 self.jogo = novo;
-                                let _ = self.jogo.salvar_local();
                                 self.audio.iniciar_ambiente();
                                 self.term.limpar();
                                 views::imprimir_contexto_sala(
@@ -1976,9 +2022,16 @@ impl eframe::App for VilasBoasApp {
                                     Instant::now(),
                                 ));
                             }
-                            Err(e) => {
+                            Some(_) => {
                                 self.feedback_save = Some((
-                                    format!("Erro ao ler JSON: {}", e),
+                                    "Não foi possível gravar o autosave importado.".to_string(),
+                                    COR_VERMELHO,
+                                    Instant::now(),
+                                ));
+                            }
+                            None => {
+                                self.feedback_save = Some((
+                                    "JSON inválido ou sem uma partida jogável.".to_string(),
                                     COR_VERMELHO,
                                     Instant::now(),
                                 ));
@@ -2149,17 +2202,27 @@ impl eframe::App for VilasBoasApp {
             .open(&mut self.modal_ajuda)
             .show(ctx, |ui| {
                 ui.label(RichText::new(">> NAVEGAÇÃO:").color(COR_BRANCO).strong());
-                ui.label("   ir frente (ou f), ir atrás (ou a), ir esquerda (ou e), ir direita (ou d)");
-                ui.label("   Você também pode digitar o nome da saída diretamente (ex: 'ir cozinha').");
+                ui.label(
+                    "   ir frente (ou f), ir atrás (ou a), ir esquerda (ou e), ir direita (ou d)",
+                );
+                ui.label(
+                    "   Você também pode digitar o nome da saída diretamente (ex: 'ir cozinha').",
+                );
                 ui.add_space(6.0);
                 ui.label(RichText::new(">> INTERAÇÃO:").color(COR_BRANCO).strong());
                 ui.label("   olhar [objeto] (ou x [objeto]) : Examina objetos em amarelo na sala");
                 ui.label("   pegar [item] (ou p [item])     : Coleta itens em verde no chão");
                 ui.label("   largar [item] (ou l [item])    : Solta um item da mochila no chão");
                 ui.label("   usar [item] (ou u [item])      : Usa um item do seu inventário");
-                ui.label("   combinar [item 1] com [item 2] : Combina dois itens (ex: tesoura + fita)");
+                ui.label(
+                    "   combinar [item 1] com [item 2] : Combina dois itens (ex: tesoura + fita)",
+                );
                 ui.add_space(6.0);
-                ui.label(RichText::new(">> SOBREVIVÊNCIA:").color(COR_VERMELHO).strong());
+                ui.label(
+                    RichText::new(">> SOBREVIVÊNCIA:")
+                        .color(COR_VERMELHO)
+                        .strong(),
+                );
                 ui.label("   inventario (ou i) : Lista os itens na sua mochila");
                 ui.label("   correr [direção]  : Foge do animatrônico, mas gera 100% de barulho!");
                 ui.label("   Setas ↑ / ↓       : Navega pelo histórico de comandos digitados");

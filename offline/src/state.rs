@@ -2,18 +2,17 @@ use crate::data::{
     chaves_nao_saida, salas_seguras_patrulha, ConquistaDef, DadosJogo, EventoAleatorio, Sala,
     CHANCE_MOVER_PATRULHA, ISQUEIRO_BARULHO, ISQUEIRO_LIMITE_LUZ, ISQUEIRO_TURNOS_BONUS,
     LIMIAR_ALERTA, LIMIAR_CACA, MAX_INVENTARIO, META_ACUMULADOR, REDUCAO_BARULHO_TURNO,
-    SLOTS_POR_BOLSA, TURNOS_BATERIA, TURNOS_LUZ_INICIAL, VIDA_GOD_MODE, VIDA_NORMAL,
-    VIDA_PESADELO,
+    SLOTS_POR_BOLSA, TURNOS_BATERIA, TURNOS_LUZ_INICIAL, VIDA_GOD_MODE, VIDA_NORMAL, VIDA_PESADELO,
 };
+use crate::storage;
 use rand::seq::SliceRandom;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const ARQUIVO_SAVE: &str = "autosave.json";
-pub const ARQUIVO_SAVE_LEGADO: &str = "savegame.json";
+const SAVES_LEGADOS: &[&str] = &["autosave.json", "savegame.json"];
 pub const MAX_LOG_COMANDOS: usize = 100;
 
 pub fn agora_segundos() -> f64 {
@@ -54,11 +53,13 @@ pub struct CaptchaData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
 pub struct SegurancaData {
     pub turno: i32,
     pub energia: i32,
     pub porta_fechada: bool,
-    pub gerador_ligado: bool,
+    pub gerador_usado: bool,
+    pub turnos_gerador: i32,
     pub usos_sistema_turno: i32,
     pub camera_quebrada: bool,
     pub deteccao_quebrada: bool,
@@ -67,12 +68,12 @@ pub struct SegurancaData {
     pub sistema_alvo_conserto: Option<String>,
     pub rick_pos: i32,
     pub jon_pos: i32,
-    pub caroline_ativa: bool,
-    pub caroline_local: String,
+    pub caroline_pos: i32,
+    pub caroline_no_duto: bool,
     pub indio_ativo: bool,
     pub alberto_msg_falsa: bool,
-    pub calor_ativo: bool,
-    pub fios_cortados: bool,
+    pub apagao: bool,
+    pub bonus_energia: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -174,15 +175,15 @@ pub struct GameState {
     #[serde(default)]
     pub tempo_total_segundos: f64,
     pub mapa: HashMap<String, Sala>,
-    #[serde(default)]
+    #[serde(default, skip_serializing)]
     pub descricoes_itens: HashMap<String, String>,
-    #[serde(default)]
+    #[serde(default, skip_serializing)]
     pub eventos_aleatorios: Vec<EventoAleatorio>,
-    #[serde(default)]
+    #[serde(default, skip_serializing)]
     pub sinonimos: HashMap<String, String>,
-    #[serde(default)]
+    #[serde(default, skip_serializing)]
     pub ascii_arts: HashMap<String, String>,
-    #[serde(default)]
+    #[serde(default, skip_serializing)]
     pub catalogo_conquistas: Vec<ConquistaDef>,
 }
 
@@ -229,26 +230,13 @@ impl Default for GameState {
 impl GameState {
     pub fn new() -> Self {
         let dados = DadosJogo::carregar_tudo();
-        let sala_inicial = if dados.mapa.contains_key("entrada") {
-            "entrada".to_string()
-        } else if dados.mapa.contains_key("01") {
-            "01".to_string()
-        } else {
-            dados
-                .mapa
-                .keys()
-                .next()
-                .cloned()
-                .unwrap_or_else(|| "entrada".to_string())
-        };
-
         Self {
             hp: VIDA_NORMAL,
             inventario: vec!["lanterna".to_string()],
             turnos_luz: TURNOS_LUZ_INICIAL,
             turnos_no_escuro: 0,
             turnos_enjoado: 0,
-            sala_atual: sala_inicial,
+            sala_atual: "entrada".to_string(),
             cofre_tentativas: 0,
             cofre_aberto: false,
             jon_erros: 0,
@@ -319,6 +307,9 @@ impl GameState {
     }
 
     pub fn tempo_decorrido_segundos(&self) -> u64 {
+        if self.estado_atual == "FIM" {
+            return self.tempo_total_segundos as u64;
+        }
         let diff = (agora_segundos() - self.tempo_inicio).max(0.0);
         (self.tempo_total_segundos + diff) as u64
     }
@@ -501,36 +492,42 @@ impl GameState {
     }
 
     pub fn salvar_local(&self) -> bool {
-        if self.estado_atual != "JOGO" && self.estado_atual != "COMBATE_ANIMATRONICO" {
-            return false;
-        }
-        if let Ok(json) = serde_json::to_string_pretty(self) {
-            return fs::write(ARQUIVO_SAVE, json).is_ok();
-        }
-        false
+        matches!(self.estado_atual.as_str(), "JOGO" | "COMBATE_ANIMATRONICO")
+            && storage::gravar(ARQUIVO_SAVE, self).is_ok()
+    }
+
+    pub fn apagar_local() -> std::io::Result<()> {
+        storage::apagar(ARQUIVO_SAVE, SAVES_LEGADOS)
     }
 
     pub fn carregar_local() -> Option<Self> {
-        let conteudo = fs::read_to_string(ARQUIVO_SAVE)
-            .or_else(|_| fs::read_to_string(ARQUIVO_SAVE_LEGADO))
-            .ok()?;
+        let conteudo = storage::ler(ARQUIVO_SAVE, SAVES_LEGADOS).ok()?;
         Self::from_json_str(&conteudo)
     }
 
     pub fn from_json_str(conteudo: &str) -> Option<Self> {
         let mut carregado: Self = serde_json::from_str(conteudo).ok()?;
+        if !matches!(
+            carregado.estado_atual.as_str(),
+            "JOGO" | "COMBATE_ANIMATRONICO"
+        ) || !(1..=VIDA_GOD_MODE).contains(&carregado.hp)
+            || !(0..=VIDA_GOD_MODE).contains(&carregado.turnos_luz)
+            || carregado.bolsas_coletadas > 1000
+            || carregado.custom_inv > 1000
+            || carregado.tempo_total_segundos < 0.0
+        {
+            return None;
+        }
         let dados = DadosJogo::carregar_tudo();
-        if carregado.ascii_arts.is_empty() {
-            carregado.ascii_arts = dados.ascii_arts;
-        }
-        if carregado.descricoes_itens.is_empty() {
-            carregado.descricoes_itens = dados.descricoes_itens;
-        }
-        if carregado.eventos_aleatorios.is_empty() {
-            carregado.eventos_aleatorios = dados.eventos_aleatorios;
-        }
+        carregado.ascii_arts = dados.ascii_arts;
+        carregado.descricoes_itens = dados.descricoes_itens;
+        carregado.eventos_aleatorios = dados.eventos_aleatorios;
+        carregado.sinonimos = dados.sinonimos;
         if carregado.mapa.is_empty() {
             carregado.mapa = dados.mapa;
+        }
+        if !carregado.mapa.contains_key(&carregado.sala_atual) {
+            return None;
         }
         if carregado.dificuldade.is_empty() {
             carregado.dificuldade = carregado.dificuldade_escolhida.clone();
@@ -542,8 +539,7 @@ impl GameState {
     }
 
     pub fn save_existe() -> bool {
-        std::path::Path::new(ARQUIVO_SAVE).exists()
-            || std::path::Path::new(ARQUIVO_SAVE_LEGADO).exists()
+        Self::carregar_local().is_some()
     }
 
     /// Port 1:1 de `avancar_ia_perseguidor` em server/state.py
@@ -651,9 +647,7 @@ pub fn calcular_caminho_bfs(
     while let Some(caminho) = fila.pop_front() {
         let atual = caminho.last()?;
         if let Some(sala) = mapa.get(atual) {
-            let mut pares: Vec<(&String, &Option<String>)> = sala.conexoes.iter().collect();
-            pares.sort_by(|a, b| a.0.cmp(b.0));
-            for (k, v) in pares {
+            for (k, v) in &sala.conexoes {
                 if nao_saida.contains(&k.as_str()) {
                     continue;
                 }

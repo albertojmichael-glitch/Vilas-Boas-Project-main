@@ -32,6 +32,12 @@ client/script.js
 client/*.min.js
 client/*.min.css
 node_modules/
+/offline/target/
+/offline/dist/
+/offline/*.exe
+/offline/vilas_boas
+/offline/config.json
+/offline/savegame.json
 
 .DS_Store
 .vscode/

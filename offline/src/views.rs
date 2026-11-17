@@ -1,4 +1,7 @@
 use crate::audio::AudioManager;
+use crate::data::{
+    ARTE_ENTRADA, ARTE_FINAL_MEDIOCRE, ARTE_FINAL_NEUTRO, ARTE_FINAL_VERDADEIRO, CAVEIRA_MORTE,
+};
 use crate::media::MediaManager;
 use crate::state::GameState;
 use crate::ui::{DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET};
@@ -10,14 +13,13 @@ use rand::Rng;
 /// Port 1:1 de `imprimir_tela_boot` do views.py
 pub fn imprimir_tela_boot(ui: &mut TerminalBuffer) {
     ui.limpar();
-    ui.animar("VILLAS-BOAS INDUSTRIES (C) 1982", DOS_BRANCO);
-    ui.animar("BIOS VERSION 1.04 - RELEASE 02/11/1982", DOS_BRANCO);
-    ui.animar("RAM CHECK: 640KB OK", DOS_VERDE);
-    ui.animar("DRIVE A: READY", DOS_VERDE);
-    ui.animar("CARREGANDO 'COMMAND.COM'....... OK\n", DOS_VERDE);
+    ui.animar_com_intervalo("VILLAS-BOAS INDUSTRIES (C) 1982", DOS_BRANCO, 0.04);
+    ui.animar_com_intervalo("BIOS VERSION 1.04 - RELEASE 02/11/1982", DOS_BRANCO, 0.04);
+    ui.animar_com_intervalo("RAM CHECK: 640KB OK", DOS_VERDE, 0.03);
+    ui.animar_com_intervalo("DRIVE A: READY", DOS_VERDE, 0.03);
+    ui.animar_com_intervalo("CARREGANDO 'COMMAND.COM'....... OK\n", DOS_VERDE, 0.06);
     ui.exibir(&format!(
-        "{}Digite {}dir{} para acessar os diretórios:{}",
-        DOS_VERDE, DOS_BRANCO, DOS_VERDE, RESET
+        "{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}"
     ));
 }
 
@@ -171,120 +173,73 @@ pub fn imprimir_menu_dificuldade(
 }
 
 /// Port 1:1 de `imprimir_tutorial` do views.py
-pub fn imprimir_tutorial(ui: &mut TerminalBuffer, jogo: &GameState) {
-    ui.animar(
-        &format!(
-            "\n{}=================================================={}",
-            DOS_AMARELO, RESET
-        ),
+pub fn imprimir_tutorial(ui: &mut TerminalBuffer, _jogo: &GameState) {
+    ui.animar_com_intervalo(
+        &format!("\n{DOS_AMARELO}=================================================={RESET}"),
         DOS_BRANCO,
+        0.005,
     );
-    ui.animar(
-        &format!(
-            "{}   [ MANUAL DE SOBREVIVÊNCIA DO SISTEMA v1.0 ]    {}",
-            DOS_AMARELO, RESET
-        ),
+    ui.animar_com_intervalo(
+        &format!("{DOS_AMARELO}   [ MANUAL DE SOBREVIVÊNCIA DO SISTEMA v1.0 ]    {RESET}"),
         DOS_BRANCO,
+        0.01,
     );
-    ui.animar(
-        &format!(
-            "{}=================================================={}",
-            DOS_AMARELO, RESET
-        ),
+    ui.animar_com_intervalo(
+        &format!("{DOS_AMARELO}=================================================={RESET}"),
         DOS_BRANCO,
+        0.005,
     );
-
-    ui.animar(&format!("{}>> NAVEGAÇÃO:{}", DOS_BRANCO, RESET), DOS_BRANCO);
-    ui.animar(
-        &format!(
-            "   Mova-se usando direções ({}ir frente{}, {}ir esquerda{})",
-            DOS_VERDE, RESET, DOS_VERDE, RESET
-        ),
+    ui.animar_com_intervalo(
+        &format!("{DOS_BRANCO}>> NAVEGAÇÃO:{RESET}"),
         DOS_BRANCO,
+        0.01,
     );
-    ui.animar(
-        &format!(
-            "   ou digite o destino exato: {}ir sala de jantar{}.",
-            DOS_VERDE, RESET
-        ),
+    ui.animar_com_intervalo(&format!("   Mova-se usando direções ({DOS_VERDE}ir frente{RESET}, {DOS_VERDE}ir esquerda{RESET})"), DOS_BRANCO, 0.01);
+    ui.animar_com_intervalo(
+        &format!("   ou digite o destino exato: {DOS_VERDE}ir sala de jantar{RESET}."),
         DOS_BRANCO,
+        0.01,
     );
-
-    ui.animar(
-        &format!("\n{}>> INTERAÇÃO:{}", DOS_BRANCO, RESET),
+    ui.animar_com_intervalo(
+        &format!("\n{DOS_BRANCO}>> INTERAÇÃO:{RESET}"),
         DOS_BRANCO,
+        0.01,
     );
-    ui.animar(
-        &format!(
-            "   Examine os detalhes ao redor com {}olhar [objeto]{}.",
-            DOS_VERDE, RESET
-        ),
+    ui.animar_com_intervalo(
+        &format!("   Examine os detalhes ao redor com {DOS_VERDE}olhar [objeto]{RESET}."),
         DOS_BRANCO,
+        0.01,
     );
-    ui.animar(
-        &format!(
-            "   Para interagir, use {}pegar [item]{} ou {}usar [item]{}.",
-            DOS_VERDE, RESET, DOS_VERDE, RESET
-        ),
+    ui.animar_com_intervalo(&format!("   Para interagir, use {DOS_VERDE}pegar [item]{RESET} ou {DOS_VERDE}usar [item]{RESET}."), DOS_BRANCO, 0.01);
+    ui.animar_com_intervalo(
+        &format!("\n{DOS_BRANCO}>> GERENCIAMENTO:{RESET}"),
         DOS_BRANCO,
+        0.01,
     );
-
-    ui.animar(
-        &format!("\n{}>> GERENCIAMENTO:{}", DOS_BRANCO, RESET),
+    ui.animar_com_intervalo(&format!("   Digite {DOS_VERDE}inventario{RESET} (ou apenas {DOS_VERDE}i{RESET}) para checar seus bolsos."), DOS_BRANCO, 0.01);
+    ui.animar_com_intervalo(
+        &format!("   Dica: Atalhos funcionam. Digite {DOS_VERDE}p chave{RESET} para pegar rápido."),
         DOS_BRANCO,
+        0.01,
     );
-    ui.animar(
-        &format!(
-            "   Digite {}inventario{} (ou apenas {}i{}) para checar seus bolsos.",
-            DOS_VERDE, RESET, DOS_VERDE, RESET
-        ),
+    ui.animar_com_intervalo(
+        &format!("\n{DOS_VERMELHO}>> AVISO DE SEGURANÇA:{RESET}"),
         DOS_BRANCO,
+        0.01,
     );
-    ui.animar(
-        &format!(
-            "   Dica: Atalhos funcionam. Digite {}p chave{} para pegar rápido.",
-            DOS_VERDE, RESET
-        ),
+    ui.animar_com_intervalo(
+        &format!("   Tropeçar no escuro ou errar comandos gera {DOS_VERMELHO}barulho{RESET}."),
         DOS_BRANCO,
+        0.01,
     );
-
-    ui.animar(
-        &format!("\n{}>> AVISO DE SEGURANÇA:{}", DOS_VERMELHO, RESET),
+    ui.animar_com_intervalo(&format!("   Ela escuta. Se precisar fugir de uma sala, digite {DOS_VERDE}correr [direção]{RESET}."), DOS_BRANCO, 0.01);
+    ui.animar_com_intervalo(&format!("\n{DOS_AMARELO}Caso precise, digite {DOS_VERDE}ajuda{DOS_AMARELO} para o guia completo novamente.{RESET}"), DOS_BRANCO, 0.01);
+    ui.animar_com_intervalo(
+        &format!("{DOS_AMARELO}=================================================={RESET}\n"),
         DOS_BRANCO,
+        0.005,
     );
-    ui.animar(
-        &format!(
-            "   Tropeçar no escuro ou errar comandos gera {}barulho{}.",
-            DOS_VERMELHO, RESET
-        ),
-        DOS_BRANCO,
-    );
-    ui.animar(
-        &format!(
-            "   Ela escuta. Se precisar fugir de uma sala, digite {}correr [direção]{}.",
-            DOS_VERDE, RESET
-        ),
-        DOS_BRANCO,
-    );
-
-    ui.animar(
-        &format!(
-            "\n{}Caso precise, digite {}ajuda{} para o guia completo novamente.{}",
-            DOS_AMARELO, DOS_VERDE, DOS_AMARELO, RESET
-        ),
-        DOS_BRANCO,
-    );
-    ui.animar(
-        &format!(
-            "{}=================================================={}\n",
-            DOS_AMARELO, RESET
-        ),
-        DOS_BRANCO,
-    );
-
-    if let Some(arte) = jogo.ascii_arts.get("ARTE_ENTRADA") {
-        ui.animar(&format!("{}{}{}", DOS_BRANCO, arte, RESET), DOS_BRANCO);
-    }
+    ui.animar_com_intervalo(ARTE_ENTRADA, DOS_BRANCO, 0.005);
 }
 
 /// Port 1:1 de `dar_dica_jon` do views.py
@@ -314,10 +269,7 @@ pub fn dar_dica_jon(passo_certo: &str, ui: &mut TerminalBuffer) {
             ));
         }
     } else if let Some((_, certa)) = dicas.iter().find(|(k, _)| *k == passo_certo) {
-        ui.exibir(&format!(
-            "\n{}[SENSÓRIO]: {}{}",
-            DOS_AMARELO, certa, RESET
-        ));
+        ui.exibir(&format!("\n{}[SENSÓRIO]: {}{}", DOS_AMARELO, certa, RESET));
     }
 }
 
@@ -336,7 +288,7 @@ pub fn falar_pianista(acertou: bool, ui: &mut TerminalBuffer) {
             "Sim... como aconteceu.",
         ];
         if let Some(f) = falas.choose(&mut rng) {
-            ui.animar(&format!("\"{}\"", f), DOS_AMARELO);
+            ui.animar_com_intervalo(&format!("\"{}\"", f), DOS_AMARELO, 0.04);
         }
     } else {
         ui.exibir(&format!("{}Acorde dissonante.{}", DOS_VERMELHO, RESET));
@@ -347,7 +299,7 @@ pub fn falar_pianista(acertou: bool, ui: &mut TerminalBuffer) {
             "Isso não é o que consta no registro.",
         ];
         if let Some(f) = falas.choose(&mut rng) {
-            ui.animar(&format!("\"{}\"", f), DOS_AMARELO);
+            ui.animar_com_intervalo(&format!("\"{}\"", f), DOS_AMARELO, 0.04);
         }
     }
 }
@@ -357,49 +309,44 @@ pub fn dar_tela_kernel_panic(jogo: &mut GameState, ui: &mut TerminalBuffer) {
     jogo.estado_atual = "FIM".to_string();
     ui.limpar();
     ui.buffer_efeito("@@PANIC@@");
-
-    let arte_panic = r#"
-    .--.
-   |0_0 |     -
-   |:_/ |    | |  
-  //    \\   | |
- (|      |)  | |
-/'\_   _/`\  ( )
-\___)=(___/  
-"#;
-
-    ui.animar(arte_panic, DOS_BRANCO);
-    ui.animar(
+    const ARTE_PANIC: &str = "\n    .--.\n   |0_0 |     -\n   |:_/ |    | |  \n  //    \\\\   | |\n (|      |)  | |\n/'\\_   _/`\\  ( )\n\\___)=(___/  \n\n    ";
+    ui.animar_com_intervalo(ARTE_PANIC, DOS_BRANCO, 0.0);
+    ui.animar_com_intervalo(
         "KERNEL PANIC - NOT SYNCING: Fatal exception in interrupt",
         DOS_BRANCO,
+        0.0,
     );
-    ui.animar(
+    ui.animar_com_intervalo(
         "Hardware CPU 0: corrupted by external psychological entity.",
         DOS_BRANCO,
+        0.0,
     );
-    ui.animar(
+    ui.animar_com_intervalo(
         "Process CAROLINE.SYS (pid: 1982, stackpage=0x00000000)",
         DOS_BRANCO,
+        0.0,
     );
-    ui.animar("Call Trace:", DOS_BRANCO);
-    ui.animar(" [<c010a245>] show_stack+0x7a/0x90", DOS_BRANCO);
-    ui.animar(" [<c010a3c4>] show_registers+0x15a/0x1dc", DOS_BRANCO);
-    ui.animar(" [<c010c140>] die_if_no_escape+0x12a/0x240", DOS_BRANCO);
-    ui.animar(
+    ui.animar_com_intervalo("Call Trace:", DOS_BRANCO, 0.0);
+    ui.animar_com_intervalo(" [<c010a245>] show_stack+0x7a/0x90", DOS_BRANCO, 0.0);
+    ui.animar_com_intervalo(" [<c010a3c4>] show_registers+0x15a/0x1dc", DOS_BRANCO, 0.0);
+    ui.animar_com_intervalo(
+        " [<c010c140>] die_if_no_escape+0x12a/0x240",
+        DOS_BRANCO,
+        0.0,
+    );
+    ui.animar_com_intervalo(
         " [<c0000000>] DO_NOT_LOOK_BEHIND_YOU+0x666/0x666",
         DOS_BRANCO,
+        0.0,
     );
     ui.exibir("\nMemory corruption detected. Dumping physical memory to disk...");
+    ui.pausa(2.0);
     ui.exibir("Dump failed. The soul is too heavy.");
-    ui.exibir("\nSystem halted. Press F5 (ou ENTER) to attempt a manual reboot.");
+    ui.exibir("\nSystem halted. Press F5 to attempt a manual reboot.");
 }
 
 /// Port 1:1 de `imprimir_contexto_sala` do views.py
-pub fn imprimir_contexto_sala(
-    jogo: &GameState,
-    ui: &mut TerminalBuffer,
-    media: &mut MediaManager,
-) {
+pub fn imprimir_contexto_sala(jogo: &GameState, ui: &mut TerminalBuffer, media: &mut MediaManager) {
     if jogo.estado_atual != "JOGO" {
         return;
     }
@@ -469,19 +416,13 @@ pub fn imprimir_contexto_sala(
         );
     }
     for item in &sala.itens {
-        descricao_colorida = descricao_colorida.replace(
-            item,
-            &format!("{}{}{}", DOS_VERDE, item, DOS_BRANCO),
-        );
+        descricao_colorida =
+            descricao_colorida.replace(item, &format!("{}{}{}", DOS_VERDE, item, DOS_BRANCO));
     }
 
-    ui.animar(
-        &format!("⏿ Visão: {}", descricao_colorida),
-        DOS_BRANCO,
-    );
+    ui.animar(&format!("⏿ Visão: {}", descricao_colorida), DOS_BRANCO);
 
-    let mut inspecionaveis: Vec<String> = sala.inspecionaveis.keys().cloned().collect();
-    inspecionaveis.sort();
+    let inspecionaveis: Vec<_> = sala.inspecionaveis.keys().map(String::as_str).collect();
     if !inspecionaveis.is_empty() {
         ui.animar(
             &format!(
@@ -516,7 +457,7 @@ pub fn imprimir_contexto_sala(
         }
     }
 
-    let saidas = sala.saidas_validas(&jogo.mapa);
+    let saidas = sala.saidas_listadas();
     if !saidas.is_empty() {
         let nomes_saidas: Vec<String> = saidas
             .into_iter()
@@ -555,25 +496,22 @@ pub fn dar_tela_de_morte(
     audio: &mut AudioManager,
     media: &mut MediaManager,
 ) {
+    jogo.sala_atual = "morte".to_string();
     jogo.estado_atual = "FIM".to_string();
     audio.parar_ambiente();
-    audio.som_grito();
+    media.imagem_atual = None;
     ui.buffer_efeito("@@JUMPSCARE@@");
-    let _ = media.acionar_imagem("jumpscare", false, true);
-
-    if let Some(caveira) = jogo.ascii_arts.get("CAVEIRA_MORTE") {
-        ui.animar(
-            &format!("{}{}{}", DOS_VERMELHO, caveira, RESET),
-            DOS_VERMELHO,
-        );
-    }
-    ui.animar(
-        "☠ GAME OVER. A NOITE ENGOLIU VOCÊ.",
-        DOS_VERMELHO,
+    ui.pausa(2.0);
+    ui.animar_com_intervalo(
+        &format!("{DOS_VERMELHO}{CAVEIRA_MORTE}{RESET}"),
+        DOS_BRANCO,
+        0.002,
     );
-    ui.animar(
-        "=== SISTEMA CORROMPIDO. APERTE F5 (OU ENTER) PARA REINICIAR ===",
+    ui.animar_com_intervalo("☠ GAME OVER. A NOITE ENGOLIU VOCÊ.", DOS_VERMELHO, 0.05);
+    ui.animar_com_intervalo(
+        "=== SISTEMA CORROMPIDO. APERTE F5 PARA REINICIAR ===",
         DOS_AMARELO,
+        0.05,
     );
 }
 
@@ -588,361 +526,315 @@ pub fn rodar_final(
     jogo.estado_atual = "FIM".to_string();
     ui.limpar();
     audio.parar_ambiente();
-    let mut liberou_deus = false;
-
-    if tipo_final == "saida" {
-        ui.animar(
-            "Você empurra as pesadas portas de vidro e foge do restaurante...",
-            DOS_AMARELO,
-        );
-        ui.animar(
-            "Você acredita que vai conseguir superar tudo isso. Que pode recomeçar uma nova vida...",
-            DOS_VERMELHO,
-        );
-        ui.animar(
-            "Você entra no seu carro, liga o motor e acelera para longe dali.",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "Você quer esquecer dela... Mesmo ela suplicando por ajuda no escuro.",
-            DOS_VERMELHO,
-        );
-
-        ui.buffer_efeito("@@GLITCH_LUZ@@");
-        ui.animar(
-            "Você olha pelo retrovisor. Algo se mexe no banco de trás.",
-            DOS_VERMELHO,
-        );
-        ui.buffer_efeito("@@JUMPSCARE@@");
-        audio.som_grito();
-        ui.buffer_efeito("@@BLACKOUT@@");
-
-        if let Some(arte) = jogo.ascii_arts.get("ARTE_FINAL_MEDIOCRE") {
-            ui.animar(&format!("{}{}{}", DOS_BRANCO, arte, RESET), DOS_BRANCO);
+    media.imagem_atual = None;
+    let id = match tipo_final {
+        "saida" => {
+            ui.animar_com_intervalo(
+                "Você empurra as pesadas portas de vidro e foge do restaurante...",
+                DOS_AMARELO,
+                0.08,
+            );
+            ui.animar_com_intervalo("Você acredita que vai conseguir superar tudo isso. Que pode recomeçar uma nova vida...", DOS_VERMELHO, 0.07);
+            ui.pausa(1.5);
+            ui.animar_com_intervalo(
+                "Você entra no seu carro, liga o motor e acelera para longe dali.",
+                DOS_BRANCO,
+                0.08,
+            );
+            ui.animar_com_intervalo(
+                "Você quer esquecer dela... Mesmo ela suplicando por ajuda no escuro.",
+                DOS_VERMELHO,
+                0.08,
+            );
+            ui.pausa(2.0);
+            ui.buffer_efeito("@@GLITCH_LUZ@@");
+            ui.animar_com_intervalo(
+                "Você olha pelo retrovisor. Algo se mexe no banco de trás.",
+                DOS_VERMELHO,
+                0.05,
+            );
+            ui.pausa(1.0);
+            ui.buffer_efeito("@@JUMPSCARE@@");
+            ui.pausa(2.0);
+            ui.buffer_efeito("@@BLACKOUT@@");
+            let arte_corrigida = ARTE_FINAL_MEDIOCRE.replace(" ", "\u{00a0}");
+            ui.animar_com_intervalo(
+                &format!("{DOS_BRANCO}{arte_corrigida}{RESET}"),
+                DOS_BRANCO,
+                0.015,
+            );
+            ui.exibir(&format!(
+                "\n{DOS_VERMELHO}[ FINAL MEDÍOCRE: ALGO TE SEGUIU... ]{RESET}"
+            ));
+            "mediocre"
         }
-
-        ui.exibir(&format!(
-            "\n{}[ FINAL MEDÍOCRE: ALGO TE SEGUIU... ]{}",
-            DOS_VERMELHO, RESET
-        ));
-        liberou_deus = audio.config.registrar_final("mediocre");
-    } else if tipo_final == "cama" {
-        ui.animar(
-            "Você deita na cama velha, ignorando o cheiro de mofo...",
-            DOS_AMARELO,
-        );
-        ui.buffer_efeito("@@LOW_POWER@@");
-        ui.animar(
-            "O corredor fica em silêncio. Você sente o trinco da porta girar lentamente...",
-            DOS_VERMELHO,
-        );
-        ui.animar(
-            "Você finalmente sente ela, o seu cheiro, sua vibração... Seu dispositivo apita...",
-            DOS_VERDE,
-        );
-        ui.animar(
-            "PRESENÇA ULTERIOR DETECTADA DENTRO DO QUARTO.",
-            DOS_VERMELHO,
-        );
-        ui.buffer_efeito("@@BLACKOUT@@");
-        ui.animar(
-            "Você fecha os olhos. Pensando em não acordar nunca mais.",
-            DOS_BRANCO,
-        );
-        ui.buffer_efeito("@@JUMPSCARE@@");
-        audio.som_grito();
-
-        ui.exibir(&format!("\n{}[ FINAL BONS SONHOS ]{}", DOS_BRANCO, RESET));
-        liberou_deus = audio.config.registrar_final("bons_sonhos");
-    } else if tipo_final == "final_bom" {
-        ui.limpar();
-        ui.animar(
-            &format!(
-                "{} ======================================================================{}",
-                DOS_VERDE, RESET
-            ),
-            DOS_VERDE,
-        );
-        ui.animar(
-            &format!(
-                "{}                             [ FINAL NEUTRO ]                               {}",
-                DOS_VERDE, RESET
-            ),
-            DOS_VERDE,
-        );
-        ui.animar(
-            &format!(
-                "{} ======================================================================{}",
-                DOS_VERDE, RESET
-            ),
-            DOS_VERDE,
-        );
-
-        ui.animar(
-            "Você acende o isqueiro e ilumina o local. A luz do fogo traz calma...",
-            DOS_VERDE,
-        );
-        ui.animar(
-            "- Por que não deu certo? O que eu fiz de errado?",
-            DOS_AMARELO,
-        );
-        ui.animar("- 'Ainda estou aqui...'", DOS_VERMELHO);
-        ui.animar("- Amor? É voce? Mesmo???", DOS_AMARELO);
-        ui.animar("- 'Eu espero que ainda seja eu...'", DOS_VERMELHO);
-        ui.animar("- 'eu Não SinTo maIS nADA...'", DOS_VERMELHO);
-        ui.animar(
-            "- 'Eu não consegui te salvar, me desculpa...'",
-            DOS_AMARELO,
-        );
-        ui.animar(
-            "- 'Não consegui salvar ninguém, o que eu fiz.'",
-            DOS_AMARELO,
-        );
-        ui.animar("- 'Me ajUde, EU SINTO FALTA DE CASA.'", DOS_VERMELHO);
-        ui.animar(
-            "- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas, eu não posso fazer mais nada.",
-            DOS_AMARELO,
-        );
-        ui.animar("- ... *Caroline abraça Rogério*", DOS_VERMELHO);
-        ui.animar("- 'Eu esperO tE eNContrar Lá, meu bem.'", DOS_VERMELHO);
-
-        ui.buffer_efeito("@@GLITCH_LUZ@@");
-        ui.buffer_efeito("@@JUMPSCARE@@");
-        audio.som_grito();
-        ui.animar(
-            "Você começa a cuspir sangue. A mão metálica dela atravessou seu estômago.",
-            DOS_VERMELHO,
-        );
-        ui.buffer_efeito("@@LOW_POWER@@");
-        ui.animar(
-            "Nada mais faz sentido, sua visão começa a tremer, mas pela última vez, você olha nos olhos dela.",
-            DOS_VERMELHO,
-        );
-        ui.animar("- 'Me Perdoe por isso.'", DOS_VERMELHO);
-        ui.buffer_efeito("@@BLACKOUT@@");
-        ui.animar(
-            "Seu corpo é deixado ao chão, e você se junta a todos os outros naquele lugar.",
-            DOS_BRANCO,
-        );
-
-        if let Some(arte) = jogo.ascii_arts.get("ARTE_FINAL_NEUTRO") {
-            ui.animar(&format!("{}{}{}", DOS_BRANCO, arte, RESET), DOS_BRANCO);
+        "cama" => {
+            ui.animar_com_intervalo(
+                "Você deita na cama velha, ignorando o cheiro de mofo...",
+                DOS_AMARELO,
+                0.05,
+            );
+            ui.pausa(1.0);
+            ui.buffer_efeito("@@LOW_POWER@@");
+            ui.animar_com_intervalo(
+                "O corredor fica em silêncio. Você sente o trinco da porta girar lentamente...",
+                DOS_VERMELHO,
+                0.09,
+            );
+            ui.animar_com_intervalo(
+                "Você finalmente sente ela, o seu cheiro, sua vibração... Seu dispositivo apita...",
+                DOS_VERDE,
+                0.06,
+            );
+            ui.pausa(1.5);
+            ui.animar_com_intervalo(
+                "PRESENÇA ULTERIOR DETECTADA DENTRO DO QUARTO.",
+                DOS_VERMELHO,
+                0.05,
+            );
+            ui.pausa(2.0);
+            ui.buffer_efeito("@@BLACKOUT@@");
+            ui.animar_com_intervalo(
+                "Você fecha os olhos. Pensando em não acordar nunca mais.",
+                DOS_BRANCO,
+                0.1,
+            );
+            ui.buffer_efeito("@@JUMPSCARE@@");
+            ui.exibir(&format!("\n{DOS_BRANCO}[ FINAL BONS SONHOS ]{RESET}"));
+            "bons_sonhos"
         }
-
-        ui.exibir(&format!(
-            "\n{}[ FINAL NEUTRO: ESCURIDÃO ]{}",
-            DOS_BRANCO, RESET
-        ));
-        liberou_deus = audio.config.registrar_final("bom");
-    } else if tipo_final == "verdadeiro" {
-        ui.limpar();
-        ui.animar(
-            &format!(
-                "{}=================================================================={}",
-                DOS_VERMELHO, RESET
-            ),
-            DOS_VERMELHO,
-        );
-        ui.animar(
-            &format!(
-                "{}                        [ FINAL VERDADEIRO ]                      {}",
-                DOS_VERMELHO, RESET
-            ),
-            DOS_VERMELHO,
-        );
-        ui.animar(
-            &format!(
-                "{}=================================================================={}\n",
-                DOS_VERMELHO, RESET
-            ),
-            DOS_VERMELHO,
-        );
-
-        ui.animar("Você acende seu isqueiro...", DOS_BRANCO);
-        ui.buffer_efeito("@@LOW_POWER@@");
-        ui.animar(
-            "Com a chama ardente, você a joga nas cortinas do hall. O fogo sobe rapidamente.",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "Você tosse um pouco com a fumaça. Ao retomar o olhar para o fim da sala, você a vê, esperando.",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "O estalo das chamas consome a madeira podre. A fumaça preta e espessa cobre o teto do restaurante.",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "O calor é sufocante, mas você não corre para a saída ainda. Você caminha até o centro do hall.\n",
-            DOS_BRANCO,
-        );
-
-        ui.animar(
-            "Lá está a carcaça de pelúcia rosa, com o metal rangendo e o plástico derretendo.",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "Você se aproxima do animatrônico... dela. E encaixa os fios na sua fiação exposta...",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "Os LEDs vermelhos piscam fracos. Ela tenta se mover... mas o mecanismo emperra.\n",
-            DOS_BRANCO,
-        );
-
-        ui.animar(
-            "- Por que não deu certo? O que eu fiz de errado...?",
-            DOS_AMARELO,
-        );
-        ui.animar(
-            "Sua voz treme. As lágrimas cortam a fuligem no seu rosto.",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "\nUm zumbido eletrônico arranhado sai do alto-falante no peito da carcaça:",
-            DOS_BRANCO,
-        );
-        ui.animar("- '... v-você... fez... dar... certo...'", DOS_VERMELHO);
-        ui.animar("- '... R-Rogério...?'", DOS_VERMELHO);
-
-        ui.animar("\n- Caro... Caroline? É você?", DOS_AMARELO);
-        ui.animar("*(Você abraça a carcaça de pelagem rosa)*", DOS_BRANCO);
-        ui.animar(
-            "Mesmo com o calor das chamas se espalhando, o metal que te toca é frio e rígido.",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "Mas você não solta. Você a segura com toda a força que te resta.",
-            DOS_BRANCO,
-        );
-
-        ui.animar(
-            "- Meu corpo ficou em silêncio... O barulho da minha cabeça, simplesmente parou.",
-            DOS_VERMELHO,
-        );
-        ui.animar(
-            "- A dor nas minhas costas... o ferro rasgando minha pele... sumiu.",
-            DOS_VERMELHO,
-        );
-        ui.animar("- Eu não sinto mais raiva.", DOS_VERMELHO);
-
-        ui.animar(
-            "\n- Eu sinto muito, Caroline... Me desculpa por não ter chegado a tempo...",
-            DOS_AMARELO,
-        );
-        ui.animar(
-            "- Eu... Eu li seus e-mails. Eu tenho te procurado em todo lugar...",
-            DOS_AMARELO,
-        );
-
-        ui.animar(
-            "\n*(O fogo se alastra pelo restaurante, aquele lugar maldito vai arder em chamas)*",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "O crepitar do incêndio abafa os ruídos metálicos dos outros robôs gritando lá no fundo.",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "O filtro de luz vermelha dos olhos de plástico dela se apaga para sempre.",
-            DOS_BRANCO,
-        );
-
-        ui.animar(
-            "\nNa penumbra dourada pelas chamas, a voz não vem mais do alto-falante. Ela ecoa suave na sua mente:",
-            DOS_BRANCO,
-        );
-        ui.animar("- Não peça desculpas, meu amor... Você veio.", DOS_VERMELHO);
-        ui.animar(
-            "- Durante meses no escuro dessa máquina, eu queria fazer 'eles' pagarem pelo que me fizeram...",
-            DOS_VERMELHO,
-        );
-        ui.animar(
-            "- Mas quando você me abraçou... a escuridão simplesmente evaporou.",
-            DOS_VERMELHO,
-        );
-
-        ui.animar(
-            "\n- Não podia te deixar presa aqui, Caroline. Hoje todo esse terror feito de máquinas acaba.",
-            DOS_AMARELO,
-        );
-        ui.animar(
-            "- A gente ainda vai viver juntos... Pena que seja em outra vida.",
-            DOS_AMARELO,
-        );
-
-        ui.animar(
-            "\nUma brisa suave e fresca corta o ar quente do incêndio, envolvendo seu pescoço.",
-            DOS_BRANCO,
-        );
-        ui.animar("- Me sinta pela última vez.", DOS_VERMELHO);
-        ui.animar(
-            "\n*(Você sente mãos invisíveis e macias em seus ombros. Toda a dor e a paranoia desaparecem)*",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "\n- Vai embora agora, viva por nós dois. Eu sempre estarei contigo.",
-            DOS_VERMELHO,
-        );
-        ui.animar("- Eu te amo.", DOS_AMARELO);
-        ui.animar("- Eu também te amo, amor. Pra sempre.", DOS_VERMELHO);
-
-        ui.animar(
-            "\n*(O animatrônico cai no chão, a carcaça é consumida pelas chamas enquanto o teto cede)*",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            &format!(
-                "\n{}[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.{}",
-                DOS_VERDE, RESET
-            ),
-            DOS_VERDE,
-        );
-
-        ui.buffer_efeito("@@NORMAL_POWER@@");
-        ui.animar(
-            "\nVocê se levanta e empurra as portas de entrada, saindo para o ar frio da madrugada.",
-            DOS_BRANCO,
-        );
-        ui.animar(
-            "Pela calçada de Curitiba, você vê a fumaça subindo ao amanhecer. O restaurante virou cinzas.",
-            DOS_BRANCO,
-        );
-
-        if let Some(arte) = jogo.ascii_arts.get("ARTE_FINAL_VERDADEIRO") {
-            ui.animar(&format!("{}{}{}", DOS_BRANCO, arte, RESET), DOS_BRANCO);
+        "final_bom" => {
+            ui.limpar();
+            ui.animar_com_intervalo(&format!("{DOS_VERDE} ======================================================================{RESET}"), DOS_BRANCO, 0.03);
+            ui.animar_com_intervalo(&format!("{DOS_VERDE}                             [ FINAL NEUTRO ]                               {RESET}"), DOS_BRANCO, 0.04);
+            ui.animar_com_intervalo(&format!("{DOS_VERDE} ======================================================================{RESET}"), DOS_BRANCO, 0.03);
+            ui.animar_com_intervalo(
+                "Você acende o isqueiro e ilumina o local. A luz do fogo traz calma...",
+                DOS_VERDE,
+                0.04,
+            );
+            ui.animar_com_intervalo(
+                "- Por que não deu certo? O que eu fiz de errado?",
+                DOS_AMARELO,
+                0.05,
+            );
+            ui.animar_com_intervalo("- 'Ainda estou aqui...'", DOS_VERMELHO, 0.09);
+            ui.animar_com_intervalo("- Amor? É voce? Mesmo???", DOS_AMARELO, 0.05);
+            ui.animar_com_intervalo("- 'Eu espero que ainda seja eu...'", DOS_VERMELHO, 0.09);
+            ui.animar_com_intervalo("- 'eu Não SinTo maIS nADA...'", DOS_VERMELHO, 0.1);
+            ui.animar_com_intervalo(
+                "- 'Eu não consegui te salvar, me desculpa...'",
+                DOS_AMARELO,
+                0.09,
+            );
+            ui.animar_com_intervalo(
+                "- 'Não consegui salvar ninguém, o que eu fiz.'",
+                DOS_AMARELO,
+                0.09,
+            );
+            ui.animar_com_intervalo("- 'Me ajUde, EU SINTO FALTA DE CASA.'", DOS_VERMELHO, 0.1);
+            ui.animar_com_intervalo("- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas,f eu não posso fazer mais nada.", DOS_AMARELO, 0.05);
+            ui.pausa(2.0);
+            ui.animar_com_intervalo("- ... *Caroline abraça Rogério*", DOS_VERMELHO, 0.09);
+            ui.animar_com_intervalo(
+                "- 'Eu esperO tE eNContrar Lá, meu bem.'",
+                DOS_VERMELHO,
+                0.09,
+            );
+            ui.pausa(1.5);
+            ui.buffer_efeito("@@GLITCH_LUZ@@");
+            ui.pausa(2.0);
+            ui.buffer_efeito("@@JUMPSCARE@@");
+            ui.pausa(3.0);
+            ui.animar_com_intervalo(
+                "Você começa a cuspir sangue. A mão metálica dela atravessou seu estômago.",
+                DOS_VERMELHO,
+                0.05,
+            );
+            ui.pausa(1.0);
+            ui.buffer_efeito("@@LOW_POWER@@");
+            ui.animar_com_intervalo("Nada mais faz sentido, sua visão começa a tremer, mas pela última vez, você olha nos olhos dela.", DOS_VERMELHO, 0.04);
+            ui.pausa(1.5);
+            ui.animar_com_intervalo("- 'Me Perdoe por isso.'", DOS_VERMELHO, 0.09);
+            ui.pausa(2.0);
+            ui.buffer_efeito("@@BLACKOUT@@");
+            ui.animar_com_intervalo(
+                "Seu corpo é deixado ao chão, e você se junta a todos os outros naquele lugar.",
+                DOS_BRANCO,
+                0.09,
+            );
+            ui.pausa(2.0);
+            ui.animar_com_intervalo(
+                &format!("{DOS_BRANCO}{ARTE_FINAL_NEUTRO}{RESET}"),
+                DOS_BRANCO,
+                0.005,
+            );
+            ui.exibir(&format!("\n{DOS_BRANCO}[ FINAL NEUTRO: ESCURIDÃO ]{RESET}"));
+            "bom"
         }
-        let _ = media.acionar_imagem("final_verdadeiro", true, false);
-
+        "verdadeiro" => {
+            ui.limpar();
+            ui.animar_com_intervalo(&format!("{DOS_VERMELHO}=================================================================={RESET}"), DOS_BRANCO, 0.02);
+            ui.animar_com_intervalo(&format!("{DOS_VERMELHO}                        [ FINAL VERDADEIRO ]                      {RESET}"), DOS_BRANCO, 0.03);
+            ui.animar_com_intervalo(&format!("{DOS_VERMELHO}=================================================================={RESET}\n"), DOS_BRANCO, 0.02);
+            ui.animar_com_intervalo("Você acende seu isqueiro...", DOS_BRANCO, 0.04);
+            ui.buffer_efeito("@@LOW_POWER@@");
+            ui.animar_com_intervalo(
+                "Com a chama ardente, você a joga nas cortinas do hall. O fogo sobe rapidamente.",
+                DOS_BRANCO,
+                0.04,
+            );
+            ui.animar_com_intervalo("Você tosse um pouco com a fumaça. Ao retomar o olhar para o fim da sala, você a vê, esperando.", DOS_BRANCO, 0.04);
+            ui.animar_com_intervalo("O estalo das chamas consome a madeira podre. A fumaça preta e espessa cobre o teto do restaurante.", DOS_BRANCO, 0.04);
+            ui.animar_com_intervalo("O calor é sufocante, mas você não corre para a saída ainda. Você caminha até o centro do hall.\n", DOS_BRANCO, 0.04);
+            ui.animar_com_intervalo(
+                "Lá está a carcaça de pelúcia rosa, com o metal rangendo e o plástico derretendo.",
+                DOS_BRANCO,
+                0.04,
+            );
+            ui.animar_com_intervalo("Você se aproxima do animatrônico... dela. E encaixa os fios na sua fiação exposta...", DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(
+                "Os LEDs vermelhos piscam fracos. Ela tenta se mover... mas o mecanismo emperra.\n",
+                DOS_BRANCO,
+                0.05,
+            );
+            ui.animar_com_intervalo(
+                "- Por que não deu certo? O que eu fiz de errado...?",
+                DOS_AMARELO,
+                0.05,
+            );
+            ui.animar_com_intervalo(
+                "Sua voz treme. As lágrimas cortam a fuligem no seu rosto.",
+                DOS_BRANCO,
+                0.04,
+            );
+            ui.animar_com_intervalo(
+                "\nUm zumbido eletrônico arranhado sai do alto-falante no peito da carcaça:",
+                DOS_BRANCO,
+                0.04,
+            );
+            ui.animar_com_intervalo(
+                "- '... v-você... fez... dar... certo...'",
+                DOS_VERMELHO,
+                0.08,
+            );
+            ui.animar_com_intervalo("- '... R-Rogério...?'", DOS_VERMELHO, 0.08);
+            ui.animar_com_intervalo("\n- Caro... Caroline? É você?", DOS_AMARELO, 0.05);
+            ui.animar_com_intervalo(
+                "*(Você abraça a carcaça de pelagem rosa)*",
+                DOS_BRANCO,
+                0.04,
+            );
+            ui.animar_com_intervalo(
+                "Mesmo com o calor das chamas se espalhando, o metal que te toca é frio e rígido.",
+                DOS_BRANCO,
+                0.04,
+            );
+            ui.animar_com_intervalo(
+                "Mas você não solta. Você a segura com toda a força que te resta.",
+                DOS_BRANCO,
+                0.04,
+            );
+            ui.animar_com_intervalo(
+                "- Meu corpo ficou em silêncio... O barulho da minha cabeça, simplesmente parou.",
+                DOS_VERMELHO,
+                0.07,
+            );
+            ui.animar_com_intervalo(
+                "- A dor nas minhas costas... o ferro rasgando minha pele... sumiu.",
+                DOS_VERMELHO,
+                0.07,
+            );
+            ui.animar_com_intervalo("- Eu não sinto mais raiva.", DOS_VERMELHO, 0.07);
+            ui.animar_com_intervalo(
+                "\n- Eu sinto muito, Caroline... Me desculpa por não ter chegado a tempo...",
+                DOS_AMARELO,
+                0.05,
+            );
+            ui.animar_com_intervalo(
+                "- Eu... Eu li seus e-mails. Eu tenho te procurado em todo lugar...",
+                DOS_AMARELO,
+                0.05,
+            );
+            ui.pausa(1.0);
+            ui.animar_com_intervalo("\n*(O fogo se alastra pelo restaurante, aquele lugar maldito vai arder em chamas)*", DOS_BRANCO, 0.04);
+            ui.animar_com_intervalo("O crepitar do incêndio abafa os ruídos metálicos dos outros robôs gritando lá no fundo.", DOS_BRANCO, 0.04);
+            ui.animar_com_intervalo(
+                "O filtro de luz vermelha dos olhos de plástico dela se apaga para sempre.",
+                DOS_BRANCO,
+                0.04,
+            );
+            ui.animar_com_intervalo("\nNa penumbra dourada pelas chamas, a voz não vem mais do alto-falante. Ela ecoa suave na sua mente:", DOS_BRANCO, 0.04);
+            ui.animar_com_intervalo(
+                "- Não peça desculpas, meu amor... Você veio.",
+                DOS_VERMELHO,
+                0.07,
+            );
+            ui.animar_com_intervalo("- Durante meses no escuro dessa máquina, eu queria fazer 'eles' pagarem pelo que me fizeram...", DOS_VERMELHO, 0.07);
+            ui.animar_com_intervalo(
+                "- Mas quando você me abraçou... a escuridão simplesmente evaporou.",
+                DOS_VERMELHO,
+                0.07,
+            );
+            ui.animar_com_intervalo("\n- Não podia te deixar presa aqui, Caroline. Hoje todo esse terror feito de máquinas acaba.", DOS_AMARELO, 0.06);
+            ui.animar_com_intervalo(
+                "- A gente ainda vai viver juntos... Pena que seja em outra vida.",
+                DOS_AMARELO,
+                0.05,
+            );
+            ui.animar_com_intervalo(
+                "\nUma brisa suave e fresca corta o ar quente do incêndio, envolvendo seu pescoço.",
+                DOS_BRANCO,
+                0.04,
+            );
+            ui.animar_com_intervalo("- Me sinta pela última vez.", DOS_VERMELHO, 0.07);
+            ui.animar_com_intervalo("\n*(Você sente mãos invisíveis e macias em seus ombros. Toda a dor e a paranoia desaparecem)*", DOS_BRANCO, 0.04);
+            ui.animar_com_intervalo(
+                "\n- Vai embora agora, viva por nós dois. Eu sempre estarei contigo.",
+                DOS_VERMELHO,
+                0.07,
+            );
+            ui.animar_com_intervalo("- Eu te amo.", DOS_AMARELO, 0.06);
+            ui.animar_com_intervalo("- Eu também te amo, amor. Pra sempre.", DOS_VERMELHO, 0.06);
+            ui.pausa(2.0);
+            ui.animar_com_intervalo("\n*(O animatrônico cai no chão, a carcaça é consumida pelas chamas enquanto o teto cede)*", DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(
+                &format!("\n{DOS_VERDE}[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.{RESET}"),
+                DOS_BRANCO,
+                0.05,
+            );
+            ui.pausa(1.5);
+            ui.buffer_efeito("@@NORMAL_POWER@@");
+            ui.animar_com_intervalo("\nVocê se levanta e empurra as portas de entrada, saindo para o ar frio da madrugada.", DOS_BRANCO, 0.08);
+            ui.animar_com_intervalo("Pela calçada de Curitiba, você vê a fumaça subindo ao amanhecer. O restaurante virou cinzas.", DOS_BRANCO, 0.06);
+            ui.animar_com_intervalo(
+                &format!("{DOS_BRANCO}{ARTE_FINAL_VERDADEIRO}{RESET}"),
+                DOS_BRANCO,
+                0.005,
+            );
+            ui.exibir(&format!(
+                "\n{DOS_VERDE}[ FINAL VERDADEIRO: LIBERTAÇÃO ]{RESET}"
+            ));
+            "verdadeiro"
+        }
+        _ => return,
+    };
+    if audio.config.registrar_final(id) {
         ui.exibir(&format!(
-            "\n{}[ FINAL VERDADEIRO: LIBERTAÇÃO ]{}",
-            DOS_VERDE, RESET
+            "\n{DOS_AMARELO}=================================================={RESET}"
         ));
-        liberou_deus = audio.config.registrar_final("verdadeiro");
-    }
-
-    if liberou_deus {
-        ui.exibir(&format!(
-            "\n{}=================================================={}",
-            DOS_AMARELO, RESET
-        ));
-        ui.animar(
+        ui.animar_com_intervalo(
             "VOCÊ DESVENDOU TODAS AS VERDADES DESTA NOITE.",
             DOS_VERMELHO,
+            0.05,
         );
         ui.exibir(&format!(
-            "{}DIGITE O ANO EM QUE TUDO ACABOU NA TELA DE MENU: {}2007{}",
-            DOS_AMARELO, DOS_BRANCO, RESET
+            "{DOS_AMARELO}DIGITE O ANO EM QUE TUDO ACABOU NA TELA DE MENU: {DOS_BRANCO}2007{RESET}"
         ));
         ui.exibir(&format!(
-            "{}=================================================={}",
-            DOS_AMARELO, RESET
+            "{DOS_AMARELO}=================================================={RESET}"
         ));
     }
-
     ui.buffer_efeito("@@NORMAL_POWER@@");
-    ui.animar(
-        "\n=== APERTE F5 (OU ENTER) PARA REINICIAR ===",
-        DOS_AMARELO,
-    );
+    ui.animar_com_intervalo("\n=== APERTE F5 PARA REINICIAR ===", DOS_AMARELO, 0.05);
 }

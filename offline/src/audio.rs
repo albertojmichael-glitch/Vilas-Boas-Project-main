@@ -1,9 +1,11 @@
 use crate::data::{obter_audio_embutido, resolver_arquivo_asset};
+use crate::storage;
 use rand::Rng;
+use rodio::buffer::SamplesBuffer;
 use rodio::source::SineWave;
 use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink, Source};
 use serde::{Deserialize, Serialize};
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::{BufReader, Cursor};
 use std::time::{Duration, Instant};
 
@@ -42,8 +44,8 @@ impl Default for Configuracoes {
     fn default() -> Self {
         Self {
             volume_geral: 1.0,
-            volume_ambiente: 0.40,
-            volume_efeitos: 0.80,
+            volume_ambiente: 0.60,
+            volume_efeitos: 1.0,
             volume_jumpscare: 1.0,
             mudo: false,
             jumpscare_visual: true,
@@ -61,7 +63,7 @@ impl Default for Configuracoes {
 
 impl Configuracoes {
     pub fn carregar() -> Self {
-        if let Ok(conteudo) = fs::read_to_string(ARQUIVO_CONFIG) {
+        if let Ok(conteudo) = storage::ler(ARQUIVO_CONFIG, &[ARQUIVO_CONFIG]) {
             if let Ok(mut cfg) = serde_json::from_str::<Configuracoes>(&conteudo) {
                 for f in ["mediocre", "bons_sonhos", "bom", "verdadeiro"] {
                     if cfg.conquistas_globais.contains(&f.to_string())
@@ -77,9 +79,7 @@ impl Configuracoes {
     }
 
     pub fn salvar(&self) {
-        if let Ok(json) = serde_json::to_string_pretty(self) {
-            let _ = fs::write(ARQUIVO_CONFIG, json);
-        }
+        let _ = storage::gravar(ARQUIVO_CONFIG, self);
     }
 
     pub fn registrar_final(&mut self, id_final: &str) -> bool {
@@ -111,6 +111,7 @@ pub struct AudioManager {
     _stream: Option<OutputStream>,
     handle: Option<OutputStreamHandle>,
     ambient_sink: Option<Sink>,
+    crt_sink: Option<Sink>,
     pub config: Configuracoes,
     pub ultima_legenda: Option<(String, Instant)>,
     proximo_som_randomico: Instant,
@@ -125,12 +126,13 @@ impl AudioManager {
         };
 
         let mut rng = rand::thread_rng();
-        let delay = rng.gen_range(35..=70);
+        let delay = rng.gen_range(30..=80);
 
         Self {
             _stream: stream,
             handle,
             ambient_sink: None,
+            crt_sink: None,
             config: Configuracoes::carregar(),
             ultima_legenda: None,
             proximo_som_randomico: Instant::now() + Duration::from_secs(delay),
@@ -157,7 +159,7 @@ impl AudioManager {
             return None;
         }
         if let Some((ref txt, quando)) = self.ultima_legenda {
-            if quando.elapsed() < Duration::from_secs(4) {
+            if quando.elapsed() < Duration::from_secs(2) {
                 return Some(txt.as_str());
             }
         }
@@ -165,6 +167,9 @@ impl AudioManager {
     }
 
     pub fn atualizar_volume_ambiente(&self) {
+        if let Some(ref sink) = self.crt_sink {
+            sink.set_volume(self.calcular_volume(0.005));
+        }
         if let Some(ref sink) = self.ambient_sink {
             sink.set_volume(self.calcular_volume(self.config.volume_ambiente));
         }
@@ -178,6 +183,18 @@ impl AudioManager {
         let Some(ref handle) = self.handle else {
             return;
         };
+
+        if self.crt_sink.is_none() {
+            if let Ok(sink) = Sink::try_new(handle) {
+                const AMOSTRAS: usize = 800;
+                let dentes: Vec<f32> = (0..AMOSTRAS)
+                    .map(|i| 2.0 * i as f32 / AMOSTRAS as f32 - 1.0)
+                    .collect();
+                sink.set_volume(self.calcular_volume(0.005));
+                sink.append(SamplesBuffer::new(1, 48_000, dentes).repeat_infinite());
+                self.crt_sink = Some(sink);
+            }
+        }
 
         if let Some(bytes) = obter_audio_embutido("ambiente.mp3") {
             if let Ok(source) = Decoder::new(Cursor::new(bytes)) {
@@ -206,6 +223,9 @@ impl AudioManager {
     }
 
     pub fn parar_ambiente(&mut self) {
+        if let Some(sink) = self.crt_sink.take() {
+            sink.stop();
+        }
         if let Some(sink) = self.ambient_sink.take() {
             sink.stop();
         }
@@ -269,9 +289,24 @@ impl AudioManager {
             return;
         }
         self.ultimo_som_tecla = Instant::now();
-        let mut rng = rand::thread_rng();
-        let freq = rng.gen_range(400.0..=550.0);
-        self.tocar_bipe(freq, 22, 0.35);
+        let volume = self.calcular_volume(self.config.volume_efeitos);
+        let Some(handle) = self.handle.as_ref().filter(|_| volume > 0.0) else {
+            return;
+        };
+        const TAXA: u32 = 48_000;
+        let freq = rand::thread_rng().gen_range(400.0..550.0);
+        let onda: Vec<f32> = (0..TAXA / 20)
+            .map(|i| {
+                let t = i as f32 / TAXA as f32;
+                let polaridade = if (freq * t).fract() < 0.5 { 1.0 } else { -1.0 };
+                polaridade * 0.015 * (1.0_f32 / 15.0).powf((t / 0.04).min(1.0))
+            })
+            .collect();
+        if let Ok(sink) = Sink::try_new(handle) {
+            sink.set_volume(volume);
+            sink.append(SamplesBuffer::new(1, TAXA, onda));
+            sink.detach();
+        }
     }
 
     pub fn som_bipe_entrada(&self) {
@@ -306,7 +341,7 @@ impl AudioManager {
     }
 
     pub fn som_apito_tv(&mut self) {
-        self.tocar_bipe(1000.0, 850, 0.45);
+        self.tocar_bipe(1000.0, 1500, 0.45);
         self.definir_legenda("[ Áudio: Sinal de teste de TV 1000Hz ]");
     }
 
@@ -316,7 +351,7 @@ impl AudioManager {
     }
 
     pub fn som_porta(&mut self) {
-        self.tocar_efeito("metalrangendo.mp3", self.config.volume_efeitos);
+        self.tocar_efeito("portafechandoabrindo.mp3", self.config.volume_efeitos);
         self.definir_legenda("[ Áudio: Rangido pesado de metal e tranca ]");
     }
 
@@ -332,7 +367,7 @@ impl AudioManager {
         } else {
             "sonsrandomicos2.mp3"
         };
-        self.tocar_efeito(arquivo, self.config.volume_efeitos * 0.85);
+        self.tocar_efeito(arquivo, self.config.volume_efeitos * 0.8);
         self.definir_legenda("[ Áudio: Ruídos estranhos ecoando pelo restaurante... ]");
     }
 
@@ -348,7 +383,7 @@ impl AudioManager {
         if Instant::now() >= self.proximo_som_randomico {
             self.som_randomico();
             let mut rng = rand::thread_rng();
-            let prox = rng.gen_range(40..=85);
+            let prox = rng.gen_range(30..=80);
             self.proximo_som_randomico = Instant::now() + Duration::from_secs(prox);
         }
     }
