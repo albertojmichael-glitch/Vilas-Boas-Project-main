@@ -8,9 +8,9 @@ pub const DOS_CIANO: &str = "\x1b[96m";
 pub const DOS_CINZA: &str = "\x1b[90m";
 pub const RESET: &str = "\x1b[0m";
 
-pub const COR_VERDE: Color32 = Color32::from_rgb(0, 255, 65);
-pub const COR_VERMELHO: Color32 = Color32::from_rgb(255, 55, 55);
-pub const COR_AMARELO: Color32 = Color32::from_rgb(255, 215, 0);
-pub const COR_BRANCO: Color32 = Color32::from_rgb(235, 235, 235);
+pub const COR_VERDE: Color32 = Color32::from_rgb(74, 255, 74);
+pub const COR_VERMELHO: Color32 = Color32::from_rgb(255, 85, 85);
+pub const COR_AMARELO: Color32 = Color32::from_rgb(255, 218, 51);
+pub const COR_BRANCO: Color32 = Color32::from_rgb(224, 224, 224);
 pub const COR_CIANO: Color32 = Color32::from_rgb(0, 225, 255);
 pub const COR_CINZA: Color32 = Color32::from_rgb(130, 130, 130);

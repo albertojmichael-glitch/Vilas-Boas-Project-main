@@ -1,9 +1,10 @@
 use crate::audio::AudioManager;
+use crate::data::{salas_terminais, CHANCE_EVENTO_ALEATORIO, CHANCE_TROPECO_ESCURO_PCT};
 use crate::media::MediaManager;
+use crate::parser::normalizar;
 use crate::state::GameState;
 use crate::ui::{DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET};
 use crate::utils::{desbloquear_conquista, encontrar_melhor_match};
-use crate::views;
 use crate::TerminalBuffer;
 use rand::seq::SliceRandom;
 use rand::Rng;
@@ -19,17 +20,16 @@ pub fn processar_comando(
     let mut comando = comando_in.trim().to_string();
 
     if jogo.estado_atual == "COMBATE_ANIMATRONICO" {
-        if jogo.god_mode
-            && ["atacar", "bater", "chutar", "lutar"].contains(&comando.as_str())
-        {
+        if jogo.god_mode && ["atacar", "bater", "chutar", "lutar"].contains(&comando.as_str()) {
             ui.animar(
                 "Você dá um soco de direita com força sobre-humana na mandíbula de metal!",
                 DOS_AMARELO,
             );
             ui.animar(
                 "O animatrônico solta faíscas e recua atordoado para a escuridão!",
-                DOS_VERDE,
+                DOS_AMARELO,
             );
+            ui.pausa(2.0);
             jogo.estado_atual = "JOGO".to_string();
             jogo.posicao_perseguidor = "longe".to_string();
             return Some("combate".to_string());
@@ -39,15 +39,23 @@ pub fn processar_comando(
                 DOS_VERMELHO,
             );
             jogo.sala_atual = "morte".to_string();
-            views::dar_tela_de_morte(jogo, ui, audio, media);
+            ui.pausa(2.0);
             return Some("morte".to_string());
         }
     }
 
     if let Some(sala) = jogo.mapa.get(&jogo.sala_atual) {
-        if sala.conexoes.contains_key(&comando) {
+        if sala
+            .conexoes
+            .keys()
+            .any(|chave| normalizar(chave) == comando)
+        {
             comando = format!("ir {}", comando);
-        } else if sala.inspecionaveis.contains_key(&comando) {
+        } else if sala
+            .inspecionaveis
+            .keys()
+            .any(|chave| normalizar(chave) == comando)
+        {
             comando = format!("examinar {}", comando);
         }
     }
@@ -68,16 +76,14 @@ pub fn processar_comando(
         "p" => "pegar",
         "l" => "largar",
         "u" => "usar",
-        "c" => "combinar",
+        "c" | "juntar" => "combinar",
         "j" => "jogar",
         "x" | "ex" | "o" | "olhar" | "ver" | "investigar" => "examinar",
         "i" | "inv" => "inventario",
         v => v,
     };
 
-    if argumento.is_empty()
-        && ["ir", "pegar", "largar", "usar", "combinar"].contains(&verbo)
-    {
+    if argumento.is_empty() && ["ir", "pegar", "largar", "usar", "combinar"].contains(&verbo) {
         let msg = match verbo {
             "ir" => "Ir para onde?",
             "pegar" => "Pegar o quê?",
@@ -142,17 +148,16 @@ pub fn processar_comando(
             Some("inventario".to_string())
         }
         _ => {
-            ui.exibir(&format!(
-                "{}Comando inválido. Digite 'ajuda' se precisar.{}",
-                DOS_VERMELHO, RESET
-            ));
-            jogo.erros_consecutivos += 1;
-            if jogo.erros_consecutivos >= 3 {
+            ui.exibir("Comando não reconhecido.");
+            if jogo.erros_consecutivos + 1 >= crate::data::LIMITE_ERROS_DICA {
+                ui.pausa(0.5);
                 ui.exibir(&format!(
-                    "\n{}[DICA DO SISTEMA]: Tente usar verbos simples no início da frase (ex: 'ir frente', 'olhar mesa', 'pegar chave', 'usar item').{}",
-                    DOS_AMARELO, RESET
+                    "\n{DOS_AMARELO}[DICA DO SISTEMA] Parece que você está com dificuldades. Tente verbos simples:{RESET}\n\
+                     {DOS_BRANCO} ☞ 'olhar' {DOS_AMARELO}(para examinar a sala){RESET}\n\
+                     {DOS_BRANCO} ☞ 'ir frente / trás / esquerda / direita'{RESET}\n\
+                     {DOS_BRANCO} ☞ 'pegar [item]' ou 'usar [item]'{RESET}\n\
+                     {DOS_BRANCO} ☞ 'inventario' {DOS_AMARELO}(para ver sua mochila){RESET}"
                 ));
-                jogo.erros_consecutivos = 0;
             }
             None
         }
@@ -167,9 +172,7 @@ pub fn cmd_ir(
     _audio: &mut AudioManager,
     _media: &mut MediaManager,
 ) -> bool {
-    let palavras_ignoradas = [
-        "para", "pro", "pra", "em", "a", "o", "as", "os", "na", "no",
-    ];
+    let palavras_ignoradas = ["para", "pro", "pra", "em", "a", "o", "as", "os", "na", "no"];
     let palavras: Vec<&str> = direcao_in
         .split_whitespace()
         .filter(|p| !palavras_ignoradas.contains(p))
@@ -186,99 +189,93 @@ pub fn cmd_ir(
     }
 
     if jogo.sala_atual == "03" && direcao == "frente" {
-        ui.limpar();
-        ui.animar(
-            "Você chuta a parte de baixo da porta emperrada. Com um estalo alto da madeira podre, ela finalmente cede e se abre por completo!",
-            DOS_VERDE,
-        );
-        if let Some(corredor) = jogo.mapa.get_mut("corredor") {
-            corredor
-                .conexoes
-                .insert("03".to_string(), Some("sala do gerador".to_string()));
-        }
-        jogo.sala_atual = "sala do gerador".to_string();
+        ui.exibir(&format!(
+            "{DOS_AMARELO}Você toma distância e dá um chute violento na porta emperrada!{RESET}"
+        ));
+        ui.exibir(&format!(
+            "{DOS_VERDE}A madeira velha cede e a porta escancara.{RESET}"
+        ));
+        abrir_sala_gerador(jogo);
+        ui.pausa(2.0);
         return true;
     }
 
-    let opcoes_saidas: Vec<String> = jogo
-        .mapa
-        .get(&jogo.sala_atual)
-        .map(|s| s.conexoes.keys().cloned().collect())
-        .unwrap_or_default();
+    let Some(sala) = jogo.mapa.get(&jogo.sala_atual) else {
+        return false;
+    };
+    let saidas = sala.saidas_listadas();
+    let opcoes: Vec<_> = saidas.iter().map(|(chave, _)| chave.clone()).collect();
+    let destino_exato = saidas
+        .iter()
+        .find_map(|(_, destino)| (normalizar(destino) == direcao).then(|| destino.clone()));
+    let destino = destino_exato.or_else(|| {
+        encontrar_melhor_match(&direcao, &opcoes, 0.70).and_then(|chave| sala.obter_saida(&chave))
+    });
+    let Some(destino) = destino else {
+        ui.exibir(&format!("Você não pode ir para '{direcao_in}'."));
+        if !opcoes.is_empty() {
+            ui.exibir(&format!(
+                "{DOS_BRANCO}Saídas disponíveis: {}{RESET}",
+                opcoes.join(", ")
+            ));
+        }
+        ui.pausa(1.5);
+        return false;
+    };
+    if !jogo.mapa.contains_key(&destino) && !salas_terminais().contains(&destino.as_str()) {
+        ui.exibir("O caminho está bloqueado ou não há saída para essa direção.");
+        return false;
+    }
 
-    let direcao_encontrada = encontrar_melhor_match(&direcao, &opcoes_saidas, 0.75);
+    ui.limpar();
+    jogo.turnos_mesma_sala = 0;
+    let mut rng = rand::thread_rng();
+    if jogo.turnos_luz <= 0
+        && !jogo.god_mode
+        && jogo.dificuldade_escolhida != "DESAFIO_BREU"
+        && rng.gen_range(1..=100) <= CHANCE_TROPECO_ESCURO_PCT
+    {
+        ui.exibir("\n No escuro, você perde a noção da direção, e acaba tropeçando no proprio pé, e cai no chão");
+        let morreu = jogo.aplicar_dano(1);
+        ui.exibir(&format!(" Você se machucou na queda. (HP: {})", jogo.hp));
+        ui.pausa(2.0);
+        if morreu {
+            ui.exibir("\n Você cai no chão e quebra sua perna, você não consegue mais andar, e escuta barulhos vindo na sua direção");
+            ui.pausa(2.0);
+        }
+        return true;
+    }
 
-    if let Some(dir_key) = direcao_encontrada {
-        let destino_opt = jogo
-            .mapa
-            .get(&jogo.sala_atual)
-            .and_then(|s| s.conexoes.get(&dir_key).cloned());
-
-        match destino_opt {
-            Some(None) => {
-                ui.exibir(&format!(
-                    "{}A passagem para '{}' está trancada!{}",
-                    DOS_VERMELHO, dir_key, RESET
-                ));
-                false
-            }
-            Some(Some(destino)) => {
-                ui.limpar();
-                jogo.turnos_mesma_sala = 0;
-
-                let mut rng = rand::thread_rng();
-                if jogo.turnos_luz <= 0
-                    && !jogo.god_mode
-                    && jogo.dificuldade != "DESAFIO_BREU"
-                    && rng.gen::<f64>() < 0.10
-                {
-                    ui.animar(
-                        "TROPEÇO! Na escuridão total, você chuta uma cadeira caída e cai no chão!",
-                        DOS_VERMELHO,
-                    );
-                    ui.animar(
-                        "O barulho ecoa pelo restaurante inteiro... Ela ouviu isso.",
-                        DOS_VERMELHO,
-                    );
-                    jogo.posicao_perseguidor = "perto".to_string();
-                    return true;
-                }
-
-                jogo.sala_atual = destino;
-
-                if rng.gen::<f64>() <= 0.25 && !jogo.eventos_aleatorios.is_empty() {
-                    if let Some(evento) = jogo.eventos_aleatorios.choose(&mut rng).cloned() {
-                        let is_bateria_repetida = evento.item_recompensa.as_deref()
-                            == Some("bateria nova")
-                            && jogo.bateria_ajuda_gerada;
-                        if !is_bateria_repetida {
-                            ui.animar(&format!("\n{}", evento.texto), DOS_AMARELO);
-                            if let Some(item_rec) = evento.item_recompensa {
-                                if let Some(sala_dest) = jogo.mapa.get_mut(&jogo.sala_atual) {
-                                    sala_dest.itens.push(item_rec.clone());
-                                }
-                                ui.animar(
-                                    &format!("Você nota algo novo no chão: {}.", item_rec),
-                                    DOS_VERDE,
-                                );
-                                if item_rec == "bateria nova" {
-                                    jogo.bateria_ajuda_gerada = true;
-                                }
-                            }
+    jogo.sala_atual = destino;
+    if jogo.mapa.contains_key(&jogo.sala_atual) && rng.gen::<f64>() < CHANCE_EVENTO_ALEATORIO {
+        if let Some(evento) = jogo.eventos_aleatorios.choose(&mut rng) {
+            let drop = evento.item_recompensa.as_deref();
+            if drop != Some("bateria nova") || !jogo.bateria_ajuda_gerada {
+                ui.pausa(0.5);
+                ui.exibir(&format!("\n{DOS_AMARELO}⚠ {}{RESET}", evento.texto));
+                if let Some(item) = drop {
+                    let sala = jogo.mapa.get_mut(&jogo.sala_atual).expect("sala válida");
+                    if !jogo.inventario.iter().chain(&sala.itens).any(|i| i == item) {
+                        sala.itens.push(item.to_string());
+                        if item == "bateria nova" {
+                            jogo.bateria_ajuda_gerada = true;
                         }
                     }
                 }
-                true
             }
-            None => false,
         }
-    } else {
-        ui.exibir(&format!(
-            "{}Não há caminho para '{}'.{}",
-            DOS_VERMELHO, direcao, RESET
-        ));
-        false
     }
+    ui.pausa(0.5);
+    true
+}
+
+fn abrir_sala_gerador(jogo: &mut GameState) {
+    if let Some(corredor) = jogo.mapa.get_mut("corredor") {
+        corredor
+            .conexoes
+            .insert("03".to_string(), Some("sala do gerador".to_string()));
+    }
+    jogo.sala_atual = "sala do gerador".to_string();
 }
 
 /// Port 1:1 de `cmd_pegar` do `server/villas_boas/actions/inventory.py`
@@ -286,61 +283,42 @@ pub fn cmd_pegar(
     item: &str,
     jogo: &mut GameState,
     ui: &mut TerminalBuffer,
-    audio: &mut AudioManager,
+    _audio: &mut AudioManager,
     media: &mut MediaManager,
 ) -> bool {
-    let itens_na_sala: Vec<String> = jogo
+    let Some(item_real) = jogo
         .mapa
         .get(&jogo.sala_atual)
-        .map(|s| s.itens.clone())
-        .unwrap_or_default();
+        .and_then(|sala| encontrar_melhor_match(item, &sala.itens, 0.70))
+    else {
+        ui.exibir(&format!("Não há nenhum '{item}' aqui para pegar."));
+        return false;
+    };
 
-    if let Some(item_real) = encontrar_melhor_match(item, &itens_na_sala, 0.70) {
-        if item_real == "bolsa" {
-            let novo_limite = jogo.equipar_bolsa();
-            ui.animar(
-                &format!(
-                    "Você encontrou uma bolsa! Agora pode carregar até {} itens.",
-                    novo_limite
-                ),
-                DOS_VERDE,
-            );
-            return true;
-        }
-
-        let limite = jogo.obter_limite_inventario();
-        if jogo.inventario.len() >= limite {
-            ui.exibir(&format!(
-                "{}Mochila cheia ({}/{} itens)! Digite 'largar [item]' para abrir espaço.{}",
-                DOS_VERMELHO,
-                jogo.inventario.len(),
-                limite,
-                RESET
-            ));
-            return false;
-        }
-
-        jogo.adicionar_ao_inventario(&item_real);
+    if item_real == "bolsa" {
+        let limite = jogo.equipar_bolsa();
         ui.exibir(&format!(
-            "{}Pegou: {}. ({}/{}){}",
-            DOS_VERDE,
-            item_real,
-            jogo.inventario.len(),
-            limite,
-            RESET
+            "{DOS_VERDE}Você equipou a bolsa! Seu limite de inventário aumentou permanentemente (Total: {limite} slots).{RESET}"
         ));
+    } else if jogo.adicionar_ao_inventario(&item_real) {
+        ui.exibir(&format!("{DOS_VERDE}Você pegou: {item_real}{RESET}"));
         let _ = media.acionar_imagem(&item_real, false, false);
-
-        if jogo.atingiu_meta_acumulador() {
-            desbloquear_conquista("acumulador", jogo, ui, audio);
-        }
-        true
     } else {
         ui.exibir(&format!(
-            "{}Não há '{}' aqui.{}",
-            DOS_VERMELHO, item, RESET
+            "{DOS_VERMELHO}Sua mochila está cheia! Você precisa largar algo antes.{RESET}"
         ));
-        false
+        return false;
+    }
+
+    if let Some(sala) = jogo.mapa.get_mut(&jogo.sala_atual) {
+        remover_um(&mut sala.itens, &item_real);
+    }
+    true
+}
+
+fn remover_um(itens: &mut Vec<String>, item: &str) {
+    if let Some(indice) = itens.iter().position(|existente| existente == item) {
+        itens.remove(indice);
     }
 }
 
@@ -390,222 +368,151 @@ pub fn cmd_usar(
         return false;
     };
 
-    if item_real == "lanterna" {
-        ui.exibir(&format!(
-            "{}Você já está usando a lanterna automaticamente para iluminar o caminho.{}",
-            DOS_AMARELO, RESET
-        ));
-        return false;
-    } else if item_real == "isqueiro" {
-        if let Some(arte) = jogo.ascii_arts.get("ARTE_ISQUEIRO") {
-            ui.animar(&format!("{}{}{}", DOS_AMARELO, arte, RESET), DOS_AMARELO);
+    match item_real.as_str() {
+        "lanterna" => {
+            ui.exibir("Você já está usando a lanterna automaticamente (quando tem bateria).");
         }
-        jogo.acender_isqueiro();
-        ui.animar(
-            "Você risca o isqueiro. A pequena chama dança na escuridão, iluminando um pouco ao seu redor, mas logo se apaga para não queimar seus dedos.",
-            DOS_AMARELO,
-        );
-        return true;
-    } else if item_real == "chave dos fundos" {
-        if jogo.sala_atual == "porta dos fundos" {
-            ui.animar(
-                "A chave gira com um estalo pesado. A porta para a Sala dos Fundos se abre!",
-                DOS_VERDE,
-            );
-            if let Some(sala) = jogo.mapa.get_mut("porta dos fundos") {
-                sala.descricao =
-                    "A pesada porta de ferro agora está destrancada, revelando a escuridão lá dentro."
-                        .to_string();
-                sala.conexoes
-                    .insert("frente".to_string(), Some("sala dos fundos".to_string()));
+        "isqueiro" => {
+            if let Some(arte) = jogo.ascii_arts.get("ARTE_ISQUEIRO") {
+                ui.animar_com_intervalo(&format!("{DOS_AMARELO}{arte}{RESET}"), DOS_AMARELO, 0.015);
             }
-            jogo.inventario.retain(|i| i != "chave dos fundos");
-            return true;
-        } else {
-            ui.exibir(&format!(
-                "{}Não há onde usar esta chave aqui.{}",
-                DOS_VERMELHO, RESET
-            ));
-            return false;
-        }
-    } else if item_real == "bateria nova" {
-        let status = jogo.recarregar_lanterna();
-        if status == "quebrada_breu" {
-            ui.exibir(&format!(
-                "{}O refletor da sua lanterna está quebrado (Modo Desafio). A bateria não serve de nada.{}",
-                DOS_VERMELHO, RESET
-            ));
-            return false;
-        } else if status == "recarregada" {
-            ui.animar(
-                "Você troca as pilhas da lanterna. A luz volta a brilhar forte!",
-                DOS_VERDE,
-            );
-            return true;
-        } else {
-            ui.exibir(&format!(
-                "{}Você precisa da lanterna na mochila para colocar a bateria!{}",
-                DOS_VERMELHO, RESET
-            ));
-            return false;
-        }
-    } else if ["disquete1", "disquete2", "disquete3"].contains(&item_real.as_str()) {
-        if jogo.sala_atual == "01" {
-            if let Some(arte) = jogo.ascii_arts.get("ARTE_DISQUETE") {
-                ui.animar(&format!("{}{}{}", DOS_VERDE, arte, RESET), DOS_VERDE);
+            if !jogo.acender_isqueiro() {
+                ui.exibir(&format!("{DOS_AMARELO}Você acende o isqueiro, mas a sua lanterna já ilumina o local muito bem.{RESET}"));
+                return false;
             }
-            ui.animar(
-                &format!(
-                    "Você insere o {} no leitor do computador. A tela pisca em verde...",
-                    item_real.to_uppercase()
-                ),
-                DOS_VERDE,
-            );
-
-            if item_real == "disquete1" {
-                ui.animar(
-                    "\n[ARQUIVO DE TEXTO: ANGELA.TXT - 14 de Outubro de 1995]",
-                    DOS_AMARELO,
-                );
-                ui.animar(
-                    "\"Eu não aguento mais o turno da noite. Os animatrônicos na sala de peças...\"",
-                    DOS_BRANCO,
-                );
-                ui.animar(
-                    "\"Eles não desligam de verdade. Ontem ouvi a voz de uma mulher chorando dentro do traje rosa.\"",
-                    DOS_BRANCO,
-                );
-                ui.animar(
-                    "\"Quando me aproximei da bancada, o braço metálico se mexeu sozinho e agarrou meu pulso.\"",
-                    DOS_BRANCO,
-                );
-                ui.animar(
-                    "\"O Sr. Villas-Boas disse que é apenas defeito nos servos motores, mas eu sei o que eu vi.\"",
-                    DOS_BRANCO,
-                );
-                ui.animar(
-                    "\"Se alguém ler isso, NÃO CONFIE NO SISTEMA DE SEGURANÇA. As portas falham quando Ela se aproxima.\"",
-                    DOS_VERMELHO,
-                );
-            } else if item_real == "disquete2" {
-                ui.animar(
-                    "\n[ARQUIVO DE LOG: MICHEL.TXT - 02 de Novembro de 1995]",
-                    DOS_AMARELO,
-                );
-                ui.animar(
-                    "\"Eles trancaram a Sala dos Fundos. O cheiro que vem de lá de dentro é insuportável.\"",
-                    DOS_BRANCO,
-                );
-                ui.animar(
-                    "\"Encontrei a chave reserva, mas o gerente mudou o código do cofre da minha sala.\"",
-                    DOS_BRANCO,
-                );
-                ui.animar(
-                    "\"Aquele maldito piano no Salão de Jogos começou a tocar sozinho de madrugada de novo.\"",
-                    DOS_BRANCO,
-                );
-                ui.animar(
-                    "\"As notas formam datas... nomes... Ele sabe o que fizemos em 1982. Ele lembra das vítimas.\"",
-                    DOS_BRANCO,
-                );
-                ui.animar(
-                    "\"Preciso cortar os fios da unidade central na Sala de Energia antes que eles acordem de vez.\"",
-                    DOS_VERMELHO,
-                );
-            } else if item_real == "disquete3" {
-                ui.buffer_efeito("@@START_FLASH_SECRETS@@");
-                ui.animar(
-                    "\n[ARQUIVO CONFIDENCIAL: RENATO.TXT - DATA CORROMPIDA]",
-                    DOS_VERMELHO,
-                );
-                ui.animar(
-                    "\"O projeto de transferência neural falhou. A cobaia (Caroline) rejeitou a carcaça mecânica.\"",
-                    DOS_BRANCO,
-                );
-                ui.animar(
-                    "\"A dor física do metal perfurando os nervos gerou um loop de agonia e fúria no sistema operacional.\"",
-                    DOS_BRANCO,
-                );
-                ui.animar(
-                    "\"Ela infectou a rede principal (CAROLINE.SYS). Os outros bonecos agora obedecem à mente colmeia dela.\"",
-                    DOS_BRANCO,
-                );
-                ui.animar(
-                    "\"A única forma de libertar a consciência presa no metal é através da destruição térmica total.\"",
-                    DOS_AMARELO,
-                );
-                ui.animar(
-                    "\"Fogo. Queime os cabos. Queime o salão principal. Queime tudo até virar cinzas.\"",
-                    DOS_VERMELHO,
-                );
-                ui.buffer_efeito("@@STOP_FLASH_SECRETS@@");
-            }
-
-            ui.animar(
-                "\nO leitor faz um barulho estridente e engole o disquete, destruindo a fita magnética.",
-                DOS_VERMELHO,
-            );
-            jogo.inventario.retain(|i| i != &item_real);
-            return true;
-        } else {
-            ui.exibir(&format!(
-                "{}Não há nenhum computador aqui para ler este disquete.{}",
-                DOS_VERMELHO, RESET
-            ));
-            return false;
+            ui.exibir(&format!("{DOS_AMARELO}Você risca a pedra do isqueiro. Uma chama tremeluzente ilumina as sombras.{RESET}"));
+            ui.exibir(&format!("{DOS_VERDE}A luz fraca permite enxergar o chão, mas o gás parece que vai durar pouco.{RESET}"));
         }
-    } else if item_real == "tabua pequena de madeira" || item_real == "tábua pequena de madeira"
-    {
-        if jogo.sala_atual == "03" {
-            ui.animar(
-                "Você usa a tábua de madeira como alavanca na fresta da porta emperrada...",
-                DOS_AMARELO,
-            );
-            ui.animar(
-                "CRACK! A madeira quebra ao meio, mas a tranca cede e a porta se abre para a Sala do Gerador!",
-                DOS_VERDE,
-            );
-            if let Some(corredor) = jogo.mapa.get_mut("corredor") {
-                corredor
-                    .conexoes
-                    .insert("03".to_string(), Some("sala do gerador".to_string()));
+        "chave dos fundos" => {
+            if jogo.sala_atual == "porta dos fundos" {
+                ui.exibir(&format!("{DOS_VERDE}Você insere a chave suja de graxa na fechadura e força. Ela gira com um estalo alto.{RESET}"));
+                ui.exibir(&format!("{DOS_AMARELO}A pesada porta de metal se escancara, revelando um corredor denso e escuro.{RESET}"));
+                if let Some(sala) = jogo.mapa.get_mut("porta dos fundos") {
+                    sala.descricao =
+                        "A pesada porta de metal está aberta, levando para a área de serviço."
+                            .to_string();
+                    sala.conexoes
+                        .insert("frente".to_string(), Some("sala dos fundos".to_string()));
+                }
+                remover_um(&mut jogo.inventario, &item_real);
+            } else {
+                ui.exibir("Não há nenhuma fechadura por aqui que se encaixe nessa chave.");
             }
-            if let Some(sala03) = jogo.mapa.get_mut("03") {
-                sala03
-                    .conexoes
-                    .insert("frente".to_string(), Some("sala do gerador".to_string()));
+        }
+        "bateria nova" => {
+            if jogo.recarregar_lanterna() == "quebrada_breu" {
+                ui.exibir("\nVocê tenta colocar a bateria nova, mas a sua lanterna está permanentemente quebrada.");
+            } else {
+                ui.exibir(&format!("{DOS_VERDE}Você abre a parte inferior da lanterna e insere a bateria nova.{RESET}"));
+                ui.exibir(&format!(
+                    "{DOS_AMARELO}A luz da lanterna fica forte e ofuscante!{RESET}"
+                ));
             }
-            jogo.inventario.retain(|i| i != &item_real);
-            return true;
-        } else {
-            ui.exibir(&format!(
-                "{}Não há necessidade de usar isso aqui.{}",
-                DOS_VERMELHO, RESET
-            ));
-            return false;
         }
-    } else if item_real == "remedio" || item_real == "doce" {
-        jogo.curar(&item_real, 1);
-        if item_real == "remedio" {
-            ui.animar(
-                "Você engole os comprimidos a seco. Sua respiração desacelera e a dor diminui. (+1 HP)",
-                DOS_VERDE,
-            );
-        } else {
-            ui.animar(
-                "Você come o doce velho. O açúcar dá um pico repentino de energia no seu sangue! (+1 HP)",
-                DOS_VERDE,
-            );
-            desbloquear_conquista("glicose", jogo, ui, audio);
+        "disquete1" | "disquete2" | "disquete3" => usar_disquete(&item_real, jogo, ui),
+        "tabua pequena de madeira" | "tábua pequena de madeira" => {
+            if jogo.sala_atual == "03" {
+                ui.exibir(&format!("{DOS_AMARELO}Você usa a tábua como alavanca e força a porta emperrada...{RESET}"));
+                ui.exibir(&format!(
+                    "{DOS_VERDE}CRASH! A porta cede e abre. A tábua quebra no processo.{RESET}"
+                ));
+                remover_um(&mut jogo.inventario, &item_real);
+                abrir_sala_gerador(jogo);
+                ui.pausa(2.0);
+            } else {
+                ui.exibir("Não há onde usar a tábua aqui.");
+            }
         }
-        return true;
+        "remedio" | "doce" => {
+            if !jogo.curar(&item_real, 1) {
+                ui.exibir("Você já está se sentindo bem. Melhor guardar isso para depois.");
+                return false;
+            }
+            if item_real == "remedio" {
+                ui.exibir(&format!("{DOS_VERDE}Você engole o relaxante muscular vencido. Seus músculos perdem o estresse e a dor diminui (+1 HP).{RESET}"));
+            } else {
+                ui.exibir(&format!("{DOS_VERDE}Você mastiga o doce velho. O pico de açúcar te dá um pouco mais de resistência (+1 HP).{RESET}"));
+                desbloquear_conquista("glicose", jogo, ui, audio);
+            }
+        }
+        _ => ui.exibir(&format!("Você não sabe como usar '{item_real}' aqui.")),
     }
+    true
+}
 
+fn usar_disquete(item: &str, jogo: &mut GameState, ui: &mut TerminalBuffer) {
+    if jogo.sala_atual != "01" {
+        ui.exibir(&format!("{DOS_BRANCO}Você segura o velho {item}, mas não há nenhum computador neste cômodo para lê-lo. Talvez na sala de segurança?{RESET}"));
+        return;
+    }
     ui.exibir(&format!(
-        "{}Você não vê utilidade para '{}' agora.{}",
-        DOS_AMARELO, item_real, RESET
+        "{DOS_VERDE}Você insere o {item} sujo no drive do terminal de segurança...{RESET}"
     ));
-    false
+    ui.pausa(1.5);
+    ui.exibir(&format!("{DOS_BRANCO}LENDO A:\\ ...{RESET}"));
+    if let Some(arte) = jogo.ascii_arts.get("ARTE_DISQUETE") {
+        ui.animar_com_intervalo(&format!("{DOS_BRANCO}{arte}{RESET}"), DOS_BRANCO, 0.015);
+        ui.pausa(1.0);
+    }
+    match item {
+        "disquete1" => {
+            ui.animar_com_intervalo(
+                &format!("{DOS_AMARELO}ARQUIVO RECUPERADO: ANGELA.TXT{RESET}"),
+                DOS_AMARELO,
+                0.05,
+            );
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Hoje vim mostrar para meu esposo João, meu local de trabalho, o Vilas Boas. Talvez não tenha sido uma boa ideia.'{RESET}"), DOS_BRANCO, 0.06);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'A gente brigou feio no meio do salão, pois aparentemente ele achava que tinha alguém me observando atrás das cortinas, sendo que não... Não tinha nada lá além de poeira e peças enferrujadas. Ele está perdendo a cabeça.'{RESET}"), DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Ele foi falar com meu chefe, o Sr. Renato, lá na salas dos fundos, enquanto eu escrevo isso.'{RESET}"), DOS_BRANCO, 0.08);
+            ui.animar_com_intervalo(&format!("{DOS_VERMELHO}'Talvez... Seja loucura minha, mas eu vi alguem me chamando para a cozinha privada pela janela do escritório, vou ir lá ver.'{RESET}"), DOS_VERMELHO, 0.05);
+            ui.animar_com_intervalo(
+                &format!("{DOS_VERMELHO}'Ela foi libertada.'{RESET}"),
+                DOS_VERMELHO,
+                0.1,
+            );
+        }
+        "disquete2" => {
+            ui.animar_com_intervalo(
+                &format!("{DOS_AMARELO}ARQUIVO RECUPERADO: MICHEL.TXT{RESET}"),
+                DOS_AMARELO,
+                0.05,
+            );
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Depois que a Caroline partiu, não encontramos ninguém para alavancar esse projeto.'{RESET}"), DOS_BRANCO, 0.06);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Acreditamos que não há salvação mais, vamos abandonar tudo e deixar as traças. Tudo o que a gente já devia ter feito.'{RESET}"), DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Perdemos tudo, e agora tem coisas no restaurante, que mesmo a gente causando isso... Nós nos arrependemos, e vimos que tudo isso não passa de uma vergonha.'{RESET}"), DOS_BRANCO, 0.06);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Sinto culpa por tudo que fiz. Não sei como me defender, sei que sou culpado, e se isso tudo vier à tona, irei pegar prisão perpétua sem dúvidas.'{RESET}"), DOS_BRANCO, 0.06);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Sou um covarde que levou todas essas pessoas à morte. Não vou mais deixar que isso me consuma, vou ir embora enquanto há tempo.'{RESET}"), DOS_BRANCO, 0.06);
+            ui.animar_com_intervalo(
+                &format!("{DOS_VERMELHO}Ele fugiu.{RESET}"),
+                DOS_VERMELHO,
+                0.1,
+            );
+        }
+        "disquete3" => {
+            ui.buffer_efeito("@@START_FLASH_SECRETS@@");
+            ui.animar_com_intervalo(
+                &format!("{DOS_AMARELO}ARQUIVO RECUPERADO: RENATO.TXT{RESET}"),
+                DOS_AMARELO,
+                0.05,
+            );
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'1994, 3 de setembro. O restaurante está indo bem, mantendo uma clientela fiel. Escrevo isso como relatório.'{RESET}"), DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Sou Renato Fidelis Gomes, fundador deste local. Eu mesmo fiz esses animatrônicos, juntei placas e peças. Minhas obras-primas.'{RESET}"), DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Derramei muito sangue e suor. Tenho fantasias antigas no estoque: uma de lebre rosa sem nome, a do Senhor Raposa, e a de jacaré, que guardo bem.'{RESET}"), DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Sou um inventor fadado a cuidar da administração sozinho. Tenho orgulho da minha primeira criação, um animatrônico de touro com 3 rostos.'{RESET}"), DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Deixo ele na sala de energia. Fiz um mini programa de sonar que lança ondas nas paredes. Se algo estiver no radar, ele vai atrás.'{RESET}"), DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'O porco Jon mapeia o local inteiro e procura as entradas. Se o caminho mais curto for pela tubulação, ele vai pela tubulação.'{RESET}"), DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'O mosqueteiro Rick é mais direto, mas precisa de manutenção. O índio Jones segue vozes e induz pensamentos nos clientes. Não sei qual o limite.'{RESET}"), DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(&format!("{DOS_VERMELHO}'E o cozinheiro Alberto tem acesso ao sistema inteiro do restaurante, acho isso preocupante.'{RESET}"), DOS_VERMELHO, 0.06);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'A ideia surgiu quando visitei Hurricane, em Utah. Descobri a Chuck E. Cheese e a Fazbear Pizza. Fiquei encantado com as atrações.'{RESET}"), DOS_BRANCO, 0.05);
+            ui.animar_com_intervalo(&format!("{DOS_BRANCO}'Penso que se esse lugar crescer, farei parcerias com eles para trazer ao Brasil. Escrevi muito, hora de dar Adeus. (FIM)'{RESET}"), DOS_BRANCO, 0.06);
+            ui.buffer_efeito("@@STOP_FLASH_SECRETS@@");
+        }
+        _ => {}
+    }
+    ui.pausa(2.0);
+    ui.exibir(&format!("{DOS_VERMELHO}O drive faz um ruído horrível e ejeta o {item} arranhado. Ele está arruinado.{RESET}"));
+    remover_um(&mut jogo.inventario, item);
+    ui.pausa(2.0);
 }
 
 /// Port 1:1 de `cmd_combinar` do `server/villas_boas/actions/inventory.py`
@@ -646,7 +553,8 @@ pub fn cmd_combinar(
     if (i1 == "tesoura quebrada" && i2 == "fita isolante")
         || (i1 == "fita isolante" && i2 == "tesoura quebrada")
     {
-        jogo.inventario.retain(|i| i != &i1 && i != &i2);
+        remover_um(&mut jogo.inventario, &i1);
+        remover_um(&mut jogo.inventario, &i2);
         jogo.inventario.push("tesoura".to_string());
         ui.animar(
             "Você enrola a fita isolante com força no cabo partido da tesoura. Agora ela está firme e pronta para cortar!",
@@ -690,7 +598,10 @@ pub fn cmd_inventario(jogo: &GameState, ui: &mut TerminalBuffer) {
             ));
         }
     }
-    ui.exibir(&format!("{}==============================={}", DOS_AMARELO, RESET));
+    ui.exibir(&format!(
+        "{}==============================={}",
+        DOS_AMARELO, RESET
+    ));
 }
 
 /// Port 1:1 de `cmd_examinar` do `server/villas_boas/actions/inspection.py`
@@ -701,82 +612,43 @@ pub fn cmd_examinar(
     _audio: &mut AudioManager,
     media: &mut MediaManager,
 ) -> bool {
-    let inspecionaveis_keys: Vec<String> = jogo
-        .mapa
-        .get(&jogo.sala_atual)
-        .map(|s| s.inspecionaveis.keys().cloned().collect())
-        .unwrap_or_default();
-
-    if let Some(obj_real) = encontrar_melhor_match(objeto, &inspecionaveis_keys, 0.70) {
-        let texto_inspecao = jogo
-            .mapa
-            .get(&jogo.sala_atual)
-            .and_then(|s| s.inspecionaveis.get(&obj_real))
-            .cloned()
-            .unwrap_or_default();
-
-        if obj_real == "papeis" && jogo.sala_atual == "01" {
+    let Some(sala) = jogo.mapa.get(&jogo.sala_atual) else {
+        return false;
+    };
+    let mut cenario: Vec<_> = sala.inspecionaveis.keys().cloned().collect();
+    cenario.sort();
+    if let Some(chave) = encontrar_melhor_match(objeto, &cenario, 0.70) {
+        ui.exibir(&format!(
+            "\n{DOS_VERDE}C:\\> ACESSANDO ARQUIVO DE DADOS...{RESET}"
+        ));
+        ui.pausa(1.0);
+        if chave == "papeis" && jogo.sala_atual == "01" {
             if let Some(arte) = jogo.ascii_arts.get("ARTE_PASTA") {
-                ui.animar(&format!("{}{}{}", DOS_AMARELO, arte, RESET), DOS_AMARELO);
-            }
-        } else if obj_real == "pelucias" {
-            if let Some(arte) = jogo.ascii_arts.get("ARTE_PELUCIA") {
-                ui.animar(&format!("{}{}{}", DOS_AMARELO, arte, RESET), DOS_AMARELO);
+                ui.animar_com_intervalo(arte, DOS_BRANCO, 0.015);
             }
         }
-
-        ui.animar(
-            &format!(
-                "{}[{}]:{} {}",
-                DOS_AMARELO,
-                obj_real.to_uppercase(),
-                RESET,
-                texto_inspecao
-            ),
-            DOS_BRANCO,
-        );
-        let _ = media.acionar_imagem(&obj_real, false, false);
-        return true;
-    }
-
-    let inv = jogo.inventario.clone();
-    if let Some(item_real) = encontrar_melhor_match(objeto, &inv, 0.70) {
-        let desc = jogo
+        ui.animar_com_intervalo(&sala.inspecionaveis[&chave], DOS_AMARELO, 0.03);
+        ui.pausa(2.0);
+    } else if let Some(item) = encontrar_melhor_match(objeto, &jogo.inventario, 0.70)
+        .or_else(|| encontrar_melhor_match(objeto, &sala.itens, 0.70))
+    {
+        if item == "pelucias" {
+            if let Some(arte) = jogo.ascii_arts.get("ARTE_PELUCIA") {
+                ui.animar_com_intervalo(arte, DOS_AMARELO, 0.015);
+            }
+        }
+        let descricao = jogo
             .descricoes_itens
-            .get(&item_real)
-            .cloned()
-            .unwrap_or_else(|| "Um item comum, não parece ter nada de especial.".to_string());
-        ui.animar(
-            &format!(
-                "{}[{}]:{} {}",
-                DOS_VERDE,
-                item_real.to_uppercase(),
-                RESET,
-                desc
-            ),
-            DOS_BRANCO,
-        );
-        let _ = media.acionar_imagem(&item_real, false, false);
-        return true;
-    }
-
-    let itens_chao: Vec<String> = jogo
-        .mapa
-        .get(&jogo.sala_atual)
-        .map(|s| s.itens.clone())
-        .unwrap_or_default();
-
-    if let Some(item_real) = encontrar_melhor_match(objeto, &itens_chao, 0.70) {
+            .get(&item)
+            .map(String::as_str)
+            .unwrap_or("Não há nada de especial nisso.");
+        ui.exibir(&format!("\n{DOS_AMARELO} ☞ {descricao}{RESET}"));
+    } else {
         ui.exibir(&format!(
-            "{}Está no chão. Digite 'pegar {}' para colocar na mochila.{}",
-            DOS_AMARELO, item_real, RESET
+            "Você não vê nenhum '{objeto}' aqui para examinar."
         ));
         return false;
     }
-
-    ui.exibir(&format!(
-        "{}Não há '{}' aqui para examinar.{}",
-        DOS_VERMELHO, objeto, RESET
-    ));
-    false
+    let _ = media.acionar_imagem(objeto, false, false);
+    true
 }

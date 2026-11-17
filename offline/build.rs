@@ -1,100 +1,165 @@
-use std::env;
-use std::fs;
-use std::path::Path;
-use std::process::Command;
+use serde_json::Value;
+use std::{env, fmt::Write as _, fs, path::PathBuf};
 
 fn main() {
-    println!("cargo:rerun-if-changed=../server");
-    println!("cargo:rerun-if-changed=../client");
+    const BALANCE: &str = "../server/data/balance_config.json";
+    const GAME: &str = "../server/data/game_data.json";
+    println!("cargo:rerun-if-changed={BALANCE}");
+    println!("cargo:rerun-if-changed={GAME}");
 
-    let out_dir = env::var("OUT_DIR").unwrap();
-    let dest_path = Path::new(&out_dir).join("server_bundle.json");
-
-    let py_script = r#"
-import ast
-import json
-import os
-import glob
-
-bundle = {
-    "mapa": {},
-    "descricoes_itens": {},
-    "eventos_aleatorios": [],
-    "sinonimos": {},
-    "ascii_arts": {},
-}
-
-json_candidates = (
-    glob.glob("../data/**/*.json", recursive=True) +
-    glob.glob("../server/**/*.json", recursive=True) +
-    glob.glob("data/**/*.json", recursive=True)
-)
-
-for jpath in json_candidates:
-    try:
-        with open(jpath, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        if isinstance(data, dict):
-            for map_key in ("mapa_original", "mapa"):
-                if map_key in data and isinstance(data[map_key], dict):
-                    bundle["mapa"].update(data[map_key])
-            for k in ("descricoes_itens", "itens_descricoes", "itens_info"):
-                if k in data and isinstance(data[k], dict):
-                    bundle["descricoes_itens"].update(data[k])
-            if "eventos_aleatorios" in data and isinstance(data["eventos_aleatorios"], list):
-                bundle["eventos_aleatorios"] = data["eventos_aleatorios"]
-            if "sinonimos" in data and isinstance(data["sinonimos"], dict):
-                bundle["sinonimos"].update(data["sinonimos"])
-    except Exception:
-        pass
-
-for pyf in sorted(glob.glob("../server/**/*.py", recursive=True)):
-    try:
-        with open(pyf, "r", encoding="utf-8") as f:
-            tree = ast.parse(f.read())
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Assign):
-                for target in node.targets:
-                    if isinstance(target, ast.Name):
-                        name = target.id
-                        try:
-                            val = ast.literal_eval(node.value)
-                        except Exception:
-                            continue
-                        if isinstance(val, str) and (
-                            "ARTE" in name.upper()
-                            or "CAVEIRA" in name.upper()
-                            or "ASCII" in name.upper()
-                            or val.count("\n") >= 3
-                        ):
-                            bundle["ascii_arts"][name] = val
-                        elif isinstance(val, dict) and "DESCRIC" in name.upper():
-                            for k, v in val.items():
-                                if isinstance(v, str):
-                                    bundle["descricoes_itens"][str(k)] = v
-    except Exception:
-        pass
-
-print(json.dumps(bundle, ensure_ascii=False))
-"#;
-
-    let output = Command::new("python3")
-        .arg("-c")
-        .arg(py_script)
-        .output()
-        .or_else(|_| Command::new("python").arg("-c").arg(py_script).output());
-
-    if let Ok(out) = output {
-        if out.status.success() {
-            let stdout = String::from_utf8_lossy(&out.stdout);
-            if stdout.trim().starts_with('{') {
-                fs::write(&dest_path, stdout.trim()).unwrap();
-                return;
-            }
-        }
+    let balance: Value = serde_json::from_slice(&fs::read(BALANCE).expect(BALANCE))
+        .expect("JSON de balanceamento inválido");
+    let game: Value =
+        serde_json::from_slice(&fs::read(GAME).expect(GAME)).expect("JSON de jogo inválido");
+    let overrides = [
+        ("MAX_INVENTARIO", "max_inventario"),
+        ("VIDA_NORMAL", "vida_normal"),
+        ("VIDA_PESADELO", "vida_pesadelo"),
+        ("TURNOS_BATERIA", "turnos_bateria"),
+        ("COFRE_SENHA", "cofre_senha"),
+    ];
+    let mut output = String::new();
+    for (group, key, name, ty) in [
+        ("inventario", "max_inicial", "MAX_INVENTARIO", "usize"),
+        ("inventario", "slots_por_bolsa", "SLOTS_POR_BOLSA", "usize"),
+        (
+            "inventario",
+            "meta_conquista_acumulador",
+            "META_ACUMULADOR",
+            "usize",
+        ),
+        ("status_jogador", "vida_normal", "VIDA_NORMAL", "i32"),
+        ("status_jogador", "vida_pesadelo", "VIDA_PESADELO", "i32"),
+        ("status_jogador", "vida_god_mode", "VIDA_GOD_MODE", "i32"),
+        ("status_jogador", "turnos_bateria", "TURNOS_BATERIA", "i32"),
+        (
+            "status_jogador",
+            "turnos_luz_inicial",
+            "TURNOS_LUZ_INICIAL",
+            "i32",
+        ),
+        (
+            "status_jogador",
+            "isqueiro_turnos_bonus",
+            "ISQUEIRO_TURNOS_BONUS",
+            "i32",
+        ),
+        (
+            "status_jogador",
+            "isqueiro_limite_luz_uso",
+            "ISQUEIRO_LIMITE_LUZ",
+            "i32",
+        ),
+        (
+            "status_jogador",
+            "isqueiro_barulho_extra",
+            "ISQUEIRO_BARULHO",
+            "i32",
+        ),
+        (
+            "barulho_e_ia",
+            "reducao_passiva_turno",
+            "REDUCAO_BARULHO_TURNO",
+            "i32",
+        ),
+        ("barulho_e_ia", "limiar_caca", "LIMIAR_CACA", "i32"),
+        ("barulho_e_ia", "limiar_alerta", "LIMIAR_ALERTA", "i32"),
+        (
+            "barulho_e_ia",
+            "chance_mover_patrulha",
+            "CHANCE_MOVER_PATRULHA",
+            "f64",
+        ),
+        ("barulho_e_ia", "barulho_correr", "BARULHO_CORRER", "i32"),
+        (
+            "barulho_e_ia",
+            "turnos_enjoado_correr",
+            "TURNOS_ENJOADO_CORRER",
+            "i32",
+        ),
+        (
+            "barulho_e_ia",
+            "chance_perder_item_correr",
+            "CHANCE_PERDER_ITEM_CORRER",
+            "f64",
+        ),
+        (
+            "barulho_e_ia",
+            "barulho_ir_abrir",
+            "BARULHO_IR_ABRIR",
+            "i32",
+        ),
+        (
+            "barulho_e_ia",
+            "reducao_olhar_esperar",
+            "REDUCAO_OLHAR_ESPERAR",
+            "i32",
+        ),
+        (
+            "barulho_e_ia",
+            "barulho_acao_comum",
+            "BARULHO_ACAO_COMUM",
+            "i32",
+        ),
+        (
+            "barulho_e_ia",
+            "barulho_erros_consecutivos",
+            "BARULHO_ERROS_CONSECUTIVOS",
+            "i32",
+        ),
+        (
+            "barulho_e_ia",
+            "limite_erros_dica",
+            "LIMITE_ERROS_DICA",
+            "i32",
+        ),
+        (
+            "barulho_e_ia",
+            "limite_barulho_desafio_fantasma",
+            "LIMITE_BARULHO_FANTASMA",
+            "i32",
+        ),
+        (
+            "exploracao",
+            "chance_tropeco_escuro_pct",
+            "CHANCE_TROPECO_ESCURO_PCT",
+            "i32",
+        ),
+        (
+            "exploracao",
+            "chance_evento_aleatorio",
+            "CHANCE_EVENTO_ALEATORIO",
+            "f64",
+        ),
+        ("exploracao", "cofre_senha", "COFRE_SENHA", "&str"),
+        (
+            "exploracao",
+            "max_tentativas_cofre",
+            "MAX_TENTATIVAS_COFRE",
+            "i32",
+        ),
+        (
+            "exploracao",
+            "tempo_speedrun_verdadeiro_seg",
+            "TEMPO_SPEEDRUN_VERDADEIRO",
+            "f64",
+        ),
+        (
+            "exploracao",
+            "tempo_speedrun_neutro_seg",
+            "TEMPO_SPEEDRUN_NEUTRO",
+            "f64",
+        ),
+    ] {
+        let value = overrides
+            .iter()
+            .find(|(constant, _)| *constant == name)
+            .and_then(|(_, field)| game["constantes"].get(field))
+            .or_else(|| balance[group].get(key))
+            .unwrap_or_else(|| panic!("Configuração ausente: {group}.{key}"));
+        // Atribuir o literal a um tipo Rust também valida o valor na compilação.
+        writeln!(output, "pub const {name}: {ty} = {value};").expect("escrever constante");
     }
-
-    let fallback = fs::read_to_string("../server/data/game_data.json")
-        .unwrap_or_else(|_| "{}".to_string());
-    fs::write(&dest_path, fallback).unwrap();
+    let out = PathBuf::from(env::var_os("OUT_DIR").expect("OUT_DIR"));
+    fs::write(out.join("balance.rs"), output).expect("escrever balance.rs");
 }

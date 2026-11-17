@@ -1,52 +1,12 @@
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use std::fs;
 use std::path::{Path, PathBuf};
 
-const SERVER_BUNDLE_JSON: &str = include_str!(concat!(env!("OUT_DIR"), "/server_bundle.json"));
-pub const EMBEDDED_GAME_DATA: &str = include_str!("../../server/data/game_data.json");
-pub const EMBEDDED_BALANCE_CFG: &str = include_str!("../../server/data/balance_config.json");
+const EMBEDDED_GAME_DATA: &str = include_str!("../../server/data/game_data.json");
+include!(concat!(env!("OUT_DIR"), "/balance.rs"));
 
-// Constantes de Inventário e Status (1:1 com server/data.py + balance_config.json)
-pub const MAX_INVENTARIO: usize = 3;
-pub const SLOTS_POR_BOLSA: usize = 3;
-pub const META_ACUMULADOR: usize = 9;
-
-pub const VIDA_NORMAL: i32 = 3;
-pub const VIDA_PESADELO: i32 = 2;
-pub const VIDA_GOD_MODE: i32 = 9999;
-pub const TURNOS_BATERIA: i32 = 12;
-pub const TURNOS_LUZ_INICIAL: i32 = 3;
-pub const ISQUEIRO_TURNOS_BONUS: i32 = 2;
-pub const ISQUEIRO_LIMITE_LUZ: i32 = 2;
-pub const ISQUEIRO_BARULHO: i32 = 10;
-
-// Constantes de Barulho e IA
-pub const REDUCAO_BARULHO_TURNO: i32 = 5;
-pub const LIMIAR_CACA: i32 = 80;
-pub const LIMIAR_ALERTA: i32 = 50;
-pub const CHANCE_MOVER_PATRULHA: f64 = 0.5;
-pub const BARULHO_CORRER: i32 = 100;
-pub const TURNOS_ENJOADO_CORRER: i32 = 2;
-pub const CHANCE_PERDER_ITEM_CORRER: f64 = 0.25;
-pub const BARULHO_IR_ABRIR: i32 = 15;
-pub const REDUCAO_OLHAR_ESPERAR: i32 = 10;
-pub const BARULHO_ACAO_COMUM: i32 = 5;
-pub const BARULHO_ERROS_CONSECUTIVOS: i32 = 30;
-pub const LIMITE_ERROS_DICA: i32 = 3;
-pub const LIMITE_BARULHO_FANTASMA: i32 = 50;
-
-// Constantes de Exploração
-pub const CHANCE_TROPECO_ESCURO_PCT: i32 = 10;
-pub const CHANCE_EVENTO_ALEATORIO: f64 = 0.25;
-pub const SENHA_COFRE: &str = "1994";
-pub const COFRE_SENHA: &str = "1994";
-pub const MAX_TENTATIVAS_COFRE: i32 = 3;
-pub const TEMPO_SPEEDRUN_VERDADEIRO: f64 = 360.0;
-pub const TEMPO_SPEEDRUN_NEUTRO: f64 = 300.0;
-
-// Artes ASCII 1:1 com server/data.py e server/villas_boas/engine/core.py
 pub const CAVEIRA_MORTE: &str = r#"
                      .ed"""" """$$$$be.
                    -"           ^""**$$$e.
@@ -378,36 +338,6 @@ pub const ARTE_COFRE_TENSO: &str = r#"
  \__________________________/
 "#;
 
-pub const MSGS_PERIGO_ESQUERDA: [&str; 3] = [
-    "Passos pesados de ferro raspam no chão à sua ESQUERDA.",
-    "Um sopro quente e cheiro de óleo queimado vêm da ESQUERDA.",
-    "Engrenagens estalam na escuridão ao seu lado ESQUERDO.",
-];
-
-pub const MSGS_PERIGO_DIREITA: [&str; 3] = [
-    "O chão treme com o peso de algo enorme à sua DIREITA.",
-    "Um chiado mecânico abafado ecoa pela sua DIREITA.",
-    "Chifres de metal arranham a grade à sua DIREITA.",
-];
-
-pub const MSGS_PERIGO_FRENTE: [&str; 3] = [
-    "Dois pontos vermelhos brilham brevemente no breu à sua FRENTE.",
-    "Uma respiração metálica e pesada bloqueia o caminho à FRENTE.",
-    "O som de cascos de ferro vem diretamente da sua FRENTE.",
-];
-
-pub const MSGS_PERIGO_TRAS: [&str; 3] = [
-    "Você sente o ar deslocar bem ATRÁS da sua nuca!",
-    "Passos apressados ecoam no corredor ATRÁS de você!",
-    "Um rangido de mandíbula metálica soa logo ATRÁS de você!",
-];
-
-pub const MSGS_PERIGO_ESTATICA: [&str; 3] = [
-    "O RADAR CHIA VIOLENTAMENTE! ELE ESTÁ DO SEU LADO!",
-    "INTERFERÊNCIA MAGNÉTICA MÁXIMA! A CRIATURA ESTÁ COLADA EM VOCÊ!",
-    "SINAL CORROMPIDO! VOCÊ SENTE O CALOR DO MOTOR DELE AO SEU LADO!",
-];
-
 pub fn salas_terminais() -> [&'static str; 4] {
     ["morte", "saida", "cama", "final_bom"]
 }
@@ -466,7 +396,7 @@ pub struct Sala {
     #[serde(default)]
     pub itens: Vec<String>,
     #[serde(default)]
-    pub inspecionaveis: HashMap<String, String>,
+    pub inspecionaveis: IndexMap<String, String>,
     #[serde(default)]
     pub energia: Option<Value>,
     #[serde(default)]
@@ -476,7 +406,7 @@ pub struct Sala {
     #[serde(default)]
     pub imagem: Option<String>,
     #[serde(default)]
-    pub conexoes: HashMap<String, Option<String>>,
+    pub conexoes: IndexMap<String, Option<String>>,
 }
 
 impl<'de> Deserialize<'de> for Sala {
@@ -501,11 +431,18 @@ impl<'de> Deserialize<'de> for Sala {
                     }
                 }
                 "inspecionaveis" => {
-                    if let Ok(hm) = serde_json::from_value::<HashMap<String, String>>(v) {
+                    if let Ok(hm) = serde_json::from_value::<IndexMap<String, String>>(v) {
                         sala.inspecionaveis = hm;
                     }
                 }
-                "energia" => sala.energia = Some(v),
+                "energia" => {
+                    if let Some(destino) = v.as_str().filter(|s| *s == "sala de energia") {
+                        sala.conexoes.insert(k, Some(destino.to_string()));
+                    } else if !v.is_null() {
+                        // O texto de destruição da porta aparece nos saves antigos.
+                        sala.energia = Some(v);
+                    }
+                }
                 "cofre_important" => sala.cofre_important = Some(v),
                 "cadeira" => sala.cadeira = Some(v),
                 "imagem" => {
@@ -514,9 +451,7 @@ impl<'de> Deserialize<'de> for Sala {
                     }
                 }
                 "conexoes" => {
-                    if let Ok(hm) =
-                        serde_json::from_value::<HashMap<String, Option<String>>>(v)
-                    {
+                    if let Ok(hm) = serde_json::from_value::<IndexMap<String, Option<String>>>(v) {
                         sala.conexoes.extend(hm);
                     }
                 }
@@ -558,7 +493,6 @@ impl Sala {
                 res.push((k.clone(), dest.clone()));
             }
         }
-        res.sort_by(|a, b| a.0.cmp(&b.0));
         res
     }
 
@@ -572,7 +506,6 @@ impl Sala {
                 }
             }
         }
-        res.sort_by(|a, b| a.0.cmp(&b.0));
         res
     }
 }
@@ -612,10 +545,6 @@ pub fn sinonimos_padrao() -> HashMap<String, String> {
         ("t", "ir atrás"),
         ("e", "ir esquerda"),
         ("d", "ir direita"),
-        ("norte", "frente"),
-        ("sul", "atrás"),
-        ("oeste", "esquerda"),
-        ("leste", "direita"),
     ] {
         m.insert(k.to_string(), v.to_string());
     }
@@ -625,6 +554,7 @@ pub fn sinonimos_padrao() -> HashMap<String, String> {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct DadosJogo {
     #[serde(default)]
+    #[serde(alias = "mapa_original")]
     pub mapa: HashMap<String, Sala>,
     #[serde(default)]
     pub descricoes_itens: HashMap<String, String>,
@@ -640,107 +570,15 @@ pub struct DadosJogo {
 
 impl DadosJogo {
     pub fn carregar_tudo() -> Self {
-        let mut dados = Self::default();
-
-        if let Ok(b) = serde_json::from_str::<DadosJogo>(SERVER_BUNDLE_JSON) {
-            dados = b;
-        }
-        Self::mesclar_json_str(&mut dados, SERVER_BUNDLE_JSON);
-        Self::mesclar_json_str(&mut dados, EMBEDDED_GAME_DATA);
-
-        let pastas_data = [
-            PathBuf::from("data"),
-            PathBuf::from("../data"),
-            PathBuf::from("../server/data"),
-            PathBuf::from("../server/villas_boas/data"),
-            PathBuf::from("server/data"),
-        ];
-
-        for pasta in &pastas_data {
-            if pasta.is_dir() {
-                if let Ok(entradas) = fs::read_dir(pasta) {
-                    for entrada in entradas.flatten() {
-                        let caminho = entrada.path();
-                        if caminho.extension().and_then(|e| e.to_str()) == Some("json") {
-                            if let Ok(conteudo) = fs::read_to_string(&caminho) {
-                                Self::mesclar_json_str(&mut dados, &conteudo);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        dados.preencher_padroes_se_vazio();
+        let mut dados: Self = serde_json::from_str(EMBEDDED_GAME_DATA)
+            .expect("server/data/game_data.json deve respeitar o formato do jogo");
+        assert!(
+            dados.mapa.contains_key("entrada"),
+            "Mapa sem a sala de entrada"
+        );
+        dados.ascii_arts = carregar_ascii_arts();
+        dados.sinonimos = sinonimos_padrao();
         dados
-    }
-
-    fn mesclar_json_str(dados: &mut DadosJogo, raw_json: &str) {
-        let Ok(val) = serde_json::from_str::<Value>(raw_json) else {
-            return;
-        };
-
-        for map_key in ["mapa_original", "mapa"] {
-            if let Some(mapa_obj) = val.get(map_key) {
-                if let Ok(m) = serde_json::from_value::<HashMap<String, Sala>>(mapa_obj.clone()) {
-                    for (k, v) in m {
-                        dados.mapa.insert(k, v);
-                    }
-                }
-            }
-        }
-
-        for chave_itens in ["descricoes_itens", "itens_descricoes", "itens_info"] {
-            if let Some(itens_val) = val.get(chave_itens) {
-                if let Ok(m) = serde_json::from_value::<HashMap<String, String>>(itens_val.clone())
-                {
-                    dados.descricoes_itens.extend(m);
-                }
-            }
-        }
-
-        if let Some(ev_val) = val.get("eventos_aleatorios") {
-            if let Ok(evs) = serde_json::from_value::<Vec<EventoAleatorio>>(ev_val.clone()) {
-                if !evs.is_empty() {
-                    dados.eventos_aleatorios = evs;
-                }
-            } else if let Some(arr) = ev_val.as_array() {
-                let mut evs = Vec::new();
-                for item in arr {
-                    if let Some(tuple) = item.as_array() {
-                        if !tuple.is_empty() {
-                            let texto = tuple[0].as_str().unwrap_or_default().to_string();
-                            let rec = tuple
-                                .get(1)
-                                .and_then(|v| v.as_str())
-                                .map(|s| s.to_string());
-                            evs.push(EventoAleatorio {
-                                texto,
-                                item_recompensa: rec,
-                            });
-                        }
-                    }
-                }
-                if !evs.is_empty() {
-                    dados.eventos_aleatorios = evs;
-                }
-            }
-        }
-
-        if let Some(sin_val) = val.get("sinonimos") {
-            if let Ok(m) = serde_json::from_value::<HashMap<String, String>>(sin_val.clone()) {
-                dados.sinonimos.extend(m);
-            }
-        }
-    }
-
-    fn preencher_padroes_se_vazio(&mut self) {
-        for (nome, arte) in carregar_ascii_arts() {
-            self.ascii_arts.entry(nome).or_insert(arte);
-        }
-        if self.sinonimos.is_empty() {
-            self.sinonimos = sinonimos_padrao();
-        }
     }
 }
 
@@ -768,7 +606,22 @@ pub fn obter_audio_embutido(nome_arquivo: &str) -> Option<&'static [u8]> {
 }
 
 pub const IMAGENS_EMBUTIDAS: &[(&str, &[u8])] = &[
-    ("tv.png", include_bytes!("../../client/assets/images/tv.png")),
+    (
+        "CORREDOR.jpg",
+        include_bytes!("../../client/assets/images/CORREDOR.jpg"),
+    ),
+    (
+        "image-1.png",
+        include_bytes!("../../client/assets/images/image-1.png"),
+    ),
+    (
+        "image-2.png",
+        include_bytes!("../../client/assets/images/image-2.png"),
+    ),
+    (
+        "tv.png",
+        include_bytes!("../../client/assets/images/tv.png"),
+    ),
     (
         "estatica.png",
         include_bytes!("../../client/assets/images/estatica.png"),
@@ -804,6 +657,18 @@ pub const IMAGENS_EMBUTIDAS: &[(&str, &[u8])] = &[
 ];
 
 pub const IMAGENS_SECRETAS_EMBUTIDAS: &[(&str, &[u8])] = &[
+    (
+        "hidden image 19.png",
+        include_bytes!("../../client/assets/secret images/hidden image 19.png"),
+    ),
+    (
+        "hidden image 20.png",
+        include_bytes!("../../client/assets/secret images/hidden image 20.png"),
+    ),
+    (
+        "hidden image 21.png",
+        include_bytes!("../../client/assets/secret images/hidden image 21.png"),
+    ),
     (
         "HiddenImage1.webp",
         include_bytes!("../../client/assets/secret images/HiddenImage1.webp"),
@@ -873,18 +738,6 @@ pub const IMAGENS_SECRETAS_EMBUTIDAS: &[(&str, &[u8])] = &[
         include_bytes!("../../client/assets/secret images/HiddenImage20.webp"),
     ),
     (
-        "hidden image 19.png",
-        include_bytes!("../../client/assets/secret images/hidden image 19.png"),
-    ),
-    (
-        "hidden image 20.png",
-        include_bytes!("../../client/assets/secret images/hidden image 20.png"),
-    ),
-    (
-        "hidden image 21.png",
-        include_bytes!("../../client/assets/secret images/hidden image 21.png"),
-    ),
-    (
         "mimic.webp",
         include_bytes!("../../client/assets/secret images/mimic.webp"),
     ),
@@ -902,7 +755,10 @@ pub fn obter_imagem_embutida(nome_arquivo: &str) -> Option<&'static [u8]> {
             return Some(*bytes);
         }
     }
-    if let Some(num_str) = lower.strip_suffix(".jpeg").or_else(|| lower.strip_suffix(".jpg")) {
+    if let Some(num_str) = lower
+        .strip_suffix(".jpeg")
+        .or_else(|| lower.strip_suffix(".jpg"))
+    {
         if let Ok(idx) = num_str.parse::<usize>() {
             if idx >= 1 && idx <= IMAGENS_SECRETAS_EMBUTIDAS.len() {
                 return Some(IMAGENS_SECRETAS_EMBUTIDAS[idx - 1].1);

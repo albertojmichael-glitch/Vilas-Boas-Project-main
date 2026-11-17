@@ -144,9 +144,15 @@ impl MediaManager {
         }
 
         let listas: [(&[(&str, &[u8])], bool); 2] = if priorizar_secreta {
-            [(IMAGENS_SECRETAS_EMBUTIDAS, true), (IMAGENS_EMBUTIDAS, false)]
+            [
+                (IMAGENS_SECRETAS_EMBUTIDAS, true),
+                (IMAGENS_EMBUTIDAS, false),
+            ]
         } else {
-            [(IMAGENS_EMBUTIDAS, false), (IMAGENS_SECRETAS_EMBUTIDAS, true)]
+            [
+                (IMAGENS_EMBUTIDAS, false),
+                (IMAGENS_SECRETAS_EMBUTIDAS, true),
+            ]
         };
 
         for (lista, secreta) in listas {
