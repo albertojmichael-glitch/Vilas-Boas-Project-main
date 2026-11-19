@@ -1,0 +1,30 @@
+# Termos que não podem aparecer em texto exibido ao jogador (comparação sem
+# acento e sem diferenciar maiúsculas, por palavra inteira). Um termo por linha.
+# Ofensas raciais/étnicas
+crioulo
+macaca
+macaco preto
+negrinho
+# Ofensas LGBTfóbicas
+viado
+bicha
+bichinha
+traveco
+sapatao
+# Capacitismo
+retardado
+retardada
+mongoloide
+debiloide
+aleijado
+# Misoginia e baixo calão
+vagabunda
+puta
+putinha
+vadia
+arrombado
+arrombada
+filho da puta
+caralho
+buceta
+porra

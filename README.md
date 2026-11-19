@@ -2,210 +2,245 @@
 
 ![Status](https://img.shields.io/badge/Status-Desenvolvimento-red?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.11+-blue?style=for-the-badge&logo=python&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.x-black?style=for-the-badge&logo=flask&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Rust](https://img.shields.io/badge/Rust-offline-000000?style=for-the-badge&logo=rust&logoColor=white)
 
-> *"Rendenção dos meus erros. Perdão por não ter vindo antes."*
+> *"Redenção dos meus erros. Perdão por não ter vindo antes."*
 
-**Vilas Boas** é um jogo de terror psicológico, ficção interativa (*text-adventure*) e sobrevivência desenvolvido com estética retrô **MS-DOS / CRT**, arquitetura cliente-servidor desacoplada, inteligência artificial baseada em grafos (BFS) e persistência criptografada.
+**Vilas Boas** é um jogo de terror psicológico em texto (*text adventure*) e sobrevivência, com estética retrô **MS-DOS / CRT**. Ele roda no navegador (cliente TypeScript + API Python/Flask) e numa edição offline nativa em Rust.
 
-🔗 **[Jogue Agora no Navegador](https://vilas-boas-project.vercel.app/)**
+🔗 **[Jogue agora no navegador](https://vilas-boas-project.vercel.app/)**
+
+> ⚠️ **Aviso de conteúdo:** terror com morte violenta, desaparecimento, depressão e culpa, fogo, sustos súbitos com imagem e som alto e efeitos de tela piscando. O efeito CRT pode ser desligado nas configurações (⚙). O mesmo aviso aparece na tela de boot do jogo.
 
 ---
 
 ## Sumário
 
-1. [Arquitetura do Projeto](#arquitetura-do-projeto)
-2. [Edição Offline](#edição-offline)
-3. [Instalação e Execução Local](#instalação-e-execução-local)
-4. [Variáveis de Ambiente](#variáveis-de-ambiente)
-5. [Testes, Cobertura e Qualidade de Código](#testes-cobertura-e-qualidade-de-código)
-6. [Mecânicas e Sistemas da Engine](#mecânicas-e-sistemas-da-engine)
-7. [Arquivo Confidencial (Lore & Spoilers)](#arquivo-confidencial-lore--spoilers)
+1. [Como jogar](#como-jogar)
+2. [Arquitetura](#arquitetura)
+3. [Rodando localmente](#rodando-localmente)
+4. [Variáveis de ambiente](#variáveis-de-ambiente)
+5. [Saves e segurança](#saves-e-segurança)
+6. [Dificuldade e balanceamento](#dificuldade-e-balanceamento)
+7. [Acessibilidade](#acessibilidade)
+8. [Testes e qualidade](#testes-e-qualidade)
+9. [Deploy](#deploy)
+10. [Edição offline](#edição-offline)
+11. [Arquivo confidencial (lore e spoilers)](#arquivo-confidencial-lore-e-spoilers)
+12. [Licença](#licença)
 
 ---
 
-## Arquitetura do Projeto
+## Como jogar
 
-O projeto é dividido entre o cliente web estático (hospedado na Vercel) e a API/Engine em Python (Flask):
+Ligue a TV, digite `dir` e escolha um modo no menu:
 
-- **`server/app.py`**: Ponto de entrada da API Web (Flask / Gunicorn).
-- **`server/cli.py`**: Ponto de entrada da interface de linha de comando (CLI) para jogar diretamente no terminal.
-- **`server/app_factory.py`**: Fábrica da aplicação Flask (CORS, Rate Limiting, OAuth, headers de segurança CSP/HSTS).
-- **`server/villas_boas/`**: Núcleo da engine do jogo (parser de linguagem natural com distância de Levenshtein, IA do perseguidor por BFS, minigames e modo desenvolvedor).
-- **`server/routes/`**: Rotas da API (`/iniciar`, `/comando`, `/save/*`, `/share/*`, `/auth/*`, `/admin/*`).
-- **`server/services/`**: Persistência de saves criptografados com Fernet (AES-128-CBC + HMAC-SHA256) e worker assíncrono de telemetria.
-- **`client/`**: Interface CRT em HTML5, CSS3 e TypeScript (`client/script.ts`) com sintetizador de áudio via Web Audio API.
-- **`tests/`**: Suíte de testes automatizados (`pytest`) cobrindo engine, gameplay, rotas de API, autenticação, compartilhamento, painel admin, segurança e Redis.
+| Opção | Modo |
+| :---: | :--- |
+| 1 / 2 | NORMAL (2 = texto instantâneo) |
+| 3 / 4 | PESADELO (4 = texto instantâneo) |
+| 5 | Modos de desafio: Speedrun, Fantasma, Breu total |
+| 6 | Personalizado: bateria, mochila e vida |
 
----
+**Comandos principais**
 
-## Edição Offline
+| Comando | O que faz |
+| :--- | :--- |
+| `ir frente` / `f`, `t`, `e`, `d` | Anda (também aceita o nome da saída, ex.: `sala 1`, `01`) |
+| `voltar` | Volta pela saída de trás |
+| `correr [direção]` | Foge de um combate (custa barulho; fugir da "Ela" custa 1 de vida) |
+| `olhar`, `examinar [objeto]` | Descreve a sala ou um objeto |
+| `pegar`, `largar`, `usar [item]` | Itens (ex.: `usar bateria nova`) |
+| `combinar [item] com [item]` | Combina itens |
+| `inventario` / `i` | Mostra a mochila |
+| `esconder` | Esconde-se no esconderijo da sala (até 3 turnos) |
+| `esperar` | Passa o turno em silêncio e baixa o barulho |
+| `sentar` | Assume a noite de segurança na sala 01 (exige o cartão) |
+| `jogar jon` / `consertos` / `tocar piano` | Fliperamas da sala de fliperamas |
+| `ajuda` | Abre o manual |
 
-Jogue no Windows com o executável nativo em Rust. O jogo inclui os arquivos necessários e salva o progresso localmente. Consulte o [guia da edição offline](offline/README.md) para compilar ou baixar o artefato do GitHub Actions.
+Comandos com erro de digitação recebem uma sugestão ("Você quis dizer 'pegar'?"). O progresso na web é salvo automaticamente a cada ação.
 
-## Instalação e Execução Local
+## Arquitetura
 
-### Pré-requisitos
+| Caminho | Conteúdo |
+| :--- | :--- |
+| `client/` | Interface CRT em HTML, CSS e TypeScript (`script.ts`), com áudio via Web Audio API. |
+| `server/app.py`, `server/app_factory.py` | API Flask: CORS, rate limiting, OAuth, headers de segurança. |
+| `server/cli.py` | O jogo direto no terminal, sem navegador. |
+| `server/villas_boas/` | Motor do jogo: parser, ações, IA dos perseguidores (`ela.py`), minigames, modo dev e simulador (`simulacao/`). |
+| `server/routes/`, `server/services/` | Rotas da API e serviços de save (cifra, assinatura, validação) e telemetria. |
+| `server/data/` | Mapa, textos (`game_data.json`) e números de balanceamento (`balance_config.json`), compartilhados com a edição offline. |
+| `offline/` | Edição nativa em Rust (egui), com as mesmas regras. |
+| `tests/` | Testes `pytest` e E2E Playwright (`tests/e2e/`). |
+| `docs/` | [API](docs/API.md) e [sistema de dificuldade](docs/DIFICULDADE.md). |
 
-- **Python 3.11+**
-- **Node.js 20+** (opcional, apenas para recompilar o TypeScript do cliente)
+## Rodando localmente
 
-### 1. Clonar e configurar o ambiente Python
+**Pré-requisitos:** Python 3.11+ e Node.js 20+.
 
 ```bash
 git clone https://github.com/albertojmichael-glitch/Vilas-Boas-Project-main.git
 cd Vilas-Boas-Project-main
-
 python -m venv venv
-# Linux / macOS:
-source venv/bin/activate
-# Windows (PowerShell):
-.\venv\Scripts\Activate.ps1
-
-pip install -U pip
+source venv/bin/activate          # Windows (PowerShell): .\venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
+npm install
 ```
 
-> Também é possível usar `make setup` em ambientes Unix/WSL.
+Também dá para usar `make setup` em Linux, macOS ou WSL.
 
-### 2. Executar a API Backend (Flask)
+**Jogo completo no navegador.** O front compilado e a API sobem juntos, como em produção:
+
+```bash
+npm run build
+PYTHONPATH=server python tests/e2e/servidor_e2e.py
+```
+
+Abra `http://localhost:5173`.
+
+**Só a API** (responde em `http://localhost:5000`, healthcheck em `GET /ping`):
 
 ```bash
 PYTHONPATH=server python server/app.py
 ```
 
-A API responderá por padrão em `http://localhost:5000` (healthcheck em `GET /ping`).
-
-### 3. Executar a versão de Terminal (CLI)
-
-Para jogar diretamente no terminal sem navegador:
+**Só o terminal (CLI):**
 
 ```bash
 PYTHONPATH=server python server/cli.py
 ```
 
-### 4. Executar o Frontend
+## Variáveis de ambiente
 
-Sirva a pasta `client/` com qualquer servidor HTTP estático (por exemplo, `python -m http.server 8080 --directory client`) ou compile alterações do TypeScript com:
+Em desenvolvimento, use um arquivo `.env`; em produção, o painel do provedor de hospedagem.
 
-```bash
-tsc -p client/tsconfig.json
-```
-
----
-
-## Variáveis de Ambiente
-
-Configure as variáveis abaixo em um arquivo `.env` (desenvolvimento) ou no painel do provedor de hospedagem (produção):
-
-| Variável | Obrigatória em Produção | Descrição |
+| Variável | Obrigatória em produção | Descrição |
 | :--- | :---: | :--- |
-| `APP_ENV` | **Sim** | Define explicitamente o ambiente de execução (`production` ou `development`). |
-| `SECRET_KEY` | **Sim** | Chave secreta usada para assinar cookies de sessão Flask e HMAC. **Sem ela o servidor se recusa a iniciar em produção** (fora de produção usa uma chave de desenvolvimento e avisa no log). |
-| `SAVE_ENCRYPTION_KEY` | **Sim** | Chave secreta da cifra Fernet dos saves **guardados no banco** (desacoplada de `SECRET_KEY`). Trocá-la torna ilegíveis os saves já gravados. |
-| `SAVE_SIGNING_KEY` | Não | Chave HMAC que assina os saves exportados. Se ausente, é derivada de `SECRET_KEY` com um rótulo próprio (nunca é igual à chave de cifra). |
-| `ADMIN_TOKEN` | **Sim** | Token secreto exigido no header `X-Admin-Token` para acessar as rotas `/admin/*`. |
-| `FRONTEND_URL` | **Sim** | URL pública do frontend (ex.: `https://vilas-boas-project.vercel.app`) para CORS, validação de `Origin` e redirecionamento pós-OAuth. |
-| `ALLOWED_ORIGINS` | Não | Lista de origens adicionais permitidas no CORS e na proteção CSRF/Origin, separadas por vírgula. |
-| `SESSION_COOKIE_SAMESITE` | Não | Política `SameSite` do cookie de sessão (`Lax` por padrão; recomendado usar subdomínios próprios). |
-| `SESSION_COOKIE_DOMAIN` | Não | Domínio compartilhado do cookie de sessão (ex.: `.seudominio.com` para `jogo.seudominio.com` e `api.seudominio.com`). |
-| `DATABASE_URL` | **Sim** | URI de conexão com o banco de dados (`postgresql://...` em produção; usa SQLite local como fallback em desenvolvimento). |
-| `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` / `DB_POOL_RECYCLE` / `DB_POOL_TIMEOUT` | Não | Parâmetros de pool de conexões do SQLAlchemy para PostgreSQL. |
-| `REDIS_URL` | Não | URI do Redis (`redis://...`) compartilhada entre os workers do Gunicorn para sessões (`RedisSessionStore`) e rate limiting (`Flask-Limiter`). |
-| `GOOGLE_CLIENT_ID` | Não | Client ID do Google OAuth 2.0 para registro de recordes no Leaderboard. |
-| `GOOGLE_CLIENT_SECRET` | Não | Client Secret do Google OAuth 2.0. |
-| `DEV_MODE_ENABLED` | Não | Define se o modo desenvolvedor pode ser ativado (`1` / `true`). Ignorado e bloqueado automaticamente quando `IS_PRODUCTION` é verdadeiro. |
-| `DEV_MODE_CODE` | Não | Código secreto personalizado necessário para ativar o modo desenvolvedor em ambiente local/teste. Não possui valor padrão. |
+| `APP_ENV` | **Sim** | Ambiente de execução (`production` ou `development`). |
+| `SECRET_KEY` | **Sim** | Assina cookies de sessão e HMAC. **Sem ela o servidor não inicia em produção.** Fora de produção, usa uma chave de desenvolvimento e avisa no log. |
+| `SAVE_ENCRYPTION_KEY` | **Sim** | Cifra (Fernet) dos saves guardados no banco. Trocá-la torna ilegíveis os saves já gravados. |
+| `SAVE_SIGNING_KEY` | Não | Chave HMAC dos saves exportados. Se ausente, é derivada de `SECRET_KEY` com um rótulo próprio. |
+| `ADMIN_TOKEN` | **Sim** | Token do header `X-Admin-Token` das rotas `/admin/*`. |
+| `FRONTEND_URL` | **Sim** | URL pública do front (CORS, validação de `Origin`, retorno do OAuth). |
+| `ALLOWED_ORIGINS` | Não | Origens extras permitidas, separadas por vírgula. |
+| `SESSION_COOKIE_SAMESITE` / `SESSION_COOKIE_DOMAIN` | Não | Política e domínio do cookie de sessão. |
+| `DATABASE_URL` | **Sim** | `postgresql://...` em produção; em desenvolvimento cai para SQLite local. |
+| `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` / `DB_POOL_RECYCLE` / `DB_POOL_TIMEOUT` | Não | Pool de conexões do SQLAlchemy. |
+| `REDIS_URL` | Não | Redis compartilhado para sessões e rate limiting entre workers. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Não | Login Google para o ranking. |
+| `DEV_MODE_ENABLED` / `DEV_MODE_CODE` | Não | Libera o modo desenvolvedor fora de produção (sempre bloqueado em produção). |
 
----
+## Saves e segurança
 
-### Saves: o que é cifrado, o que é assinado
+- **No servidor**, o progresso fica **cifrado** (Fernet) no banco. As chaves nunca saem do servidor.
+- **No navegador**, nada é escondido. O save exportado (`formato: vilas-boas-save`, `versao: 2`) é um JSON **legível** com uma **assinatura HMAC** do servidor: dá para ler, mas qualquer alteração é recusada.
+- **Todo estado recebido é validado** (`server/services/save_validacao.py`), seja na importação, no autosave ou num link compartilhado:
+  - vida, luz, itens, salas e conquistas precisam ser possíveis;
+  - o mapa é reconstruído a partir do original;
+  - a dificuldade vem sempre do servidor.
+- **Um estado inválido nunca sobrescreve o último save bom.** Saves antigos continuam carregando.
+- **Links de compartilhamento** (`/share/<token>`) pedem confirmação via `POST`, para que bots de pré-visualização (WhatsApp, Discord) não consumam o link.
+- **Modo dev** só fora de produção. Partidas com ele ficam fora do ranking e da telemetria.
 
-* **No servidor**, o progresso fica **cifrado** (Fernet) no banco. As chaves nunca saem do servidor.
-* **No navegador**, nada é escondido: o arquivo exportado (`formato: vilas-boas-save`, `versao: 2`) é um JSON **legível**, com uma **assinatura HMAC** do servidor. O jogador pode ler o próprio save, mas qualquer alteração invalida a assinatura.
-* **Tudo o que entra no servidor é validado** (`server/services/save_validacao.py`): importação, autosave e link compartilhado.
-  * Vida, luz, inventário, salas e conquistas precisam ser possíveis.
-  * O mapa é reconstruído do original, com só as mudanças que o próprio jogo faz.
-  * Presets de dificuldade e o perfil da "Ela" vêm do servidor.
-* **Um estado inválido nunca sobrescreve o último save bom.** Saves antigos em JSON puro ainda carregam e são migrados para o formato cifrado. Arquivos exportados no formato antigo (`dados_seguros`) continuam importáveis.
+Detalhes das rotas em [docs/API.md](docs/API.md).
 
-## Testes, Cobertura e Qualidade de Código
+## Dificuldade e balanceamento
 
-Para rodar a suíte completa de testes automatizados com relatório de cobertura:
+Os números ficam em `server/data/balance_config.json`, e as duas edições usam o mesmo arquivo. O documento [docs/DIFICULDADE.md](docs/DIFICULDADE.md) explica cada modo, a IA da "Ela", luz, barulho, esconderijos, a noite de segurança e como ajustar com segurança.
 
-```bash
-PYTHONPATH=server pytest tests/ --cov=server --cov-report=term-missing -v
-```
-
-Para verificar formatação, lint (`ruff`) e checagem estática de tipos (`mypy`):
-
-```bash
-ruff check .
-ruff format --check .
-MYPYPATH=server mypy --explicit-package-bases server/
-```
-
-Ou utilizando o `Makefile`:
-
-```bash
-make test
-make lint
-make format
-```
-
----
-
-## Balanceamento e Simulador
-
-Os números de dificuldade ficam em `server/data/balance_config.json`, compartilhado entre a edição web e a offline em Rust. O perfil de IA da "Ela" fica em `dificuldades.<MODO>.ela`. O simulador roda milhares de partidas headless e determinísticas (uma semente por partida):
+O simulador mede o efeito de cada ajuste:
 
 ```bash
 PYTHONPATH=server python -m villas_boas.simulacao --partidas 5000 \
     --dificuldade NORMAL PESADELO --estrategia competente aleatoria
 ```
 
-* `competente`: segue a rota do final neutro como um jogador que conhece o jogo. Reage aos avisos de passos e grades, se esconde, foge, gerencia luz e energia e paga para checar os dutos na noite de segurança.
-* `aleatoria`: passeio aleatório, a métrica original da issue #7.
+A meta do PESADELO é **15–30%** de vitórias para um jogador competente (hoje ~27%); o NORMAL fica em ~72%.
 
-A meta do PESADELO é **15–30%** de vitórias para o bot `competente`; hoje está em ~27%. O NORMAL fica em ~72%. `tests/test_balanceamento.py` verifica essas faixas, ausência de travamentos e exceções, e que tropeços e o Jon não matam mais um jogador atento. O lote pesado roda com:
+## Acessibilidade
+
+O cliente web é testado automaticamente contra a **WCAG 2.2 AA** (axe-core), no desktop e no celular:
+
+- **Leitores de tela:** a saída do terminal é anunciada (`role="log"`, `aria-live`), e todos os botões e controles têm nome acessível.
+- **Teclado:** dá para jogar só pelo teclado, e `Esc` fecha qualquer janela.
+- **Visual:** contraste AA, zoom liberado no celular e o efeito CRT, a velocidade do texto e o volume dos sustos ajustáveis em ⚙.
+- **Celular:** botões de toque com pelo menos 24 px e nenhuma rolagem horizontal.
+
+## Testes e qualidade
 
 ```bash
-PYTHONPATH=server pytest -m slow tests/test_balanceamento.py
+PYTHONPATH=server pytest tests/                               # suíte padrão
+PYTHONPATH=server pytest -m slow tests/test_balanceamento.py  # 40 mil partidas simuladas
+npx playwright install chromium                               # só na primeira vez
+npx playwright test                                           # acessibilidade e celular (E2E)
+cd offline && cargo test                                      # edição offline
 ```
 
-## Mecânicas e Sistemas da Engine
+| Arquivo | Cobre |
+| :--- | :--- |
+| `test_comandos.py` | Parser, menu, sinônimos e cada saída, objeto e item de cada sala, mais entradas aleatórias que nunca podem derrubar o motor. |
+| `test_saves.py`, `test_corrupcao.py` | Assinatura, validação, adulteração, arquivos truncados ou corrompidos, registros quebrados no banco. |
+| `test_conteudo.py` | Termos ofensivos no texto do jogo (lista em `tests/dados/termos_ofensivos.txt`) e o aviso de conteúdo. |
+| `test_balanceamento.py` | Taxas de vitória e regras de dificuldade. |
+| `tests/e2e/*.spec.ts` | WCAG (axe), teclado, celular e as opções do menu no navegador. |
 
-- **Parser Tolerante a Erros**: Normaliza acentuação, filtra *stopwords* e corrige erros de digitação usando distância de Levenshtein.
-- **IA de Perseguição (BFS)**: O perseguidor navega pelo grafo do mapa usando Busca em Largura (*Breadth-First Search*), alternando entre patrulha e caça conforme o nível de ruído gerado pelo jogador.
-- **Saves Criptografados e Compartilhamento Seguro**: Progresso exportado ou salvo no banco é criptografado com Fernet. Links de compartilhamento (`/share/<token>`) exigem confirmação via `POST` para evitar consumo acidental por bots de pré-visualização (WhatsApp, Discord).
-- **Modo Desenvolvedor Isolado**: Disponível exclusivamente fora de produção mediante `DEV_MODE_ENABLED=1` e `DEV_MODE_CODE` definido no ambiente. Partidas com modo dev ativo são automaticamente excluídas do leaderboard e da telemetria.
+Lint, formatação e tipos:
+
+```bash
+ruff check . && ruff format --check .
+MYPYPATH=server mypy --explicit-package-bases server/
+tsc -p client/tsconfig.json --noEmit
+```
+
+## Deploy
+
+O deploy de produção é feito pelo GitHub Actions (`.github/workflows/ci.yml`, job **deploy**):
+
+- Roda **só em push na `main`** e **só depois** de passarem lint, testes, balanceamento, build do front e testes E2E.
+- O deploy automático por git da Vercel está desligado (`"git": {"deploymentEnabled": false}` nos `vercel.json`), então nada vai ao ar sem os testes.
+
+Secrets necessários no repositório (Settings → Secrets and variables → Actions):
+
+| Secret | Uso |
+| :--- | :--- |
+| `VERCEL_TOKEN` | Token de acesso da Vercel. |
+| `VERCEL_ORG_ID` | ID do time ou conta na Vercel. |
+| `VERCEL_PROJECT_ID` | Projeto do **front** (raiz do repositório). |
+| `VERCEL_PROJECT_ID_API` | Projeto da **API** (pasta `server/`). |
+| `RAILWAY_TOKEN` + `RAILWAY_SERVICE` | Opcionais, se a API também roda no Railway. Nesse caso, desligue o deploy automático no painel do Railway. |
+
+## Edição offline
+
+Executável nativo em Rust para Windows e Linux, que salva o progresso localmente. Veja o [guia da edição offline](offline/README.md) para compilar ou baixar o artefato do GitHub Actions.
 
 ---
 
-## Arquivo Confidencial (Lore & Spoilers)
+## Arquivo confidencial (lore e spoilers)
 
 <details>
-<summary><strong>⚠️ AVISO DE SPOILER — Clique para expandir os detalhes da história e enredo</strong></summary>
+<summary><strong>⚠️ AVISO DE SPOILER — clique para expandir a história e os finais</strong></summary>
 
-### A Tragédia do Restaurante Vilas Boas
+### A tragédia do Restaurante Vilas Boas
 
-Na década de 1982, **Renato Fidelis Gomes**, um engenheiro brilhante na área de robótica e sistemas embarcados, construiu animatrônicos avançados para o restaurante famoso em Curiiba. Porém, por conta de não haver ajudantes e trabalhadores na area de administração do local, Renato teve que abandonar a robotica e focar em papeis, dinheiro e tempo. O restaurante estava indo muito bem, famoso e tendo proposta de criar filiais, desabou em 1994, onde ocorreu o incidente mais famoso da cidade de Curtiba, o **IPD**, incidente das pessoas desaparecidas, onde 2 funcionarios, incluindo o gerente Renato Fidelis G. E uma cliente, desapareceram como pó ao fim do expediente. Em 1995, sem fluxo de clientes, e com diversas denuncias pela vigilancia sanitaria, o restaurante fechou definitivamente, com decisão de **Renato Fidelis Jr**, filho do dono, com previsão de abrir novamente nos anos 2000.
+Em 1982, **Renato Fidelis Gomes**, um engenheiro brilhante na área de robótica e sistemas embarcados, construiu animatrônicos avançados para um restaurante famoso em Curitiba. Porém, por não haver ajudantes nem funcionários na administração do local, Renato teve que abandonar a robótica e focar em papéis, dinheiro e tempo. O restaurante ia muito bem, famoso e com propostas de abrir filiais, até desabar em 1994, quando ocorreu o incidente mais famoso de Curitiba: o **IPD**, incidente das pessoas desaparecidas, em que 2 funcionários, incluindo o gerente Renato Fidelis G., e uma cliente desapareceram como pó ao fim do expediente. Em 1995, sem fluxo de clientes e com diversas denúncias da vigilância sanitária, o restaurante fechou definitivamente, por decisão de **Renato Fidelis Jr.**, filho do dono, com previsão de reabrir nos anos 2000.
 
-Em 2007, o restaurante está abandonado, mas com o *Renato* e *Michel* cuidando do restaurante, contratando serviços de limpeza e segurança. **Caroline A.**, uma estudante universitária, precisando de dinheiro rapido, consegue a vaga de segurança no restaurante, e logo começa a trabalhar. 
-Caroline, após 4 dias sendo segurança, desaparece no restaurante, e não é mais achada. Nesses 4 dias, ela enviava diarimente emails para **Rogerio V.** Seu namorado que estava na cidade vizinha a procura de trabalho. Ao saber do desaparecimento, Rogerio não faz nada, se reclusa em casa, com medo e depressão profundo, covarde.
+Em 2007, o restaurante está abandonado, mas *Renato* e *Michel* cuidam do lugar, contratando serviços de limpeza e segurança. **Caroline A.**, uma estudante universitária precisando de dinheiro rápido, consegue a vaga de segurança no restaurante e logo começa a trabalhar.
+Após 4 dias como segurança, Caroline desaparece no restaurante e nunca mais é encontrada. Nesses 4 dias, ela enviava e-mails diariamente para **Rogério V.**, seu namorado, que estava na cidade vizinha à procura de trabalho. Ao saber do desaparecimento, Rogério não faz nada: se isola em casa, com medo e em depressão profunda, covarde.
 
-8 meses após Caroline desaparecer, Rogério não aguenta mais sentir culpa, afundando em suas lagrimas toda noite, e sonhos turbulentos, e vai a procura da sua redenção de seus erros e relapso, ele vai atrás de Caroline no restaurante.
+8 meses após o desaparecimento de Caroline, Rogério não aguenta mais a culpa, afundando em lágrimas toda noite e em sonhos turbulentos, e vai em busca da redenção de seus erros: ele vai atrás de Caroline no restaurante.
 
+### Os finais possíveis
 
-### Os Finais Possíveis: O progresso da história depende de quão fundo o jogador decide ir na investigação:
+O progresso da história depende de quão fundo o jogador decide ir na investigação:
 
-- **Final Mediocre (`saida`)**: Rogerio, com medo e apavorado com o ambiente do restaurante, foge covardemente, e vai embora novamente para casa. 
-- **Final Neutro (`final_neutro`)**: Rogério sobrevive até de manhã, vencendo a noite na sala de segurança, enfrentando todos os animatronicos, porém, sem pegar o item "fios cortados", ao chegar ao hall de entrada, o animatronico de caroline o cerca, tendo um dialogo profundo, reconhecendo o protagonista, porém, sua raiva sobresai, matando rogerio na sua frente, e o condenando a viver o terror em maquina. O ciclo de almas presas no maquinário permanece intacto.
-- **Final Verdadeiro (`Libertação`)**: Rogerio consegue a chave dos fundos, vence o minigame do minotauro pegando os "fios cortados", vai na sala de fliperamas, faz cada um dos minigames, conseguindo passar na prova final, o julgamento do pianista, recebendo o cartão IV. Indo para sala de segurança, vencendo a noite, e indo ao hall de entrada, ateia fogo no local, e desliga o animatronico onde Caroline está, fazendo ela finalmente se recordar dele. Sem raiva e sem lamento, os dois se despedem, o animatronico pega fogo, e todos os espiritos, incluindo de caroline, descansam em paz.
-- **Morte (`Assasinado`)**: Rogério é encontrado morto no restaurante as 8 da manhã do dia seguinte. Especialistas forenses relatam semelhanças com um ataque brutal feito por um predador, como um urso.
-- **Final Bons Sonhos (`Durma...`)**: Rogério entra na sala de descanso, e decide dormir, preferindo entregar-se à insanidade dos pesadelos, ouvindo a porta da sala abrindo devargarzinho, sentindo braços etereos envolvendo seu pescoço.
+- **Final Medíocre (`saida`)**: Rogério, com medo e apavorado com o ambiente do restaurante, foge covardemente e volta para casa.
+- **Final Neutro (`final_neutro`)**: Rogério sobrevive até de manhã, vencendo a noite na sala de segurança e enfrentando todos os animatrônicos, mas sem pegar o item "fios cortados". Ao chegar ao hall de entrada, o animatrônico de Caroline o cerca. Há um diálogo profundo e ela reconhece o protagonista, porém sua raiva sobressai: ela mata Rogério e o condena a viver o terror dentro da máquina. O ciclo de almas presas no maquinário permanece intacto.
+- **Final Verdadeiro (`Libertação`)**: Rogério consegue a chave dos fundos, vence o minigame do minotauro pegando os "fios cortados", vai à sala de fliperamas e faz cada um dos minigames, passando na prova final, o julgamento do pianista, e recebendo o cartão IV. Ele vai à sala de segurança, vence a noite e, no hall de entrada, ateia fogo no local e desliga o animatrônico onde Caroline está, fazendo-a finalmente se lembrar dele. Sem raiva e sem lamento, os dois se despedem, o animatrônico pega fogo e todos os espíritos, incluindo o de Caroline, descansam em paz.
+- **Morte (`Assassinado`)**: Rogério é encontrado morto no restaurante às 8 da manhã do dia seguinte. Especialistas forenses relatam semelhanças com um ataque brutal de um predador, como um urso.
+- **Final Bons Sonhos (`Durma...`)**: Rogério entra na sala de descanso e decide dormir, preferindo entregar-se à insanidade dos pesadelos, ouvindo a porta da sala se abrindo devagarzinho e sentindo braços etéreos envolvendo seu pescoço.
 
 </details>
 
@@ -213,7 +248,4 @@ Caroline, após 4 dias sendo segurança, desaparece no restaurante, e não é ma
 
 ## Licença
 
-Distribuído sob a licença Apache 2.0. Veja o arquivo [LICENSE](LICENSE) para mais informações.
-
-
----
+Distribuído sob a licença Apache 2.0. Veja o arquivo [LICENSE](LICENSE).
