@@ -120,9 +120,17 @@ pub struct AudioManager {
 
 impl AudioManager {
     pub fn new() -> Self {
-        let (stream, handle) = match OutputStream::try_default() {
-            Ok((s, h)) => (Some(s), Some(h)),
-            Err(_) => (None, None),
+        // Nos testes não abrimos o dispositivo de som: em runners sem placa de
+        // áudio (Windows do CI), vários testes abrindo o WASAPI em paralelo
+        // derrubavam o processo com STATUS_ACCESS_VIOLATION. Sem stream, o
+        // jogo já trata o áudio como ausente.
+        let (stream, handle) = if cfg!(test) {
+            (None, None)
+        } else {
+            match OutputStream::try_default() {
+                Ok((s, h)) => (Some(s), Some(h)),
+                Err(_) => (None, None),
+            }
         };
 
         let mut rng = rand::thread_rng();
