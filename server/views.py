@@ -5,6 +5,8 @@ from state import carregar_conquistas, registrar_final
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
 from villas_boas.utils import corromper_texto
 
+AVISO_DE_CONTEUDO = "AVISO DE CONTEÚDO: terror com morte violenta, desaparecimento, depressão, fogo, sustos súbitos com som alto e luzes piscando. O efeito CRT pode ser desligado nas configurações."
+
 
 def imprimir_tela_boot(ui):
     ui.animar("VILLAS-BOAS INDUSTRIES (C) 1982", 0.04, DOS_BRANCO)
@@ -12,6 +14,7 @@ def imprimir_tela_boot(ui):
     ui.animar("RAM CHECK: 640KB OK", 0.03, DOS_VERDE)
     ui.animar("DRIVE A: READY", 0.03, DOS_VERDE)
     ui.animar("CARREGANDO 'COMMAND.COM'....... OK\n", 0.06, DOS_VERDE)
+    ui.exibir(f"{DOS_AMARELO}{AVISO_DE_CONTEUDO}{RESET}\n")
     ui.exibir(
         f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}"
     )

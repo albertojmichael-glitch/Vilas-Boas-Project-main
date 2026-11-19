@@ -11,6 +11,9 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 
 /// Port 1:1 de `imprimir_tela_boot` do views.py
+/// Mesmo aviso exibido na edição web (server/views.py).
+pub const AVISO_DE_CONTEUDO: &str = "AVISO DE CONTEÚDO: terror com morte violenta, desaparecimento, depressão, fogo, sustos súbitos com som alto e luzes piscando. O efeito CRT pode ser desligado nas configurações.";
+
 pub fn imprimir_tela_boot(ui: &mut TerminalBuffer) {
     ui.limpar();
     ui.animar_com_intervalo("VILLAS-BOAS INDUSTRIES (C) 1982", DOS_BRANCO, 0.04);
@@ -18,6 +21,7 @@ pub fn imprimir_tela_boot(ui: &mut TerminalBuffer) {
     ui.animar_com_intervalo("RAM CHECK: 640KB OK", DOS_VERDE, 0.03);
     ui.animar_com_intervalo("DRIVE A: READY", DOS_VERDE, 0.03);
     ui.animar_com_intervalo("CARREGANDO 'COMMAND.COM'....... OK\n", DOS_VERDE, 0.06);
+    ui.exibir(&format!("{DOS_AMARELO}{AVISO_DE_CONTEUDO}{RESET}\n"));
     ui.exibir(&format!(
         "{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}"
     ));
