@@ -474,13 +474,16 @@ class MinigameSeguranca(BaseMinigame):
 
         ui.pausar(2.0)
 
+        resultado = None
         if turno_passou:
             resultado = self._resolver_fim_de_turno(ui, jogo, god_mode)
-            if resultado is not None:
+            if resultado == "morte":
                 return resultado
 
         turno_final_val = getattr(self, "TURNO_FINAL", 24)
 
+        # A vitória sai no mesmo 'esperar' que chega às 06:00 (antes era preciso
+        # digitar mais um comando, e quem só esperava ficava preso na noite).
         if self.turno >= turno_final_val:
             ui.limpar()
             ui.animar(f"{DOS_VERDE}06:00 AM{RESET}", 0.1, jogo=jogo)
@@ -492,6 +495,8 @@ class MinigameSeguranca(BaseMinigame):
             ui.pausar(2)
             jogo.noite_vencida = True
             return "vitoria_seguranca"
+
+        return resultado
 
     def _acao_fechar_porta(self, ui, custos):
         custo = custos["motor"]

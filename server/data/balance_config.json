@@ -27,7 +27,21 @@
     "barulho_acao_comum": 5,
     "barulho_erros_consecutivos": 30,
     "limite_erros_dica": 3,
-    "limite_barulho_desafio_fantasma": 50
+    "limite_barulho_desafio_fantasma": 50,
+    "dutos_ela": [
+      "palco",
+      "sala 1",
+      "sala 2",
+      "duas salas de festas",
+      "sala de jantar",
+      "corredor",
+      "entrada",
+      "hall de entrada",
+      "mesas de jantar",
+      "quarto de refrigeração",
+      "sala dos fundos"
+    ],
+    "sala_inicial_ela": "palco"
   },
   "exploracao": {
     "chance_tropeco_escuro_pct": 10,
@@ -35,20 +49,51 @@
     "cofre_senha": "1994",
     "max_tentativas_cofre": 3,
     "tempo_speedrun_verdadeiro_seg": 360.0,
-    "tempo_speedrun_neutro_seg": 300.0
+    "tempo_speedrun_neutro_seg": 300.0,
+    "tropeco_pode_matar": false,
+    "barulho_tropeco_nao_letal": 30,
+    "salas_esconderijo": [
+      "balcão",
+      "mesas de jantar",
+      "sala de fliperamas",
+      "sala de pelucias",
+      "cozinha principal",
+      "04"
+    ],
+    "max_esconder_seguidos": 3
   },
   "dificuldades": {
     "NORMAL": {
       "hp": 3,
       "furia_noite": 1,
       "energia_min_noite": 100,
-      "energia_max_noite": 100
+      "energia_max_noite": 100,
+      "ela": {
+        "turnos_dormencia": 10,
+        "chance_mover": 0.3,
+        "chance_rastrear": 0.25,
+        "chance_usar_duto": 0.1,
+        "alcance_duto": 2,
+        "turnos_atordoada": 5,
+        "dano_fuga": 1,
+        "aviso_distancia": 2
+      }
     },
     "PESADELO": {
       "hp": 2,
       "furia_noite": 2,
       "energia_min_noite": 70,
-      "energia_max_noite": 82
+      "energia_max_noite": 76,
+      "ela": {
+        "turnos_dormencia": 3,
+        "chance_mover": 0.65,
+        "chance_rastrear": 0.9,
+        "chance_usar_duto": 0.45,
+        "alcance_duto": 2,
+        "turnos_atordoada": 2,
+        "dano_fuga": 1,
+        "aviso_distancia": 1
+      }
     }
   },
   "minigame_seguranca": {
@@ -62,9 +107,9 @@
     "custo_base_motor": 2,
     "limite_usos_sistema": 2,
     "gerador_duracao_turnos": 2,
-    "chance_interferencia_mov": 0.10,
+    "chance_interferencia_mov": 0.1,
     "chance_rick_recuar": 0.25,
-    "chance_rick_avanca_de_3": 0.80,
+    "chance_rick_avanca_de_3": 0.8,
     "chance_indio_janela": 30,
     "chance_alberto_troll": 20,
     "chance_anomalia_camera": 1

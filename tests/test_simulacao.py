@@ -47,8 +47,7 @@ def rodar_bateria_testes(dificuldade, qtd_partidas=50):
     for _ in range(qtd_partidas):
         jogo = GameState(ui_handler=SilenciadorUI())
         jogo.estado_atual = "JOGO"
-        jogo.dificuldade_escolhida = dificuldade
-        jogo.hp = 2 if dificuldade == "PESADELO" else 3
+        jogo.configurar_dificuldade(dificuldade)
         jogo.sala_atual = "entrada"
 
         turnos_jogados = 0

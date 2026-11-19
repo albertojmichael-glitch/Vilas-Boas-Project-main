@@ -1,6 +1,6 @@
 import difflib
 
-from data import descricoes_itens
+from data import MAX_ESCONDER_SEGUIDOS, SALAS_ESCONDERIJO, descricoes_itens
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERMELHO, RESET
 
 from villas_boas.actions.inspection import cmd_examinar
@@ -54,6 +54,30 @@ ATALHOS_DIRECAO = {
 }
 
 
+COMANDOS_ESCONDER = frozenset(
+    {"esconder", "se esconder", "esconder-se", "esconder se", "hide"}
+)
+
+
+def cmd_esconder(jogo):
+    """Esconde o jogador por um turno, se a sala tiver onde se esconder."""
+    ui = jogo.ui_handler
+    if jogo.sala_atual not in SALAS_ESCONDERIJO:
+        ui.exibir("Não há onde se esconder aqui.")
+        return False
+    if jogo.turnos_escondido >= MAX_ESCONDER_SEGUIDOS:
+        ui.exibir(
+            f"{DOS_AMARELO}Suas pernas formigam e o ar acaba. Você não aguenta mais ficar escondido aqui.{RESET}"
+        )
+        return False
+    jogo.escondido = True
+    jogo.turnos_escondido += 1
+    ui.exibir(
+        f"{DOS_BRANCO}Você se encolhe no esconderijo e segura a respiração...{RESET}"
+    )
+    return True
+
+
 def processar_comando(comando, jogo, mapa):
     ui = jogo.ui_handler
     comando = comando.strip()
@@ -75,11 +99,18 @@ def processar_comando(comando, jogo, mapa):
             jogo.posicao_perseguidor = "longe"
             return True
         else:
-            ui.exibir(
-                f"{DOS_VERMELHO}Sua reação foi inútil... Ele esmaga o seu pescoço em um estalo seco.{RESET}"
-            )
+            atacante = getattr(jogo, "atacante_combate", "") or "animatronico"
+            if atacante == "ela":
+                ui.exibir(
+                    f"{DOS_VERMELHO}Você hesita. Ela não. Dedos de metal se fecham em volta do seu rosto.{RESET}"
+                )
+            else:
+                ui.exibir(
+                    f"{DOS_VERMELHO}Sua reação foi inútil... Ele esmaga o seu pescoço em um estalo seco.{RESET}"
+                )
             ui.pausar(2)
             jogo.sala_atual = "morte"
+            jogo.causa_morte = atacante
             ui.exibir("@@JUMPSCARE@@")
 
             jogo.estado_atual = "FIM"
@@ -192,6 +223,15 @@ def processar_comando(comando, jogo, mapa):
             ui.exibir(
                 f"{DOS_VERMELHO}[GOD MODE ERRO] Matéria não catalogada. O sistema não sabe como fabricar '{item_desejado}'.{RESET}"
             )
+        return True
+
+    if normalizar(comando) in COMANDOS_ESCONDER:
+        return cmd_esconder(jogo)
+
+    if normalizar(comando) in ("esperar", "aguardar", "z"):
+        ui.exibir(
+            f"{DOS_BRANCO}Você fica imóvel, em silêncio, ouvindo o prédio respirar...{RESET}"
+        )
         return True
 
     partes = comando.split(maxsplit=1)

@@ -59,6 +59,10 @@ include = ["villas_boas*", "routes*", "services*", "data*"]
 [tool.pytest.ini_options]
 pythonpath = ["server"]
 testpaths = ["tests"]
+addopts = "-m 'not slow'"
+markers = [
+    "slow: lotes pesados de simulação (rode com: pytest -m slow)",
+]
 
 [tool.mypy]
 python_version = "3.11"

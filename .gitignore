@@ -43,3 +43,6 @@ node_modules/
 .vscode/
 .idea/
 
+
+# Metadados gerados pelo pip install -e
+*.egg-info/
