@@ -89,6 +89,91 @@ def processar_ia_inimigo(jogo):
         )
 
 
+COMANDOS_AJUDA = frozenset({"ajuda", "help", "manual", "comandos"})
+COMANDOS_SALVAR = frozenset({"salvar", "save", "gravar"})
+
+# Sinônimos que o jogador costuma digitar (alinhados com a edição offline).
+# Valem em qualquer sala; os de sala específica ficam em SINONIMOS_POR_SALA.
+SINONIMOS_GERAIS = {
+    "iniciar turno": "cadeira",
+    "usar cartao de seguranca": "cadeira",
+    "usar cartão de segurança": "cadeira",
+}
+SINONIMOS_POR_SALA = {
+    "sala de fliperamas": {
+        "fome de jon": "jogar jon",
+        "usar fliperama": "jogar jon",
+        "jogar fliperama": "jogar jon",
+        "consertos": "jogar consertos",
+        "consertos e sorrisos": "jogar consertos",
+        "jogar consertos e sorrisos": "jogar consertos",
+        "usar moeda": "jogar consertos",
+        "usar moeda velha": "jogar consertos",
+        "piano": "jogar julgamento",
+        "tocar piano": "jogar julgamento",
+        "usar piano": "jogar julgamento",
+        "jogar piano": "jogar julgamento",
+        "usar partitura": "jogar julgamento",
+        "usar partitura rasgada": "jogar julgamento",
+    },
+    "01": {"usar cofre": "abrir cofre", "cofre": "abrir cofre"},
+    "porta dos fundos": {
+        "abrir porta": "usar chave dos fundos",
+        "destrancar porta": "usar chave dos fundos",
+    },
+    "03": {
+        "chutar porta": "ir frente",
+        "abrir porta": "ir frente",
+        "forcar porta": "ir frente",
+        "forçar porta": "ir frente",
+    },
+}
+
+
+def traduzir_sinonimo(comando, jogo):
+    """Converte sinônimos comuns no comando canônico que o motor entende."""
+    da_sala = SINONIMOS_POR_SALA.get(jogo.sala_atual, {})
+    if comando in da_sala:
+        return da_sala[comando]
+    if comando in SINONIMOS_GERAIS:
+        return SINONIMOS_GERAIS[comando]
+    if comando in ("voltar", "sair") and "atrás" in jogo.mapa.get(jogo.sala_atual, {}):
+        return "ir atrás"
+    return comando
+
+
+# Limites do modo personalizado (os mesmos da edição offline).
+CUSTOM_BAT_MIN, CUSTOM_BAT_MAX = 1, 99
+CUSTOM_INV_MIN, CUSTOM_INV_MAX = 0, 9
+CUSTOM_HP_MIN, CUSTOM_HP_MAX = 1, 10
+
+
+def _numero_na_faixa(comando, minimo, maximo, ui):
+    """Lê um inteiro dentro da faixa; avisa e devolve None se não for válido."""
+    try:
+        valor = int(comando)
+    except ValueError:
+        valor = None
+    if valor is None or not minimo <= valor <= maximo:
+        ui.exibir(
+            f"{DOS_VERMELHO}Digite um número inteiro entre {minimo} e {maximo}.{RESET}"
+        )
+        return None
+    return valor
+
+
+def imprimir_menu_desafios(ui):
+    ui.exibir(f"{DOS_AMARELO}=================================================={RESET}")
+    ui.exibir(f"{DOS_AMARELO}             [ MODOS DE DESAFIO ]{RESET}")
+    ui.exibir(f"{DOS_AMARELO}=================================================={RESET}")
+    ui.exibir(f"{DOS_BRANCO}[1] SPEEDRUN (Vença em menos de 5 minutos){RESET}")
+    ui.exibir(
+        f"{DOS_BRANCO}[2] MODO FANTASMA (Morte instantânea se o SOM passar de 50%){RESET}"
+    )
+    ui.exibir(f"{DOS_BRANCO}[3] BREU TOTAL (Lanterna quebrada desde o início){RESET}")
+    ui.exibir(f"{DOS_BRANCO}[4] Voltar ao Menu Principal{RESET}")
+
+
 def _fugir_da_ela(jogo):
     """Fuga bem-sucedida da 'Ela': custa HP, mas a deixa atordoada."""
     from villas_boas.ela import atordoar_apos_fuga
@@ -503,6 +588,19 @@ def _processar_fluxo_jogo_normal(
                     jogo=jogo,
                 )
                 imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
+        elif comando == "5":
+            jogo.estado_atual = "MENU_DESAFIOS"
+            ui.limpar()
+            imprimir_menu_desafios(ui)
+        elif comando == "6":
+            jogo.estado_atual = "MENU_CUSTOM_BAT"
+            ui.limpar()
+            ui.animar(
+                f"{DOS_AMARELO}=== MODO PERSONALIZADO (1/3) ==={RESET}", 0.02, jogo=jogo
+            )
+            ui.exibir(
+                f"{DOS_VERDE}1. Duração de cada bateria em turnos ({CUSTOM_BAT_MIN} a {CUSTOM_BAT_MAX}, padrão 12):{RESET}"
+            )
         elif comando in ["1", "2", "3", "4"]:
             ui.limpar()
             is_fast = comando in ["2", "4"]
@@ -550,9 +648,22 @@ def _processar_fluxo_jogo_normal(
             )
 
     elif jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
+        traduzido = traduzir_sinonimo(comando, jogo)
+        if traduzido != comando:
+            comando = comando_bruto = traduzido
+
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
             imprimir_contexto_sala(jogo)
+
+        elif comando in COMANDOS_AJUDA:
+            imprimir_tutorial(ui, jogo=jogo)
+
+        elif comando in COMANDOS_SALVAR:
+            ui.exibir(
+                f"{DOS_VERDE}[SISTEMA]: O progresso é salvo automaticamente a cada ação. "
+                f"Para guardar uma cópia, use o botão de exportar save.{RESET}"
+            )
 
         elif jogo.sala_atual == "sala de energia" and not getattr(
             jogo, "fios_cortados_inventario", False
@@ -715,9 +826,13 @@ def _processar_fluxo_jogo_normal(
             if not verificar_final_de_jogo(jogo) and jogo.estado_atual == "JOGO":
                 imprimir_contexto_sala(jogo)
     elif jogo.estado_atual == "MENU_DESAFIOS":
-        if comando == "voltar":
+        if comando in ("4", "voltar"):
             jogo.estado_atual = "MENU"
+            ui.limpar()
             imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
+            return
+        if comando not in ("1", "2", "3"):
+            ui.exibir(f"{DOS_VERMELHO}Opção inválida. Digite 1, 2, 3 ou 4.{RESET}")
             return
 
         jogo.fast_mode = False
@@ -759,30 +874,27 @@ def _processar_fluxo_jogo_normal(
         imprimir_contexto_sala(jogo)
 
     elif jogo.estado_atual == "MENU_CUSTOM_BAT":
-        try:
-            jogo.turnos_luz = int(comando)
+        valor = _numero_na_faixa(comando, CUSTOM_BAT_MIN, CUSTOM_BAT_MAX, ui)
+        if valor is not None:
+            jogo.turnos_luz = valor
             jogo.estado_atual = "MENU_CUSTOM_INV"
             ui.exibir(
-                "\n2. Bônus de Espaço na Mochila Inicial (Digite um número, ex: 0, 3, 6):"
-            )
-        except ValueError:
-            ui.exibir(
-                f"{DOS_VERMELHO}Por favor, digite apenas números inteiros.{RESET}"
+                f"\n{DOS_VERDE}2. Espaços extras na mochila ({CUSTOM_INV_MIN} a {CUSTOM_INV_MAX}, em múltiplos de 3; padrão 0):{RESET}"
             )
 
     elif jogo.estado_atual == "MENU_CUSTOM_INV":
-        try:
-            jogo.bolsas_coletadas = int(comando) // 3
+        valor = _numero_na_faixa(comando, CUSTOM_INV_MIN, CUSTOM_INV_MAX, ui)
+        if valor is not None:
+            jogo.bolsas_coletadas = valor // 3
             jogo.estado_atual = "MENU_CUSTOM_HP"
-            ui.exibir("\n3. Pontos de Vida (HP) Iniciais (ex: 1, 3, 10):")
-        except ValueError:
             ui.exibir(
-                f"{DOS_VERMELHO}Por favor, digite apenas números inteiros.{RESET}"
+                f"\n{DOS_VERDE}3. Pontos de vida iniciais ({CUSTOM_HP_MIN} a {CUSTOM_HP_MAX}, padrão 3):{RESET}"
             )
 
     elif jogo.estado_atual == "MENU_CUSTOM_HP":
-        try:
-            jogo.hp = int(comando)
+        valor = _numero_na_faixa(comando, CUSTOM_HP_MIN, CUSTOM_HP_MAX, ui)
+        if valor is not None:
+            jogo.hp = valor
             jogo.dificuldade_escolhida = "CUSTOM"
             jogo.estado_atual = "JOGO"
             jogo.tempo_inicio = time.time()
@@ -794,10 +906,6 @@ def _processar_fluxo_jogo_normal(
             )
             imprimir_tutorial(ui, jogo=jogo)
             imprimir_contexto_sala(jogo)
-        except ValueError:
-            ui.exibir(
-                f"{DOS_VERMELHO}Por favor, digite apenas números inteiros.{RESET}"
-            )
 
     # minigame do cofre
     elif jogo.estado_atual == "MINIGAME_COFRE":

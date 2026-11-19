@@ -97,7 +97,10 @@ def receber_comando():
 
     jogo.ui_handler = WebUIHandler()
     try:
-        requisicao = ComandoRequest(**(request.json or {}))
+        corpo = request.get_json(silent=True)
+        if not isinstance(corpo, dict):
+            raise ValidationError.from_exception_data("ComandoRequest", [])
+        requisicao = ComandoRequest(**corpo)
         comando = requisicao.comando
         session["permite_telemetria"] = requisicao.telemetria
     except ValidationError:

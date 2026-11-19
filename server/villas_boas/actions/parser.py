@@ -78,6 +78,30 @@ def cmd_esconder(jogo):
     return True
 
 
+VERBOS_CONHECIDOS = (
+    "ir",
+    "correr",
+    "pegar",
+    "largar",
+    "usar",
+    "combinar",
+    "examinar",
+    "olhar",
+    "inventario",
+    "esconder",
+    "esperar",
+    "sentar",
+    "jogar",
+    "abrir",
+    "ajuda",
+)
+
+
+def sugerir_comando(verbo):
+    """Verbo conhecido mais parecido com o que foi digitado (erro de digitação)."""
+    return encontrar_melhor_match(verbo, list(VERBOS_CONHECIDOS), limite=0.7)
+
+
 def processar_comando(comando, jogo, mapa):
     ui = jogo.ui_handler
     comando = comando.strip()
@@ -302,7 +326,11 @@ def processar_comando(comando, jogo, mapa):
         erros = getattr(jogo, "erros_consecutivos", 0) + 1
         jogo.erros_consecutivos = erros
 
-        ui.exibir("Comando não reconhecido.")
+        sugestao = sugerir_comando(verbo)
+        if sugestao:
+            ui.exibir(f"Comando não reconhecido. Você quis dizer '{sugestao}'?")
+        else:
+            ui.exibir("Comando não reconhecido. Digite 'ajuda' para ver os comandos.")
 
         if erros >= 3:
             ui.pausar(0.5)

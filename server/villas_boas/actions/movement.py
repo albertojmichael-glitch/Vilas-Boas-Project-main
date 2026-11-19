@@ -64,14 +64,18 @@ def cmd_ir(comando, jogo, mapa):
 
     destino = sala.get(direcao, direcao)
 
-    if direcao == "cadeira" and "cadeira" in sala:
-        destino = sala["cadeira"]
+    if destino == "cadeira":
+        # A cadeira é um objeto da sala 01, não um lugar: andar até ela não
+        # muda de sala (antes isso quebrava o evento aleatório com KeyError).
+        ui.exibir(
+            "A cadeira de segurança está bem na sua frente. Digite 'sentar' para assumir o turno."
+        )
+        return False
 
     lugares_validos = list(mapa.keys()) + [
         "morte",
         "saida",
         "01",
-        "cadeira",
         "cama",
         "final_bom",
         "hall de entrada",
@@ -119,7 +123,7 @@ def cmd_ir(comando, jogo, mapa):
     if destino == "morte":
         jogo.causa_morte = "saida_mortal"
 
-    if EVENTOS_ALEATORIOS and random.random() < 0.25:
+    if EVENTOS_ALEATORIOS and jogo.sala_atual in mapa and random.random() < 0.25:
         evento = random.choice(EVENTOS_ALEATORIOS)
         item_drop = evento.get("item_drop")
 
