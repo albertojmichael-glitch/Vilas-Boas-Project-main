@@ -139,7 +139,7 @@ pub fn iniciar_minigame_jon(jogo: &mut GameState, ui: &mut TerminalBuffer) {
     ui.animar_com_intervalo("--- A FOME DE JON ---", DOS_VERDE, 0.03);
     ui.exibir("Guie o Porco Jon pelos dutos baseando-se nos seus sentidos.");
     ui.exibir("Comandos: [F] Frente | [E] Esquerda | [D] Direita");
-    views::dar_dica_jon(&jogo.jon_caminho_certo[0], ui);
+    jogo.jon_dica_falsa = views::dar_dica_jon(&jogo.jon_caminho_certo[0], ui);
     ui.exibir("Passo 1/4 - Direção (F/E/D): ");
 }
 
@@ -174,7 +174,7 @@ fn processar_jon(
         ui.exibir(progresso[passo]);
         jogo.jon_passos_dados += 1;
         if let Some(proximo) = jogo.jon_caminho_certo.get(passo + 1) {
-            views::dar_dica_jon(proximo, ui);
+            jogo.jon_dica_falsa = views::dar_dica_jon(proximo, ui);
             ui.exibir(&format!("Passo {}/4 - Direção (F/E/D): ", passo + 2));
             return;
         }
@@ -192,12 +192,22 @@ fn processar_jon(
             "Errado. Um fio desencapado solta faísca — você sente o choque na mão.",
             "Jon trava numa curva fechada, e a máquina te dá um aviso doloroso.",
         ];
-        ui.exibir(&format!(
-            "\n{DOS_VERMELHO}{}{RESET}",
-            erros[jogo.jon_erros.min(erros.len() - 1)]
-        ));
+        let dica_falsa = std::mem::take(&mut jogo.jon_dica_falsa);
+        if dica_falsa {
+            // O sensório mentiu: o erro custa luz e barulho, mas não vida.
+            ui.exibir(&format!(
+                "\n{DOS_AMARELO}O sensório te enganou. Jon bate a cabeça no duto e a máquina solta um zumbido alto.{RESET}"
+            ));
+            jogo.alterar_barulho(crate::data::BARULHO_ERROS_CONSECUTIVOS);
+        } else {
+            ui.exibir(&format!(
+                "\n{DOS_VERMELHO}{}{RESET}",
+                erros[jogo.jon_erros.min(erros.len() - 1)]
+            ));
+        }
         jogo.jon_erros += 1;
-        if jogo.aplicar_dano(1) {
+        if !dica_falsa && jogo.aplicar_dano(1) {
+            jogo.causa_morte = "jon".to_string();
             views::dar_tela_de_morte(jogo, ui, audio, media);
             return;
         }
@@ -399,6 +409,7 @@ fn processar_nomes_julgamento(
                 0.05,
             );
             ui.pausa(1.0);
+            jogo.causa_morte = "julgamento".to_string();
             views::dar_tela_kernel_panic(jogo, ui);
         }
     }
@@ -817,7 +828,10 @@ fn processar_minotauro(
             imprimir_status_minotauro(&m, ui);
             jogo.minotauro_dados = Some(m);
         }
-        ResultadoLabirinto::Morte => views::dar_tela_de_morte(jogo, ui, audio, media),
+        ResultadoLabirinto::Morte => {
+            jogo.causa_morte = "minotauro".to_string();
+            views::dar_tela_de_morte(jogo, ui, audio, media)
+        }
         ResultadoLabirinto::Vitoria => {
             desbloquear_conquista("toureiro", jogo, ui, audio);
             jogo.sala_atual = "sala dos fundos".to_string();

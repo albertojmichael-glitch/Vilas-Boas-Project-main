@@ -1,5 +1,8 @@
 use crate::audio::AudioManager;
-use crate::data::{salas_terminais, CHANCE_EVENTO_ALEATORIO, CHANCE_TROPECO_ESCURO_PCT};
+use crate::data::{
+    salas_terminais, BARULHO_TROPECO_NAO_LETAL, CHANCE_EVENTO_ALEATORIO, CHANCE_TROPECO_ESCURO_PCT,
+    MAX_ESCONDER_SEGUIDOS, SALAS_ESCONDERIJO, SALAS_ILUMINADAS, TROPECO_PODE_MATAR,
+};
 use crate::media::MediaManager;
 use crate::parser::normalizar;
 use crate::state::GameState;
@@ -8,6 +11,34 @@ use crate::utils::{desbloquear_conquista, encontrar_melhor_match};
 use crate::TerminalBuffer;
 use rand::seq::SliceRandom;
 use rand::Rng;
+
+pub const COMANDOS_ESCONDER: [&str; 5] = [
+    "esconder",
+    "se esconder",
+    "esconder-se",
+    "esconder se",
+    "hide",
+];
+
+/// Port de `cmd_esconder` (parser.py): esconde o jogador por um turno.
+pub fn cmd_esconder(jogo: &mut GameState, ui: &mut TerminalBuffer) -> bool {
+    if !SALAS_ESCONDERIJO.contains(&jogo.sala_atual.as_str()) {
+        ui.exibir("Não há onde se esconder aqui.");
+        return false;
+    }
+    if jogo.turnos_escondido >= MAX_ESCONDER_SEGUIDOS {
+        ui.exibir(&format!(
+            "{DOS_AMARELO}Suas pernas formigam e o ar acaba. Você não aguenta mais ficar escondido aqui.{RESET}"
+        ));
+        return false;
+    }
+    jogo.escondido = true;
+    jogo.turnos_escondido += 1;
+    ui.exibir(&format!(
+        "{DOS_BRANCO}Você se encolhe no esconderijo e segura a respiração...{RESET}"
+    ));
+    true
+}
 
 /// Port 1:1 de `processar_comando` do `server/villas_boas/actions/parser.py`
 pub fn processar_comando(
@@ -34,14 +65,37 @@ pub fn processar_comando(
             jogo.posicao_perseguidor = "longe".to_string();
             return Some("combate".to_string());
         } else {
-            ui.animar(
-                "Você tenta reagir na escuridão, mas garras de ferro perfuram seu peito...",
-                DOS_VERMELHO,
-            );
+            let atacante = if jogo.atacante_combate.is_empty() {
+                "animatronico".to_string()
+            } else {
+                jogo.atacante_combate.clone()
+            };
+            if atacante == "ela" {
+                ui.animar(
+                    "Você hesita. Ela não. Dedos de metal se fecham em volta do seu rosto.",
+                    DOS_VERMELHO,
+                );
+            } else {
+                ui.animar(
+                    "Você tenta reagir na escuridão, mas garras de ferro perfuram seu peito...",
+                    DOS_VERMELHO,
+                );
+            }
             jogo.sala_atual = "morte".to_string();
+            jogo.causa_morte = atacante;
             ui.pausa(2.0);
             return Some("morte".to_string());
         }
+    }
+
+    if COMANDOS_ESCONDER.contains(&comando.as_str()) {
+        return cmd_esconder(jogo, ui).then(|| "esconder".to_string());
+    }
+    if ["esperar", "aguardar", "z"].contains(&comando.as_str()) {
+        ui.exibir(&format!(
+            "{DOS_BRANCO}Você fica imóvel, em silêncio, ouvindo o prédio respirar...{RESET}"
+        ));
+        return Some("esperar".to_string());
     }
 
     if let Some(sala) = jogo.mapa.get(&jogo.sala_atual) {
@@ -229,23 +283,39 @@ pub fn cmd_ir(
 
     ui.limpar();
     jogo.turnos_mesma_sala = 0;
+    jogo.turnos_escondido = 0;
     let mut rng = rand::thread_rng();
     if jogo.turnos_luz <= 0
+        && !SALAS_ILUMINADAS.contains(&jogo.sala_atual.as_str())
         && !jogo.god_mode
         && jogo.dificuldade_escolhida != "DESAFIO_BREU"
         && rng.gen_range(1..=100) <= CHANCE_TROPECO_ESCURO_PCT
     {
         ui.exibir("\n No escuro, você perde a noção da direção, e acaba tropeçando no proprio pé, e cai no chão");
+        if jogo.hp <= 1 && !TROPECO_PODE_MATAR {
+            // O tropeço nunca é o golpe final: só faz barulho e custa o turno.
+            jogo.alterar_barulho(BARULHO_TROPECO_NAO_LETAL);
+            jogo.ai_alvo = Some(jogo.sala_atual.clone());
+            ui.exibir(&format!(
+                "{DOS_AMARELO} Você se segura nos móveis no último segundo. O estrondo ecoa pelo prédio.{RESET}"
+            ));
+            ui.pausa(2.0);
+            return true;
+        }
         let morreu = jogo.aplicar_dano(1);
         ui.exibir(&format!(" Você se machucou na queda. (HP: {})", jogo.hp));
         ui.pausa(2.0);
         if morreu {
+            jogo.causa_morte = "tropeco".to_string();
             ui.exibir("\n Você cai no chão e quebra sua perna, você não consegue mais andar, e escuta barulhos vindo na sua direção");
             ui.pausa(2.0);
         }
         return true;
     }
 
+    if destino == "morte" {
+        jogo.causa_morte = "saida_mortal".to_string();
+    }
     jogo.sala_atual = destino;
     if jogo.mapa.contains_key(&jogo.sala_atual) && rng.gen::<f64>() < CHANCE_EVENTO_ALEATORIO {
         if let Some(evento) = jogo.eventos_aleatorios.choose(&mut rng) {

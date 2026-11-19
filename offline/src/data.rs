@@ -5,7 +5,40 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 const EMBEDDED_GAME_DATA: &str = include_str!("../../server/data/game_data.json");
+
+/// Perfil de IA da "Ela" por dificuldade (gerado de `dificuldades.<MODO>.ela`).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PerfilEla {
+    pub turnos_dormencia: i32,
+    pub chance_mover: f64,
+    pub chance_rastrear: f64,
+    pub chance_usar_duto: f64,
+    pub alcance_duto: usize,
+    pub turnos_atordoada: i32,
+    pub dano_fuga: i32,
+    pub aviso_distancia: usize,
+}
+
 include!(concat!(env!("OUT_DIR"), "/balance.rs"));
+
+/// Perfil da "Ela" para o modo (os demais modos usam o do NORMAL).
+pub fn perfil_ela(modo: &str) -> PerfilEla {
+    if modo == "PESADELO" {
+        PERFIL_ELA_PESADELO
+    } else {
+        PERFIL_ELA_NORMAL
+    }
+}
+
+/// Salas com luz própria: não gastam lanterna nem provocam tropeços.
+pub const SALAS_ILUMINADAS: [&str; 6] = [
+    "sala de fliperamas",
+    "hall de entrada",
+    "quarto de refrigeração",
+    "01",
+    "balcão",
+    "mesas de jantar",
+];
 
 pub const CAVEIRA_MORTE: &str = r#"
                      .ed"""" """$$$$be.

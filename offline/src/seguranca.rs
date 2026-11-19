@@ -649,6 +649,7 @@ pub fn processar(
     if let Some(captcha) = s.captcha_ativo.take() {
         s.responder_captcha(comando, captcha, ui);
         if s.resolver_invasao(jogo.god_mode, true, ui, &mut rng) {
+            jogo.causa_morte = "seguranca".to_string();
             views::dar_tela_de_morte(jogo, ui, audio, media);
             return;
         }
@@ -716,10 +717,13 @@ pub fn processar(
     }
     ui.pausa(2.0);
     if turno_passou && !s.avancar_turno(jogo, ui, &mut rng) {
+        jogo.causa_morte = "seguranca".to_string();
         views::dar_tela_de_morte(jogo, ui, audio, media);
         return;
     }
-    if !turno_passou && s.turno >= TURNO_FINAL {
+    // A vitória sai no mesmo 'esperar' que chega às 06:00 (antes era preciso
+    // digitar mais um comando, e quem só esperava ficava preso na noite).
+    if s.turno >= TURNO_FINAL {
         vencer(jogo, false, ui, media);
         return;
     }

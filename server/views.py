@@ -182,6 +182,12 @@ def imprimir_tutorial(ui, jogo=None):
         DOS_BRANCO,
         jogo,
     )
+    ui.animar(
+        f"   Ouça os passos e o ranger das grades. Para sumir, {DOS_VERDE}esconder{RESET}; para baixar o barulho, {DOS_VERDE}esperar{RESET}.",
+        0.01,
+        DOS_BRANCO,
+        jogo,
+    )
 
     ui.animar(
         f"\n{DOS_AMARELO}Caso precise, digite {DOS_VERDE}ajuda{DOS_AMARELO} para o guia completo novamente.{RESET}",

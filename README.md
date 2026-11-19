@@ -146,6 +146,24 @@ make format
 
 ---
 
+## Balanceamento e Simulador
+
+Os números de dificuldade ficam em `server/data/balance_config.json`, compartilhado entre a edição web e a offline em Rust. O perfil de IA da "Ela" fica em `dificuldades.<MODO>.ela`. O simulador roda milhares de partidas headless e determinísticas (uma semente por partida):
+
+```bash
+PYTHONPATH=server python -m villas_boas.simulacao --partidas 5000 \
+    --dificuldade NORMAL PESADELO --estrategia competente aleatoria
+```
+
+* `competente`: segue a rota do final neutro como um jogador que conhece o jogo. Reage aos avisos de passos e grades, se esconde, foge, gerencia luz e energia e paga para checar os dutos na noite de segurança.
+* `aleatoria`: passeio aleatório, a métrica original da issue #7.
+
+A meta do PESADELO é **15–30%** de vitórias para o bot `competente`; hoje está em ~27%. O NORMAL fica em ~72%. `tests/test_balanceamento.py` verifica essas faixas, ausência de travamentos e exceções, e que tropeços e o Jon não matam mais um jogador atento. O lote pesado roda com:
+
+```bash
+PYTHONPATH=server pytest -m slow tests/test_balanceamento.py
+```
+
 ## Mecânicas e Sistemas da Engine
 
 - **Parser Tolerante a Erros**: Normaliza acentuação, filtra *stopwords* e corrige erros de digitação usando distância de Levenshtein.

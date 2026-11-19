@@ -168,14 +168,20 @@ def montar_radar(jogo):
         linhas.append(f"{DOS_BRANCO}        rota: {' > '.join(caminho)}{RESET}")
     linhas.append(f"{DOS_BRANCO}        barulho: {jogo.nivel_barulho}%{RESET}")
 
-    if jogo.dificuldade_escolhida == "PESADELO":
+    if jogo.dificuldade_escolhida in ("NORMAL", "PESADELO"):
         c2 = _bfs(jogo, jogo.sala_atual, jogo.posicao_perseguidor)
         d2 = len(c2) - 1 if c2 else None
         d2_txt = "sem rota" if d2 is None else f"{d2} sala(s)"
+        if jogo.ela_dormencia > 0:
+            d2_txt += f", dormindo por {jogo.ela_dormencia} turno(s)"
+        if jogo.ela_no_duto:
+            d2_txt += f", no duto rumo a {jogo.ela_saida_duto}"
+        if jogo.ela_atordoada > 0:
+            d2_txt += f", atordoada por {jogo.ela_atordoada}"
         linhas.append(
-            f"{_cor_distancia(d2)}[RADAR] Ela (PESADELO): {jogo.posicao_perseguidor} ({d2_txt}){RESET}"
+            f"{_cor_distancia(d2)}[RADAR] Ela ({jogo.dificuldade_escolhida}): {jogo.posicao_perseguidor} ({d2_txt}){RESET}"
         )
-    elif jogo.dificuldade_escolhida == "NORMAL" and getattr(jogo, "dev_ia", False):
+    if jogo.dificuldade_escolhida == "NORMAL" and getattr(jogo, "dev_ia", False):
         linhas.append(
             f"{DOS_BRANCO}[RADAR] Cronômetro do corredor: {jogo.turnos_mesma_sala}/{jogo.turnos_perseguidor_morte} turnos parado{RESET}"
         )

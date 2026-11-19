@@ -5,6 +5,7 @@ mod actions;
 mod audio;
 mod data;
 mod devmode;
+mod ela;
 mod engine;
 mod media;
 mod minigames;

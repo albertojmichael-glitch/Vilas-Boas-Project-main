@@ -256,7 +256,9 @@ fn aplicar_efeitos_pos_turno(
     } else {
         let delta = if comando.starts_with("ir ") || comando.starts_with("abrir ") {
             BARULHO_IR_ABRIR
-        } else if ["olhar", "inventario", "esperar"].contains(&comando) {
+        } else if ["olhar", "inventario", "esperar", "aguardar", "z"].contains(&comando)
+            || crate::actions::COMANDOS_ESCONDER.contains(&comando)
+        {
             -REDUCAO_OLHAR_ESPERAR
         } else {
             BARULHO_ACAO_COMUM
@@ -265,7 +267,12 @@ fn aplicar_efeitos_pos_turno(
 
         let ia = jogo.avancar_ia_perseguidor();
         if ia.ativa {
-            if ia.combate_iniciado {
+            if ia.passou_escondido {
+                ui.animar(
+                    "O animatrônico atravessa a sala, fareja o ar... e segue adiante sem te ver.",
+                    DOS_AMARELO,
+                );
+            } else if ia.combate_iniciado {
                 ui.animar(
                     "O animatrônico irrompe na sala! Ele encontrou você!",
                     DOS_VERMELHO,
@@ -290,7 +297,27 @@ fn aplicar_efeitos_pos_turno(
         ));
         ui.pausa(1.5);
         jogo.sala_atual = "morte".to_string();
+        jogo.causa_morte = "fantasma".to_string();
     }
+}
+
+/// Fuga bem-sucedida da "Ela": custa HP, mas a deixa atordoada.
+fn fugir_da_ela(jogo: &mut GameState, ui: &mut TerminalBuffer) {
+    let dano = jogo.perfil_ela().dano_fuga;
+    if jogo.aplicar_dano(dano) {
+        jogo.causa_morte = "ela".to_string();
+        ui.exibir(&format!(
+            "\n{DOS_VERMELHO}As garras dela rasgam suas costas enquanto você foge. Você não chega longe...{RESET}"
+        ));
+        return;
+    }
+    crate::ela::atordoar_apos_fuga(jogo);
+    ui.exibir(&format!(
+        "\n{DOS_VERMELHO}As garras dela rasgam suas costas, mas você escapa! (-{dano} HP){RESET}"
+    ));
+    ui.exibir(&format!(
+        "{DOS_AMARELO}Ela bate contra o batente da porta e fica desorientada por alguns instantes.{RESET}"
+    ));
 }
 
 fn imprimir_diretorio(jogo: &mut GameState, ui: &mut TerminalBuffer, audio: &AudioManager) {
@@ -739,9 +766,18 @@ pub fn processar_fluxo_jogo(
             }
 
             let correu = comando.starts_with("correr ");
+            let mut fugindo_de = String::new();
+            jogo.escondido = false;
             let acao = if let Some(direcao) = comando.strip_prefix("correr ") {
                 let entrada = format!("ir {direcao}");
                 let movimento = expandir_atalho_direcao(&entrada, &jogo.sinonimos);
+                if jogo.estado_atual == "COMBATE_ANIMATRONICO" {
+                    fugindo_de = if jogo.atacante_combate.is_empty() {
+                        "animatronico".to_string()
+                    } else {
+                        jogo.atacante_combate.clone()
+                    };
+                }
                 jogo.estado_atual = "JOGO".to_string();
                 if cmd_ir(
                     movimento.strip_prefix("ir ").unwrap_or(direcao),
@@ -758,6 +794,13 @@ pub fn processar_fluxo_jogo(
             } else {
                 processar_comando(&comando, jogo, ui, audio, media)
             };
+
+            if acao.is_some() && !fugindo_de.is_empty() {
+                jogo.atacante_combate.clear();
+                if fugindo_de == "ela" {
+                    fugir_da_ela(jogo, ui);
+                }
+            }
 
             if let Some(acao) = &acao {
                 if jogo.estado_atual != "FIM" {
