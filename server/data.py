@@ -411,6 +411,20 @@ SALAS_ESCONDERIJO = frozenset(
 )
 MAX_ESCONDER_SEGUIDOS = int(_exp_cfg.get("max_esconder_seguidos", 3))
 
+# Mudanças que o próprio jogo faz no mapa durante a partida. São as únicas que um
+# save pode trazer: o restante do mapa é sempre reconstruído do original.
+SALA_GERADOR_ABERTA = "sala do gerador"
+PORTA_DOS_FUNDOS_ABERTA = (
+    "A pesada porta de metal está aberta, levando para a área de serviço."
+)
+SALA_ENERGIA_DESTRUIDA = "A pesada porta da sala de energia está totalmente destruída."
+MUTACOES_MAPA_PERMITIDAS: dict[tuple[str, str], str] = {
+    ("corredor", "03"): SALA_GERADOR_ABERTA,
+    ("porta dos fundos", "frente"): "sala dos fundos",
+    ("porta dos fundos", "descrição"): PORTA_DOS_FUNDOS_ABERTA,
+    ("sala dos fundos", "energia"): SALA_ENERGIA_DESTRUIDA,
+}
+
 # Salas com luz própria: não gastam lanterna e não provocam tropeços no escuro.
 SALAS_ILUMINADAS = frozenset(
     {

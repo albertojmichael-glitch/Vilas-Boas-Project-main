@@ -9,6 +9,20 @@ export function configurarLoggerStorage(fn: LogTerminalFn): void {
     logCallback = fn;
 }
 
+function jsonValido(texto: string): boolean {
+    try {
+        JSON.parse(texto);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Persistência local de preferências e conquistas cosméticas.
+ * Não há cifra nem assinatura aqui de propósito: o jogador controla o navegador.
+ * O estado do jogo vive (cifrado e validado) no servidor.
+ */
 export const SafeStorage = {
     save<T>(key: string, data: T): void {
         try {
@@ -18,8 +32,13 @@ export const SafeStorage = {
                 data
             };
             const jsonString = JSON.stringify(payload);
+            // Confere o JSON antes de gravar: nada corrompido entra no disco.
+            JSON.parse(jsonString);
+
+            // Só promove o valor antigo a backup se ele estiver íntegro; senão o
+            // último backup bom seria trocado por lixo e o progresso se perderia.
             const oldData = localStorage.getItem(key);
-            if (oldData) localStorage.setItem(`${key}_backup`, oldData);
+            if (oldData && jsonValido(oldData)) localStorage.setItem(`${key}_backup`, oldData);
             localStorage.setItem(key, jsonString);
         } catch (e) {
             console.error("[SISTEMA] Erro crítico de I/O no disco local:", e);

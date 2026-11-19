@@ -1,5 +1,6 @@
 import logging
 
+from data import PORTA_DOS_FUNDOS_ABERTA, SALA_GERADOR_ABERTA
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET
 
 from villas_boas.utils import encontrar_melhor_match
@@ -102,9 +103,7 @@ def _usar_chave_dos_fundos(jogo, mapa, item):
         ui.exibir(
             f"{DOS_AMARELO}A pesada porta de metal se escancara, revelando um corredor denso e escuro.{RESET}"
         )
-        mapa["porta dos fundos"]["descrição"] = (
-            "A pesada porta de metal está aberta, levando para a área de serviço."
-        )
+        mapa["porta dos fundos"]["descrição"] = PORTA_DOS_FUNDOS_ABERTA
         mapa["porta dos fundos"]["frente"] = "sala dos fundos"
         jogo.inventario.remove("chave dos fundos")
     else:
@@ -321,7 +320,7 @@ def _usar_tabua_pequena_de_madeira(jogo, mapa, item):
             f"{DOS_VERDE}CRASH! A porta cede e abre. A tábua quebra no processo.{RESET}"
         )
         jogo.inventario.remove(item)
-        mapa["corredor"]["03"] = "sala do gerador"
+        mapa["corredor"]["03"] = SALA_GERADOR_ABERTA
         jogo.sala_atual = "sala do gerador"
         ui.pausar(2)
         return True

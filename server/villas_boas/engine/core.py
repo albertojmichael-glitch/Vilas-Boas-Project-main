@@ -16,6 +16,7 @@ from data import (
     MAX_INVENTARIO,
     MAX_TENTATIVAS_COFRE,
     REDUCAO_OLHAR_ESPERAR,
+    SALA_ENERGIA_DESTRUIDA,
     TEMPO_SPEEDRUN_NEUTRO,
     TEMPO_SPEEDRUN_VERDADEIRO,
     TURNOS_ENJOADO_CORRER,
@@ -1214,9 +1215,7 @@ def _processar_fluxo_jogo_normal(
                     )
 
                 if "sala dos fundos" in jogo.mapa:
-                    jogo.mapa["sala dos fundos"]["energia"] = (
-                        "A pesada porta da sala de energia está totalmente destruída."
-                    )
+                    jogo.mapa["sala dos fundos"]["energia"] = SALA_ENERGIA_DESTRUIDA
                 ui.exibir(
                     f"{DOS_VERDE}A porta cedeu atrás de você. Você sobreviveu.{RESET}"
                 )

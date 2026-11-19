@@ -103,8 +103,9 @@ Configure as variáveis abaixo em um arquivo `.env` (desenvolvimento) ou no pain
 | Variável | Obrigatória em Produção | Descrição |
 | :--- | :---: | :--- |
 | `APP_ENV` | **Sim** | Define explicitamente o ambiente de execução (`production` ou `development`). |
-| `SECRET_KEY` | **Sim** | Chave secreta usada exclusivamente para assinar cookies de sessão Flask e HMAC. |
-| `SAVE_ENCRYPTION_KEY` | **Sim** | Chave secreta dedicada para derivar a chave Fernet de criptografia dos saves (desacoplada de `SECRET_KEY`). |
+| `SECRET_KEY` | **Sim** | Chave secreta usada para assinar cookies de sessão Flask e HMAC. **Sem ela o servidor se recusa a iniciar em produção** (fora de produção usa uma chave de desenvolvimento e avisa no log). |
+| `SAVE_ENCRYPTION_KEY` | **Sim** | Chave secreta da cifra Fernet dos saves **guardados no banco** (desacoplada de `SECRET_KEY`). Trocá-la torna ilegíveis os saves já gravados. |
+| `SAVE_SIGNING_KEY` | Não | Chave HMAC que assina os saves exportados. Se ausente, é derivada de `SECRET_KEY` com um rótulo próprio (nunca é igual à chave de cifra). |
 | `ADMIN_TOKEN` | **Sim** | Token secreto exigido no header `X-Admin-Token` para acessar as rotas `/admin/*`. |
 | `FRONTEND_URL` | **Sim** | URL pública do frontend (ex.: `https://vilas-boas-project.vercel.app`) para CORS, validação de `Origin` e redirecionamento pós-OAuth. |
 | `ALLOWED_ORIGINS` | Não | Lista de origens adicionais permitidas no CORS e na proteção CSRF/Origin, separadas por vírgula. |
@@ -119,6 +120,16 @@ Configure as variáveis abaixo em um arquivo `.env` (desenvolvimento) ou no pain
 | `DEV_MODE_CODE` | Não | Código secreto personalizado necessário para ativar o modo desenvolvedor em ambiente local/teste. Não possui valor padrão. |
 
 ---
+
+### Saves: o que é cifrado, o que é assinado
+
+* **No servidor**, o progresso fica **cifrado** (Fernet) no banco. As chaves nunca saem do servidor.
+* **No navegador**, nada é escondido: o arquivo exportado (`formato: vilas-boas-save`, `versao: 2`) é um JSON **legível**, com uma **assinatura HMAC** do servidor. O jogador pode ler o próprio save, mas qualquer alteração invalida a assinatura.
+* **Tudo o que entra no servidor é validado** (`server/services/save_validacao.py`): importação, autosave e link compartilhado.
+  * Vida, luz, inventário, salas e conquistas precisam ser possíveis.
+  * O mapa é reconstruído do original, com só as mudanças que o próprio jogo faz.
+  * Presets de dificuldade e o perfil da "Ela" vêm do servidor.
+* **Um estado inválido nunca sobrescreve o último save bom.** Saves antigos em JSON puro ainda carregam e são migrados para o formato cifrado. Arquivos exportados no formato antigo (`dados_seguros`) continuam importáveis.
 
 ## Testes, Cobertura e Qualidade de Código
 
