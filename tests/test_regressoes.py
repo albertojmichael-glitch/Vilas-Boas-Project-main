@@ -16,7 +16,7 @@ def test_to_uuid_aceita_str_e_uuid_e_rejeita_lixo():
 
 def test_save_roundtrip_com_sid_str(app_ctx):
     sid = str(uuid.uuid4())
-    salvar_save_web(GameState(), sid)
+    salvar_save_web(GameState(estado_atual="JOGO"), sid)
     assert save_existe(sid) is True
     assert db.session.get(SaveJogo, uuid.UUID(sid)) is not None
 
@@ -31,7 +31,9 @@ def test_share_com_save_original_inexistente_retorna_404(app_ctx, cliente):
 
 def test_share_get_nao_consome_nem_cria_save_para_previews(app_ctx, cliente):
     sid = uuid.uuid4()
-    dados = CIPHER_SUITE.encrypt(GameState().model_dump_json().encode()).decode()
+    dados = CIPHER_SUITE.encrypt(
+        GameState(estado_atual="JOGO").model_dump_json().encode()
+    ).decode()
     db.session.add(SaveJogo(sid=sid, dados=dados))
     share = Compartilhamento(original_sid=str(sid), expires_at=9e12)
     db.session.add(share)
@@ -58,7 +60,9 @@ def test_share_com_save_corrompido_nao_gera_500_nao_tratado(app_ctx, cliente):
 
 def test_share_feliz_cria_novo_save_e_redireciona(app_ctx, cliente):
     sid = uuid.uuid4()
-    dados = CIPHER_SUITE.encrypt(GameState().model_dump_json().encode()).decode()
+    dados = CIPHER_SUITE.encrypt(
+        GameState(estado_atual="JOGO").model_dump_json().encode()
+    ).decode()
     db.session.add(SaveJogo(sid=sid, dados=dados))
     share = Compartilhamento(original_sid=str(sid), expires_at=9e12)
     db.session.add(share)

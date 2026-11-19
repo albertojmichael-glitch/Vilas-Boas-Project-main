@@ -2,6 +2,8 @@ import base64
 import binascii
 import contextlib
 import hashlib
+import hmac
+import logging
 import os
 import secrets
 from typing import ClassVar
@@ -28,6 +30,17 @@ def _obter_database_url() -> str | None:
     return None
 
 
+CHAVE_DEV_INSEGURA = "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
+
+
+def _derivar_chave(raiz: str, rotulo: str) -> str:
+    """Deriva uma subchave independente da raiz (HMAC-SHA256 com rótulo).
+
+    Assim a chave de cifra dos saves e a de assinatura nunca são a mesma."""
+    digest = hmac.new(raiz.encode("utf-8"), rotulo.encode("utf-8"), hashlib.sha256)
+    return base64.urlsafe_b64encode(digest.digest()).decode("utf-8")
+
+
 def _garantir_fernet_key(raw_key: str) -> str:
     """Garante que a chave tenha 32 bytes em urlsafe base64 para o Fernet."""
     with contextlib.suppress(binascii.Error, ValueError):
@@ -50,6 +63,7 @@ class Config:
     }
     SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
     SAVE_ENCRYPTION_KEY = os.environ.get("SAVE_ENCRYPTION_KEY")
+    SAVE_SIGNING_KEY = os.environ.get("SAVE_SIGNING_KEY")
     ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
     FRONTEND_URL = os.environ.get("FRONTEND_URL")
     ALLOWED_ORIGINS_ENV = os.environ.get("ALLOWED_ORIGINS", "")
@@ -61,13 +75,30 @@ class Config:
     @classmethod
     def validar_e_configurar(cls):
         cls.IS_PRODUCTION = is_production()
-        cls.SECRET_KEY = (
-            os.environ.get("SECRET_KEY")
-            or os.environ.get("FLASK_SECRET_KEY")
-            or "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
-        )
-        raw_save_key = os.environ.get("SAVE_ENCRYPTION_KEY") or cls.SECRET_KEY
+        segredo = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
+        if not segredo:
+            if cls.IS_PRODUCTION:
+                # Sem segredo próprio, a chave dos saves derivaria de um valor
+                # público (que está no repositório) e qualquer um forjaria saves.
+                raise RuntimeError(
+                    "SECRET_KEY ausente em produção: defina SECRET_KEY "
+                    "(ou FLASK_SECRET_KEY) antes de iniciar o servidor."
+                )
+            logging.getLogger(__name__).warning(
+                "SECRET_KEY ausente: usando chave de desenvolvimento insegura."
+            )
+            segredo = CHAVE_DEV_INSEGURA
+        cls.SECRET_KEY = segredo
+
+        # Saves: cifrados em repouso no servidor (Fernet) e assinados (HMAC) quando
+        # exportados. A cifra mantém a derivação de sempre (senão os saves já
+        # gravados no banco ficariam ilegíveis); a assinatura usa uma subchave
+        # própria, para nunca reaproveitar a mesma chave em dois papéis.
+        raw_save_key = os.environ.get("SAVE_ENCRYPTION_KEY") or segredo
         cls.SAVE_ENCRYPTION_KEY = _garantir_fernet_key(raw_save_key)
+        cls.SAVE_SIGNING_KEY = os.environ.get("SAVE_SIGNING_KEY") or _derivar_chave(
+            segredo, "vilas-boas/save/assinatura"
+        )
 
         cls.ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN") or secrets.token_hex(16)
         cls.FRONTEND_URL = os.environ.get("FRONTEND_URL") or "http://localhost:5000"

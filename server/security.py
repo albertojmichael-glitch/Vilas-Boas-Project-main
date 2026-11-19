@@ -37,6 +37,35 @@ def assinar_dados(dados_dict):
     return hmac.new(obter_secret_key(), dados_str.encode(), hashlib.sha256).hexdigest()
 
 
+# --- Saves exportados: legíveis pelo jogador, mas assinados pelo servidor ---
+FORMATO_SAVE = "vilas-boas-save"
+VERSAO_SAVE = 2
+
+
+def json_canonico(dados) -> bytes:
+    """Serialização estável (mesmos dados -> mesmos bytes) para assinar."""
+    return json.dumps(
+        dados, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+
+
+def _corpo_assinado(estado: dict) -> bytes:
+    return json_canonico(
+        {"formato": FORMATO_SAVE, "versao": VERSAO_SAVE, "estado": estado}
+    )
+
+
+def assinar_save(estado: dict) -> str:
+    chave = str(Config.SAVE_SIGNING_KEY).encode("utf-8")
+    return hmac.new(chave, _corpo_assinado(estado), hashlib.sha256).hexdigest()
+
+
+def verificar_assinatura_save(estado: dict, assinatura: str) -> bool:
+    if not isinstance(estado, dict) or not isinstance(assinatura, str):
+        return False
+    return hmac.compare_digest(assinar_save(estado), assinatura)
+
+
 def requer_admin(f):
     @functools.wraps(f)
     def decorated(*args, **kwargs):

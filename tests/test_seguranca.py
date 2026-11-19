@@ -120,7 +120,7 @@ def test_rotas_admin_auditoria_saves_e_replay(app_ctx, cliente):
         log_comandos=["ir frente", "olhar"],
     )
     db.session.add(tele)
-    salvar_save_web(GameState(), str(uuid.uuid4()))
+    salvar_save_web(GameState(estado_atual="JOGO"), str(uuid.uuid4()))
     db.session.commit()
 
     r_auditoria = cliente.get("/admin/auditoria-mortes", headers=headers)
@@ -152,7 +152,7 @@ def test_fluxo_share_generate_e_expiracao(app_ctx, cliente):
     cliente.post("/iniciar")
     with cliente.session_transaction() as sess:
         sid = sess["sid"]
-    salvar_save_web(GameState(), sid)
+    salvar_save_web(GameState(estado_atual="JOGO"), sid)
 
     r_gen = cliente.post("/share/generate")
     assert r_gen.status_code == 200

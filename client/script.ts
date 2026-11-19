@@ -198,6 +198,16 @@ async function exportarSave(): Promise<void> {
     }
 }
 
+function saveTemFormatoConhecido(dados: unknown): dados is SaveExportado {
+    if (!dados || typeof dados !== 'object' || Array.isArray(dados)) return false;
+    const d = dados as Record<string, unknown>;
+    const v2 = d.formato === 'vilas-boas-save'
+        && typeof d.assinatura === 'string'
+        && !!d.estado && typeof d.estado === 'object';
+    const v1 = typeof d.dados_seguros === 'string';
+    return v2 || v1;
+}
+
 async function importarSave(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -209,17 +219,19 @@ async function importarSave(event: Event): Promise<void> {
             const conteudo = e.target?.result;
             if (typeof conteudo !== 'string') throw new Error("Falha ao ler arquivo.");
 
-            const dados = JSON.parse(conteudo) as SaveExportado;
-
-            if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
-                throw new Error("Estrutura do arquivo incompatível com o sistema host.");
+            // Editores no Windows costumam gravar um BOM no início do arquivo,
+            // o que quebrava o JSON.parse ("o JS não reconhece o json").
+            const texto = conteudo.replace(/^\uFEFF/, '').trim();
+            let dados: unknown;
+            try {
+                dados = JSON.parse(texto);
+            } catch {
+                throw new Error("O arquivo não é um JSON válido (está truncado ou foi editado?).");
             }
-            if (!dados.dados_seguros || typeof dados.dados_seguros !== 'string') {
-                throw new Error("Assinatura de segurança (dados_seguros) ausente ou corrompida.");
+            if (!saveTemFormatoConhecido(dados)) {
+                throw new Error("Este arquivo não é um save do Vilas Boas OS.");
             }
-            if (!dados.resumo || typeof dados.resumo !== 'object' || !dados.resumo.sala) {
-                throw new Error("Metadados (header) de ambiente ausentes.");
-            }
+            // A validação de verdade (assinatura e regras do jogo) é feita no servidor.
 
             const res = await fetch(`${API_URL}/save/import`, {
                 method: 'POST',

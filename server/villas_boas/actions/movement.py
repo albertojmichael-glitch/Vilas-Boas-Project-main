@@ -4,6 +4,7 @@ from data import (
     BARULHO_TROPECO_NAO_LETAL,
     CHANCE_TROPECO_ESCURO_PCT,
     EVENTOS_ALEATORIOS,
+    SALA_GERADOR_ABERTA,
     SALAS_ILUMINADAS,
     TROPECO_PODE_MATAR,
 )
@@ -34,7 +35,7 @@ def cmd_ir(comando, jogo, mapa):
             f"{DOS_AMARELO}Você toma distância e dá um chute violento na porta emperrada!{RESET}"
         )
         ui.exibir(f"{DOS_VERDE}A madeira velha cede e a porta escancara.{RESET}")
-        mapa["corredor"]["03"] = "sala do gerador"
+        mapa["corredor"]["03"] = SALA_GERADOR_ABERTA
         jogo.sala_atual = "sala do gerador"
         ui.pausar(2)
         return True

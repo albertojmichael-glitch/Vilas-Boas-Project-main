@@ -3,6 +3,7 @@ import json
 import logging
 import time
 import uuid
+from datetime import UTC, datetime
 
 from cryptography.fernet import InvalidToken
 from extensions import MEMORIA_SESSOES, db, limiter
@@ -15,15 +16,24 @@ from flask import (
 )
 from models import Compartilhamento, SaveJogo
 from pydantic import ValidationError
-from security import requer_origem_valida
+from security import (
+    FORMATO_SAVE,
+    VERSAO_SAVE,
+    assinar_save,
+    requer_origem_valida,
+    verificar_assinatura_save,
+)
 from services.save_service import (
     CIPHER_SUITE,
+    carregar_estado_validado,
     carregar_save_web,
     obter_ou_recuperar_jogo,
     salvar_save_web,
     save_existe,
+    serializar_estado,
     to_uuid,
 )
+from services.save_validacao import SaveInvalido, validar_estado_save
 from state import GameState
 from views import imprimir_tela_boot
 from villas_boas.engine.core import processar_fluxo_jogo
@@ -36,6 +46,7 @@ from routes.helpers import (
 )
 
 logger = logging.getLogger(__name__)
+TAMANHO_MAXIMO_SAVE = 200_000  # bytes; o save legível é maior que o token antigo
 game_bp = Blueprint("game", __name__)
 
 
@@ -125,48 +136,92 @@ def receber_comando():
 @game_bp.route("/save/export", methods=["GET"])
 @limiter.limit("5 per minute")
 def exportar_save():
+    """Exporta o save em JSON legível e assinado pelo servidor.
+
+    Nada é escondido do jogador (ele controla o navegador de qualquer forma);
+    a assinatura HMAC só garante que o arquivo não foi alterado."""
     sid = obter_sid_seguro()
     jogo = obter_ou_recuperar_jogo(sid, MEMORIA_SESSOES) if sid else None
     if not jogo:
         return jsonify({"erro": "Nenhum jogo ativo para processar o save."}), 404
 
-    dados_criptografados = CIPHER_SUITE.encrypt(
-        json.dumps(jogo.to_dict(), ensure_ascii=False).encode("utf-8")
-    ).decode("utf-8")
-    resumo_publico = {
-        "sala": jogo.sala_atual,
-        "hp": jogo.hp,
-        "inventario_tamanho": len(jogo.inventario),
-    }
-    return jsonify({"resumo": resumo_publico, "dados_seguros": dados_criptografados})
+    try:
+        estado = json.loads(serializar_estado(jogo))
+    except SaveInvalido as exc:
+        return jsonify({"erro": f"O jogo atual não pode ser exportado: {exc}"}), 409
+
+    return jsonify(
+        {
+            "formato": FORMATO_SAVE,
+            "versao": VERSAO_SAVE,
+            "criado_em": datetime.now(UTC).isoformat(timespec="seconds"),
+            "resumo": {
+                "sala": jogo.sala_atual,
+                "hp": jogo.hp,
+                "dificuldade": jogo.dificuldade_escolhida,
+                "inventario_tamanho": len(jogo.inventario),
+            },
+            "estado": estado,
+            "assinatura": assinar_save(estado),
+        }
+    )
+
+
+def _estado_do_arquivo(payload):
+    """Extrai o estado de um save importado (v2 assinado ou v1 legado).
+
+    Devolve (estado, None) ou (None, (mensagem, status_http))."""
+    if not isinstance(payload, dict):
+        return None, ("Formato não suportado.", 400)
+
+    if payload.get("formato") == FORMATO_SAVE:
+        if payload.get("versao") != VERSAO_SAVE:
+            return None, ("Versão de save não suportada.", 400)
+        estado, assinatura = payload.get("estado"), payload.get("assinatura")
+        if not verificar_assinatura_save(estado, assinatura):
+            return None, (
+                "[ ERRO CRÍTICO ] ASSINATURA INVÁLIDA: o arquivo foi alterado.",
+                403,
+            )
+        return estado, None
+
+    dados_seguros = payload.get("dados_seguros")  # formato v1 (Fernet), legado
+    if isinstance(dados_seguros, str):
+        try:
+            texto = CIPHER_SUITE.decrypt(dados_seguros.encode("utf-8")).decode("utf-8")
+            return json.loads(texto), None
+        except InvalidToken:
+            return None, ("[ ERRO CRÍTICO ] ASSINATURA INVÁLIDA.", 403)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return None, ("Arquivo de save inválido.", 400)
+
+    return None, ("Formato não suportado.", 400)
 
 
 @game_bp.route("/save/import", methods=["POST"])
 @limiter.limit("10 per minute")
 @requer_origem_valida
 def importar_save():
-    sid = obter_sid_seguro() or str(uuid.uuid4())
-    session["sid"], session.permanent = sid, True
-
-    dados_seguros = (request.json or {}).get("dados_seguros")
-    if not dados_seguros or not isinstance(dados_seguros, str):
-        return jsonify({"erro": "Formato não suportado."}), 400
-    if len(dados_seguros) > 50000:
+    if (request.content_length or 0) > TAMANHO_MAXIMO_SAVE:
         return jsonify({"erro": "Tamanho excede o permitido."}), 413
+    payload = request.get_json(silent=True)
+
+    estado, erro = _estado_do_arquivo(payload)
+    if erro:
+        return jsonify({"erro": erro[0]}), erro[1]
 
     try:
-        dados_save = json.loads(
-            CIPHER_SUITE.decrypt(dados_seguros.encode("utf-8")).decode("utf-8")
-        )
-        novo_jogo = GameState.from_dict(dados_save)
-        novo_jogo.ui_handler = WebUIHandler()
-        MEMORIA_SESSOES[sid] = novo_jogo
-        salvar_save_web(novo_jogo, sid)
-        return jsonify({"sucesso": True, "mensagem": "Save importado."})
-    except InvalidToken:
-        return jsonify({"erro": "[ ERRO CRÍTICO ] ASSINATURA INVÁLIDA."}), 403
-    except (ValueError, TypeError, KeyError):
-        return jsonify({"erro": "Arquivo de save inválido."}), 400
+        novo_jogo = validar_estado_save(estado, permitir_dev=False)
+    except SaveInvalido as exc:
+        return jsonify({"erro": f"Save rejeitado: {exc}"}), 400
+
+    sid = obter_sid_seguro() or str(uuid.uuid4())
+    session["sid"], session.permanent = sid, True
+    novo_jogo.ui_handler = WebUIHandler()
+    if not salvar_save_web(novo_jogo, sid):
+        return jsonify({"erro": "Falha ao gravar o save importado."}), 500
+    MEMORIA_SESSOES[sid] = novo_jogo
+    return jsonify({"sucesso": True, "mensagem": "Save importado."})
 
 
 @game_bp.route("/share/generate", methods=["POST"])
@@ -233,15 +288,13 @@ def carregar_compartilhado(share_token):
         return jsonify({"erro": "Origem não autorizada."}), 403
 
     try:
-        dados_descriptografados = CIPHER_SUITE.decrypt(
-            original.dados.encode("utf-8")
-        ).decode("utf-8")
-        dados = json.loads(dados_descriptografados)
-        novo_jogo = GameState.from_dict(dados)
+        novo_jogo = carregar_estado_validado(original.dados, permitir_dev=False)
+        if novo_jogo is None:
+            return "Os dados estruturais do save estão corrompidos e ilegíveis.", 500
 
         novo_sid = uuid.uuid4()
-        db.session.add(SaveJogo(sid=novo_sid, dados=original.dados))
-        db.session.commit()
+        if not salvar_save_web(novo_jogo, novo_sid):
+            return "Não foi possível clonar o save compartilhado.", 500
 
         session["sid"] = str(novo_sid)
         session.permanent = True

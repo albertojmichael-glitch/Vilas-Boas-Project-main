@@ -3,6 +3,28 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## Revisão da Segurança dos Saves 19/11/26
+
+Revisão da issue #4 ("criptografia do JSON dando erro"). A criptografia deixa de ser usada para esconder dados no navegador, já que o jogador sempre controla o que roda lá. Ela fica no servidor, e todo estado recebido passa a ser assinado e validado.
+
+### Alterado
+* **Save exportado legível e assinado (v2):** o arquivo agora traz o `estado` em JSON aberto e uma `assinatura` HMAC-SHA256 do servidor. Qualquer edição é recusada com 403. O formato antigo (`dados_seguros`) continua importável.
+* **Validação de integridade de todo save recebido** (`server/services/save_validacao.py`), na importação, no autosave e no link compartilhado:
+  * faixas de HP, luz e barulho; itens e conquistas existentes; salas válidas;
+  * só estados de jogo persistíveis; nada de modo deus ou modo dev em arquivo importado;
+  * o mapa é reconstruído do original, aceitando só as mudanças que o próprio jogo faz;
+  * presets de dificuldade e perfil da "Ela" vêm sempre do servidor.
+* **Chaves:** a assinatura usa uma chave própria (`SAVE_SIGNING_KEY` ou uma derivada com rótulo), separada da chave de cifra.
+
+### Corrigido
+* **Produção sem `SECRET_KEY`:** o servidor caía silenciosamente numa chave de desenvolvimento pública, o que permitia forjar saves. Agora ele se recusa a iniciar.
+* **Perda de progresso:**
+  * um estado inválido não sobrescreve mais o último save bom; o JSON é conferido antes de gravar;
+  * registros corrompidos no banco não derrubam a rota com 500 nem são apagados;
+  * saves legados em JSON puro voltam a carregar e são migrados para o formato cifrado.
+* **Import no navegador:** remove o BOM e espaços antes do `JSON.parse` (o "JS não reconhece o json"). O `SafeStorage` só promove a backup um valor antigo que esteja íntegro.
+* **Edição offline:** os testes deixam de abrir o dispositivo de áudio. Isso evita o `STATUS_ACCESS_VIOLATION` no Windows do CI.
+
 ## Rebalanceamento do Modo Pesadelo 19/11/26
 
 Resolve a issue #7 ("dificuldade PESADELO impossível de vencer"). Com o mesmo simulador, um bot que joga bem vencia **1,1%** das partidas no PESADELO (11 de 1.000) e agora vence **26,7%** (5.000 partidas, IC95% 25,5–27,9%). O NORMAL ficou em **72,5%**.

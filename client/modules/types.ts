@@ -33,14 +33,23 @@ export interface SavePayload<T> {
     data: T;
 }
 
-export interface SaveExportado {
-    dados_seguros: string;
-    resumo: {
-        sala: string;
-        [key: string]: unknown;
-    };
-    [key: string]: unknown;
+/** Save v2: legível pelo jogador e assinado (HMAC) pelo servidor. */
+export interface SaveExportadoV2 {
+    formato: 'vilas-boas-save';
+    versao: 2;
+    criado_em?: string;
+    resumo?: { sala?: string; [key: string]: unknown };
+    estado: Record<string, unknown>;
+    assinatura: string;
 }
+
+/** Save v1 (legado): estado cifrado pelo servidor num token opaco. */
+export interface SaveExportadoV1 {
+    dados_seguros: string;
+    resumo?: { sala?: string; [key: string]: unknown };
+}
+
+export type SaveExportado = SaveExportadoV2 | SaveExportadoV1;
 
 export interface RespostaShare {
     link: string;
