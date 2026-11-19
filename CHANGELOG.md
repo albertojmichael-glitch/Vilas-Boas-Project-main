@@ -3,6 +3,41 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## Rebalanceamento do Modo Pesadelo 19/11/26
+
+Resolve a issue #7 ("dificuldade PESADELO impossível de vencer"). Com o mesmo simulador, um bot que joga bem vencia **1,1%** das partidas no PESADELO (11 de 1.000) e agora vence **26,7%** (5.000 partidas, IC95% 25,5–27,9%). O NORMAL ficou em **72,5%**.
+
+### Adicionado
+* **"Ela" nos dois modos, com IA por dificuldade:** a perseguidora agora existe no NORMAL e no PESADELO. O perfil fica em `balance_config.json` → `dificuldades.<MODO>.ela`: dormência inicial, chance de andar, de rastrear o barulho e de usar dutos, turnos atordoada e alcance dos passos.
+* **Dutos exclusivos da "Ela":** ela pode entrar numa grade de ventilação e sair, no turno seguinte, numa sala com grade a até 2 salas de distância (`dutos_ela`). O mapa do jogador não muda. A grade range antes de ela sair, e as salas sem grade (fliperamas, 01, 04, balcão e as salas pequenas dos fundos) viram rotas de sobrevivência.
+* **Avisos com direção:** "Passos de metal maciço na sala ao lado vindo da esquerda…".
+* **Comandos `esconder` e `esperar`:** esconder funciona em balcão, mesas de jantar, fliperamas, pelúcias, cozinha principal e 04, por até 3 turnos seguidos; tanto a "Ela" quanto o animatrônico passam direto. Esperar gasta o turno em silêncio e baixa o barulho.
+* **Simulador de balanceamento** (`server/villas_boas/simulacao`):
+  * dois bots, `aleatoria` e `competente`;
+  * sementes determinísticas, com intervalo de confiança e causas de morte por partida;
+  * detecção de travamentos e uma CLI.
+* **Testes de balanceamento** (`tests/test_balanceamento.py`):
+  * 8.000 partidas no CI padrão e um job `balance` com 40.000 partidas (`pytest -m slow`);
+  * na edição offline, testes Rust equivalentes em `offline/src/ela.rs`.
+
+### Alterado
+* **Encontro com a "Ela" deixou de ser morte instantânea:** vira combate. `correr [direção]` escapa com −1 HP e a deixa atordoada; qualquer outra ação mata.
+* **NORMAL:** ficar parado 5 turnos não mata mais sozinho; agora faz barulho e chama a "Ela".
+* **PESADELO:**
+  * energia da noite de 70–82 para 70–76;
+  * os presets de dificuldade agora também alimentam a edição Rust (`build.rs`).
+
+### Corrigido
+* **Tropeço no escuro:** não acontece mais em sala iluminada e nunca é o golpe final (a 1 HP vira barulho).
+* **Dica falsa do Jon:** errar por causa do "[SENSÓRIO CONFUSO]" custa luz e barulho, não vida.
+* **Crash `TypeError` na morte do Jon:** a telemetria era chamada com 7 argumentos.
+* **Vitória da noite de segurança:** sai no próprio `esperar` que chega às 06:00. Antes, quem só esperava ficava preso na noite (Python e Rust).
+* **Perseguidores acampando na porta de salas seguras:**
+  * o animatrônico do barulho entrava na `01` e pegava o jogador assim que ele saía;
+  * a "Ela" congelava no corredor.
+* **F5/reiniciar:** começava a partida sem lanterna, no escuro e com os perseguidores e o barulho da partida anterior.
+* **Erro de digitação:** `"sala de refrigeração"` → `"quarto de refrigeração"` na lista de salas iluminadas.
+
 ## Atualização, Correções e Adições 30/09/26
 
 ### Adicionado

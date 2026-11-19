@@ -39,7 +39,7 @@ from views import (
 )
 
 from villas_boas.actions import processar_comando
-from villas_boas.actions.parser import ATALHOS_DIRECAO, normalizar
+from villas_boas.actions.parser import ATALHOS_DIRECAO, COMANDOS_ESCONDER, normalizar
 from villas_boas.engine import devmode
 from villas_boas.engine.minigames.minotauro import MinigameMinotauro
 from villas_boas.engine.minigames.seguranca import MinigameSeguranca
@@ -50,6 +50,11 @@ from villas_boas.utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Ações que gastam o turno em silêncio (o barulho cai em vez de subir).
+COMANDOS_SILENCIOSOS = frozenset(
+    {"olhar", "inventario", "esperar", "aguardar", "z"} | COMANDOS_ESCONDER
+)
 
 
 def calcular_caminho_bfs(mapa, inicio, destino):
@@ -65,7 +70,11 @@ def processar_ia_inimigo(jogo):
         return
 
     distancia = relatorio["distancia"]
-    if relatorio["combate_iniciado"]:
+    if relatorio.get("passou_escondido"):
+        jogo.ui_handler.buffer.append(
+            "@@TYPE@@amarelo@@15@@O animatrônico atravessa a sala, fareja o ar... e segue adiante sem te ver."
+        )
+    elif relatorio["combate_iniciado"]:
         jogo.ui_handler.buffer.append(
             "@@TYPE@@vermelho@@15@@O animatrônico irrompe na sala! Ele encontrou você!"
         )
@@ -77,6 +86,27 @@ def processar_ia_inimigo(jogo):
         jogo.ui_handler.buffer.append(
             "@@TYPE@@amarelo@@15@@Um baque surdo ecoa pelos corredores distantes."
         )
+
+
+def _fugir_da_ela(jogo):
+    """Fuga bem-sucedida da 'Ela': custa HP, mas a deixa atordoada."""
+    from villas_boas.ela import atordoar_apos_fuga
+
+    ui = jogo.ui_handler
+    dano = int(jogo.perfil_ela.get("dano_fuga", 1))
+    if jogo.aplicar_dano(dano):
+        jogo.causa_morte = "ela"
+        ui.exibir(
+            f"\n{DOS_VERMELHO}As garras dela rasgam suas costas enquanto você foge. Você não chega longe...{RESET}"
+        )
+        return
+    atordoar_apos_fuga(jogo)
+    ui.exibir(
+        f"\n{DOS_VERMELHO}As garras dela rasgam suas costas, mas você escapa! (-{dano} HP){RESET}"
+    )
+    ui.exibir(
+        f"{DOS_AMARELO}Ela bate contra o batente da porta e fica desorientada por alguns instantes.{RESET}"
+    )
 
 
 def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
@@ -109,7 +139,7 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
 
     elif comando.startswith(("ir ", "abrir ")):
         jogo.nivel_barulho = min(100, jogo.nivel_barulho + BARULHO_IR_ABRIR)
-    elif comando in ["olhar", "inventario", "esperar"]:
+    elif comando in COMANDOS_SILENCIOSOS:
         jogo.nivel_barulho = max(0, jogo.nivel_barulho - REDUCAO_OLHAR_ESPERAR)
     else:
         jogo.nivel_barulho = min(100, jogo.nivel_barulho + BARULHO_ACAO_COMUM)
@@ -125,6 +155,7 @@ def aplicar_efeitos_pos_turno(jogo, comando, comando_correu):
         ui.exibir(f"\n{DOS_VERMELHO}Você quebrou o silêncio. Eles ouviram.{RESET}")
         ui.pausar(1.5)
         jogo.sala_atual = "morte"
+        jogo.causa_morte = "fantasma"
         jogo.estado_atual = "FIM"
 
 
@@ -564,7 +595,7 @@ def _processar_fluxo_jogo_normal(
                 f"{DOS_BRANCO}Guie o Porco Jon pelos dutos baseando-se nos seus sentidos.{RESET}"
             )
             ui.exibir("Comandos: [F] Frente | [E] Esquerda | [D] Direita")
-            dar_dica_jon(jogo.jon_caminho_certo[0], ui)
+            jogo.jon_dica_falsa = dar_dica_jon(jogo.jon_caminho_certo[0], ui)
             ui.exibir("Passo 1/4 - Direção (F/E/D): ")
 
         elif comando == "jogar consertos" and jogo.sala_atual == "sala de fliperamas":
@@ -608,7 +639,9 @@ def _processar_fluxo_jogo_normal(
 
         else:
             jogador_correu = False
+            fugindo_de = ""
             comando_para_executar = comando_bruto
+            jogo.escondido = False
 
             if comando.startswith("correr "):
                 direcao = comando.replace("correr ", "").strip()
@@ -624,11 +657,18 @@ def _processar_fluxo_jogo_normal(
                 jogador_correu = True
                 if jogo.estado_atual == "COMBATE_ANIMATRONICO":
                     jogo.estado_atual = "JOGO"
+                    fugindo_de = jogo.atacante_combate or "animatronico"
 
             gastou_turno = processar_comando(comando_para_executar, jogo, jogo.mapa)
 
+            if gastou_turno and fugindo_de:
+                jogo.atacante_combate = ""
+                if fugindo_de == "ela":
+                    _fugir_da_ela(jogo)
+
             if gastou_turno:
-                atualizar_eventos_de_tempo(jogo)
+                if jogo.sala_atual != "morte":
+                    atualizar_eventos_de_tempo(jogo)
                 jogo.erros_consecutivos = 0
                 if jogo.estado_atual == "JOGO" and gastou_turno != "olhar":
                     aplicar_efeitos_pos_turno(
@@ -865,7 +905,9 @@ def _processar_fluxo_jogo_normal(
                     jogo.estado_atual = "JOGO"
                     imprimir_contexto_sala(jogo)
                 else:
-                    dar_dica_jon(jogo.jon_caminho_certo[jogo.jon_passos_dados], ui)
+                    jogo.jon_dica_falsa = dar_dica_jon(
+                        jogo.jon_caminho_certo[jogo.jon_passos_dados], ui
+                    )
                     ui.exibir(
                         f"Passo {jogo.jon_passos_dados + 1}/4 - Direção (F/E/D): "
                     )
@@ -877,17 +919,26 @@ def _processar_fluxo_jogo_normal(
                 ]
                 erro_idx = min(getattr(jogo, "jon_erros", 0), len(frases_erro) - 1)
                 jogo.jon_erros = getattr(jogo, "jon_erros", 0) + 1
-                ui.exibir(f"\n{DOS_VERMELHO}{frases_erro[erro_idx]}{RESET}")
-                jogo.hp -= 1
                 jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
-                if jogo.hp <= 0:
+                morreu = False
+                if jogo.jon_dica_falsa:
+                    # O sensório mentiu: o jogador não tinha como acertar, então
+                    # o erro custa luz e barulho, mas não vida.
+                    ui.exibir(
+                        f"\n{DOS_AMARELO}O sensório te enganou. Jon bate a cabeça no duto e a máquina solta um zumbido alto.{RESET}"
+                    )
+                    jogo.alterar_barulho(BARULHO_ERROS_CONSECUTIVOS)
+                else:
+                    ui.exibir(f"\n{DOS_VERMELHO}{frases_erro[erro_idx]}{RESET}")
+                    morreu = jogo.aplicar_dano(1)
+                jogo.jon_dica_falsa = False
+                if morreu:
+                    jogo.causa_morte = "jon"
                     registrar_telemetria_segura(
                         "FALHA_MINIGAME",
-                        "MORTE",
                         "MINIGAME_JON",
                         jogo.dificuldade_escolhida,
-                        "Morto pelo Porco",
-                        "Errou a direcao",
+                        "Morto pelo Porco (errou a direção)",
                         jogo,
                     )
                     dar_tela_de_morte(jogo)
@@ -1087,6 +1138,7 @@ def _processar_fluxo_jogo_normal(
 
                 from views import dar_tela_kernel_panic
 
+                jogo.causa_morte = "julgamento"
                 dar_tela_kernel_panic(jogo)
 
                 return
@@ -1122,12 +1174,18 @@ def _processar_fluxo_jogo_normal(
             jogo.minigame_atual.imprimir_status()
 
         elif resultado == "morte":
+            minigame = (
+                "seguranca"
+                if jogo.estado_atual == "MINIGAME_SEGURANCA"
+                else "minotauro"
+            )
             jogo.estado_atual = "FIM"
             jogo.sala_atual = "morte"
+            jogo.causa_morte = minigame
             jogo.minigame_atual = None
             registrar_telemetria_segura(
                 "MORTE",
-                jogo.estado_atual,
+                f"MINIGAME_{minigame.upper()}",
                 jogo.dificuldade_escolhida,
                 "Falhou em um Minigame",
                 jogo,

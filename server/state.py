@@ -19,12 +19,14 @@ from data import (
     MAX_INVENTARIO,
     META_ACUMULADOR,
     REDUCAO_BARULHO_TURNO,
+    SALA_INICIAL_ELA,
     SLOTS_POR_BOLSA,
     TURNOS_BATERIA,
     TURNOS_LUZ_INICIAL,
     VIDA_GOD_MODE,
     VIDA_NORMAL,
     VIDA_PESADELO,
+    perfil_ela,
 )
 from pydantic import BaseModel, Field, PrivateAttr
 
@@ -123,7 +125,20 @@ class GameState(BaseModel):
     incendio: bool = False
     turnos_fuga: int = 5
     isqueiro_usos: int = 3
-    posicao_perseguidor: str = "palco"
+    posicao_perseguidor: str = SALA_INICIAL_ELA
+    # Estado da "Ela" (perseguidora presente no NORMAL e no PESADELO)
+    perfil_ela: dict[str, Any] = Field(default_factory=lambda: perfil_ela("NORMAL"))
+    ela_dormencia: int = Field(
+        default_factory=lambda: int(perfil_ela("NORMAL")["turnos_dormencia"])
+    )
+    ela_no_duto: bool = False
+    ela_saida_duto: str = ""
+    ela_atordoada: int = 0
+    atacante_combate: str = ""
+    escondido: bool = False
+    turnos_escondido: int = 0
+    jon_dica_falsa: bool = False
+    causa_morte: str = ""
     estado_atual: str = GameStateEnum.AGUARDANDO_DIR.value
     god_mode: bool = False
     dev_mode: bool = False
@@ -288,6 +303,9 @@ class GameState(BaseModel):
         self.fast_mode = fast_mode
         presets = BALANCE_CFG.get("dificuldades", {})
 
+        self.perfil_ela = perfil_ela(modo)
+        self.ela_dormencia = int(self.perfil_ela["turnos_dormencia"])
+
         if modo == "GOD MODE":
             self.god_mode = True
             self.hp = VIDA_GOD_MODE
@@ -311,26 +329,15 @@ class GameState(BaseModel):
                 self.turnos_luz = 0
 
     def resetar_para_novo_jogo(self) -> None:
-        try:
-            self.mapa = copy.deepcopy(MAPA_ORIGINAL)
-        except (TypeError, ValueError) as e:
-            logger.error(f"Erro ao restaurar MAPA_ORIGINAL: {e}")
-
-        self.estado_atual = GameStateEnum.AGUARDANDO_DIR.value
-        self.inventario = []
-        self.hp = VIDA_NORMAL
-        self.sala_atual = "entrada"
-        self.incendio = False
-        self.noite_vencida = False
-        self.fios_cortados_inventario = False
-        self.amanheceu = False
-        self.alberto_desativado = False
-        self.god_mode = False
-        self.turnos_luz = 0
-        self.fast_mode = False
-        self.dificuldade_escolhida = "NORMAL"
+        """Volta tudo ao estado de uma partida nova (lanterna, luz inicial,
+        perseguidores e barulho incluídos), preservando só as conquistas e as
+        flags do modo dev (que o devmode limpa por conta própria)."""
+        novo = self.__class__()
+        preservar = {"conquistas", "dev_mode", "dev_usado", "dev_radar", "dev_ia"}
+        for campo in type(self).model_fields:
+            if campo not in preservar:
+                setattr(self, campo, getattr(novo, campo))
         self._minigame_atual = None
-        self.tempo_inicio = time.time()
 
     def calcular_caminho_bfs(self, inicio: str, destino: str) -> list[str]:
         if inicio not in self.mapa or destino not in self.mapa:
@@ -367,7 +374,15 @@ class GameState(BaseModel):
         if self.nivel_barulho > 0:
             self.alterar_barulho(-REDUCAO_BARULHO_TURNO)
 
-        if self.nivel_barulho >= LIMIAR_CACA or self.ai_sala == self.sala_atual:
+        # Escondido e em silêncio, o jogador não é "visto" na própria sala.
+        oculto = self.escondido and self.nivel_barulho < LIMIAR_CACA
+        # Nas salas seguras (01, sala de energia) ele não pode entrar: perde o
+        # rastro em vez de acampar lá dentro esperando o jogador sair.
+        if self.sala_atual in SALAS_SEGURAS_PATRULHA:
+            self.ai_estado = "PATRULHA"
+        elif self.nivel_barulho >= LIMIAR_CACA or (
+            self.ai_sala == self.sala_atual and not oculto
+        ):
             self.ai_estado = "CACA"
         elif self.nivel_barulho >= LIMIAR_ALERTA and self.ai_estado != "CACA":
             self.ai_estado = "ALERTA"
@@ -393,21 +408,29 @@ class GameState(BaseModel):
                 else (self.ai_alvo or self.sala_atual)
             )
             caminho = self.calcular_caminho_bfs(self.ai_sala, destino)
-            if len(caminho) > 1:
+            if len(caminho) > 1 and caminho[1] not in SALAS_SEGURAS_PATRULHA:
                 self.ai_sala = caminho[1]
 
         caminho_para_jogador = self.calcular_caminho_bfs(self.sala_atual, self.ai_sala)
         distancia = len(caminho_para_jogador) - 1 if caminho_para_jogador else 99
 
         combate = False
+        passou_por_voce = False
         if distancia == 0 and self.sala_atual not in ["01", "sala de energia"]:
-            self.estado_atual = GameStateEnum.COMBATE_ANIMATRONICO.value
-            combate = True
+            if oculto:
+                passou_por_voce = True
+                self.ai_estado = "PATRULHA"
+                self.ai_alvo = ""
+            else:
+                self.estado_atual = GameStateEnum.COMBATE_ANIMATRONICO.value
+                self.atacante_combate = "animatronico"
+                combate = True
 
         return {
             "ativa": True,
             "distancia": distancia,
             "combate_iniciado": combate,
+            "passou_escondido": passou_por_voce,
             "ai_estado": self.ai_estado,
             "ai_sala": self.ai_sala,
         }

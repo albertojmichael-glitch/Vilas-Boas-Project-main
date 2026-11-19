@@ -1,8 +1,11 @@
 use crate::data::{
-    chaves_nao_saida, salas_seguras_patrulha, ConquistaDef, DadosJogo, EventoAleatorio, Sala,
-    CHANCE_MOVER_PATRULHA, ISQUEIRO_BARULHO, ISQUEIRO_LIMITE_LUZ, ISQUEIRO_TURNOS_BONUS,
-    LIMIAR_ALERTA, LIMIAR_CACA, MAX_INVENTARIO, META_ACUMULADOR, REDUCAO_BARULHO_TURNO,
-    SLOTS_POR_BOLSA, TURNOS_BATERIA, TURNOS_LUZ_INICIAL, VIDA_GOD_MODE, VIDA_NORMAL, VIDA_PESADELO,
+    chaves_nao_saida, perfil_ela, salas_seguras_patrulha, ConquistaDef, DadosJogo, EventoAleatorio,
+    PerfilEla, Sala, CHANCE_MOVER_PATRULHA, ISQUEIRO_BARULHO, ISQUEIRO_LIMITE_LUZ,
+    ISQUEIRO_TURNOS_BONUS, LIMIAR_ALERTA, LIMIAR_CACA, MAX_INVENTARIO, META_ACUMULADOR,
+    NORMAL_ENERGIA_MAX_NOITE, NORMAL_ENERGIA_MIN_NOITE, NORMAL_FURIA_NOITE,
+    PESADELO_ENERGIA_MAX_NOITE, PESADELO_ENERGIA_MIN_NOITE, PESADELO_FURIA_NOITE,
+    REDUCAO_BARULHO_TURNO, SALA_INICIAL_ELA, SLOTS_POR_BOLSA, TURNOS_BATERIA, TURNOS_LUZ_INICIAL,
+    VIDA_GOD_MODE, VIDA_NORMAL, VIDA_PESADELO,
 };
 use crate::storage;
 use rand::seq::SliceRandom;
@@ -27,6 +30,8 @@ pub struct RelatorioIA {
     pub ativa: bool,
     pub distancia: usize,
     pub combate_iniciado: bool,
+    #[serde(default)]
+    pub passou_escondido: bool,
     pub ai_estado: String,
     pub ai_sala: String,
 }
@@ -142,6 +147,25 @@ pub struct GameState {
     #[serde(default = "default_isqueiro_usos")]
     pub isqueiro_usos: i32,
     pub posicao_perseguidor: String,
+    /// Estado da "Ela" (perseguidora do NORMAL e do PESADELO).
+    #[serde(default)]
+    pub ela_dormencia: i32,
+    #[serde(default)]
+    pub ela_no_duto: bool,
+    #[serde(default)]
+    pub ela_saida_duto: String,
+    #[serde(default)]
+    pub ela_atordoada: i32,
+    #[serde(default)]
+    pub atacante_combate: String,
+    #[serde(default)]
+    pub escondido: bool,
+    #[serde(default)]
+    pub turnos_escondido: i32,
+    #[serde(default)]
+    pub jon_dica_falsa: bool,
+    #[serde(default)]
+    pub causa_morte: String,
     pub estado_atual: String,
     pub god_mode: bool,
     pub dev_mode: bool,
@@ -270,7 +294,16 @@ impl GameState {
             incendio: false,
             turnos_fuga: 5,
             isqueiro_usos: 3,
-            posicao_perseguidor: "palco".to_string(),
+            posicao_perseguidor: SALA_INICIAL_ELA.to_string(),
+            ela_dormencia: perfil_ela("NORMAL").turnos_dormencia,
+            ela_no_duto: false,
+            ela_saida_duto: String::new(),
+            ela_atordoada: 0,
+            atacante_combate: String::new(),
+            escondido: false,
+            turnos_escondido: 0,
+            jon_dica_falsa: false,
+            causa_morte: String::new(),
             estado_atual: "AGUARDANDO_DIR".to_string(),
             god_mode: false,
             dev_mode: false,
@@ -283,7 +316,7 @@ impl GameState {
             alberto_desativado: false,
             fast_mode: false,
             amanheceu: false,
-            ai_sala: "palco".to_string(),
+            ai_sala: SALA_INICIAL_ELA.to_string(),
             ai_estado: "PATRULHA".to_string(),
             ai_alvo: None,
             nivel_barulho: 0,
@@ -444,6 +477,7 @@ impl GameState {
         self.dificuldade_escolhida = modo.to_string();
         self.velocidade_texto = velocidade;
         self.fast_mode = velocidade == 0.0;
+        self.ela_dormencia = perfil_ela(modo).turnos_dormencia;
 
         if modo == "GOD MODE" {
             self.god_mode = true;
@@ -455,9 +489,9 @@ impl GameState {
         } else if modo == "PESADELO" {
             self.god_mode = false;
             self.hp = VIDA_PESADELO;
-            self.furia_noite = 2;
-            self.energia_min_noite = 70;
-            self.energia_max_noite = 82;
+            self.furia_noite = PESADELO_FURIA_NOITE;
+            self.energia_min_noite = PESADELO_ENERGIA_MIN_NOITE;
+            self.energia_max_noite = PESADELO_ENERGIA_MAX_NOITE;
         } else if modo == "CUSTOM" {
             self.god_mode = false;
             self.hp = self.custom_hp;
@@ -468,13 +502,18 @@ impl GameState {
         } else {
             self.god_mode = false;
             self.hp = VIDA_NORMAL;
-            self.furia_noite = 1;
-            self.energia_min_noite = 100;
-            self.energia_max_noite = 100;
+            self.furia_noite = NORMAL_FURIA_NOITE;
+            self.energia_min_noite = NORMAL_ENERGIA_MIN_NOITE;
+            self.energia_max_noite = NORMAL_ENERGIA_MAX_NOITE;
             if modo == "DESAFIO_BREU" {
                 self.turnos_luz = 0;
             }
         }
+    }
+
+    /// Perfil de IA da "Ela" para a dificuldade atual.
+    pub fn perfil_ela(&self) -> PerfilEla {
+        perfil_ela(&self.dificuldade_escolhida)
     }
 
     pub fn resetar_para_novo_jogo(&mut self) {
@@ -550,6 +589,7 @@ impl GameState {
                 ativa: false,
                 distancia: 99,
                 combate_iniciado: false,
+                passou_escondido: false,
                 ai_estado: self.ai_estado.clone(),
                 ai_sala: self.ai_sala.clone(),
             };
@@ -559,7 +599,14 @@ impl GameState {
             self.alterar_barulho(-REDUCAO_BARULHO_TURNO);
         }
 
-        if self.nivel_barulho >= LIMIAR_CACA || self.ai_sala == self.sala_atual {
+        let seguras = salas_seguras_patrulha();
+        // Escondido e em silêncio, o jogador não é "visto" na própria sala.
+        let oculto = self.escondido && self.nivel_barulho < LIMIAR_CACA;
+        // Nas salas seguras ele não entra: perde o rastro em vez de acampar.
+        if seguras.contains(&self.sala_atual.as_str()) {
+            self.ai_estado = "PATRULHA".to_string();
+        } else if self.nivel_barulho >= LIMIAR_CACA || (self.ai_sala == self.sala_atual && !oculto)
+        {
             self.ai_estado = "CACA".to_string();
         } else if self.nivel_barulho >= LIMIAR_ALERTA && self.ai_estado != "CACA" {
             self.ai_estado = "ALERTA".to_string();
@@ -567,7 +614,6 @@ impl GameState {
             self.ai_estado = "PATRULHA".to_string();
         }
 
-        let seguras = salas_seguras_patrulha();
         let nao_saida = chaves_nao_saida();
         let mut rng = rand::thread_rng();
 
@@ -600,7 +646,7 @@ impl GameState {
                     .unwrap_or_else(|| self.sala_atual.clone())
             };
             if let Some(caminho) = calcular_caminho_bfs(&self.mapa, &self.ai_sala, &destino) {
-                if caminho.len() > 1 {
+                if caminho.len() > 1 && !seguras.contains(&caminho[1].as_str()) {
                     self.ai_sala = caminho[1].clone();
                 }
             }
@@ -611,15 +657,24 @@ impl GameState {
             .unwrap_or(99);
 
         let mut combate = false;
+        let mut passou_escondido = false;
         if distancia == 0 && self.sala_atual != "01" && self.sala_atual != "sala de energia" {
-            self.estado_atual = "COMBATE_ANIMATRONICO".to_string();
-            combate = true;
+            if oculto {
+                passou_escondido = true;
+                self.ai_estado = "PATRULHA".to_string();
+                self.ai_alvo = None;
+            } else {
+                self.estado_atual = "COMBATE_ANIMATRONICO".to_string();
+                self.atacante_combate = "animatronico".to_string();
+                combate = true;
+            }
         }
 
         RelatorioIA {
             ativa: true,
             distancia,
             combate_iniciado: combate,
+            passou_escondido,
             ai_estado: self.ai_estado.clone(),
             ai_sala: self.ai_sala.clone(),
         }

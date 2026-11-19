@@ -125,81 +125,40 @@ def encontrar_melhor_match(termo, lista_opcoes, cutoff=0.70):
 
 
 def processar_perseguidores_por_tempo(jogo, ui):
-    """Perseguidores 'por tempo': cronômetro do modo NORMAL e a perseguidora do PESADELO."""
-    salas_seguras_ia = [
-        "saida",
-        "cama",
-        "final_bom",
-        "morte",
-        "tubo de ventilação",
-        "01",
-    ]
+    """Perseguidores 'por tempo': o cronômetro de ficar parado e a 'Ela'.
+
+    No NORMAL, ficar parado tempo demais faz barulho e chama a 'Ela' (em vez de
+    matar sozinho). A 'Ela' existe no NORMAL e no PESADELO; o que muda entre os
+    modos é o perfil de IA (``jogo.perfil_ela``)."""
+    from data import LIMIAR_ALERTA, LIMIAR_CACA
+
+    from villas_boas.ela import SALAS_SEGURAS_ELA, ela_ativa_no_modo, processar_ela
+
+    if not ela_ativa_no_modo(jogo):
+        return
+    if jogo.sala_atual in SALAS_SEGURAS_ELA:
+        # Ela não entra aqui e perde o rastro, mas continua andando: assim não
+        # fica acampada na porta, e os passos dela seguem audíveis.
+        jogo.turnos_mesma_sala = 0
+        processar_ela(jogo, ui, barulho_alto=False)
+        return
 
     if jogo.dificuldade_escolhida == "NORMAL":
-        if jogo.sala_atual not in salas_seguras_ia:
-            jogo.turnos_mesma_sala += 1
-            if jogo.turnos_mesma_sala == jogo.turnos_perseguidor_aviso:
-                ui.exibir(
-                    f"\n{DOS_AMARELO}Você escuta ruídos metálicos pesados ecoando no corredor próximo...{RESET}"
-                )
-            elif jogo.turnos_mesma_sala == jogo.turnos_perseguidor_morte:
-                ui.exibir(
-                    "\n"
-                    + "=" * 50
-                    + f"\n{DOS_VERMELHO}Você ficou muito tempo parado. Algo entrou na sua sala...\n{RESET}"
-                    + "=" * 50
-                )
-                if getattr(jogo, "dev_mode", False):
-                    ui.exibir(
-                        f"{DOS_AMARELO}[DEV] Cronômetro do corredor zerado: você seria morto aqui. Reiniciado.{RESET}"
-                    )
-                    jogo.turnos_mesma_sala = 0
-                else:
-                    ui.pausar(4)
-                    jogo.sala_atual = "morte"
-        else:
-            jogo.turnos_mesma_sala = 0
-
-    elif (
-        jogo.dificuldade_escolhida == "PESADELO"
-        and jogo.posicao_perseguidor != "morte"
-        and jogo.sala_atual not in salas_seguras_ia
-    ):
-        sala_monstro = jogo.mapa.get(jogo.posicao_perseguidor, {})
-        conexoes = [
-            v
-            for k, v in sala_monstro.items()
-            if k not in ["descrição", "itens", "inspecionaveis"]
-            and v in jogo.mapa
-            and v not in salas_seguras_ia
-        ]
-        if conexoes and random.random() < 0.40:
-            jogo.posicao_perseguidor = random.choice(conexoes)
-
-        if jogo.posicao_perseguidor == jogo.sala_atual and getattr(
-            jogo, "dev_mode", False
-        ):
+        jogo.turnos_mesma_sala += 1
+        if jogo.turnos_mesma_sala == jogo.turnos_perseguidor_aviso:
             ui.exibir(
-                f"{DOS_AMARELO}[DEV] 'Ela' te encontrou em {jogo.sala_atual}: você seria morto. Ela recuou.{RESET}"
+                f"\n{DOS_AMARELO}Você escuta ruídos metálicos pesados ecoando no corredor próximo...{RESET}"
             )
-            jogo.posicao_perseguidor = "palco"
-        elif jogo.posicao_perseguidor == jogo.sala_atual:
-            ui.exibir("\n" + "=" * 50)
-            ui.exibir(f"{DOS_VERMELHO}A porta quebra. Ela te encontrou{RESET}")
-            ui.pausar(3)
-            jogo.sala_atual = "morte"
-        else:
-            sala_jog_dados = jogo.mapa.get(jogo.sala_atual, {})
-            conexoes_jogador = [
-                v
-                for k, v in sala_jog_dados.items()
-                if k not in ["descrição", "itens", "inspecionaveis"]
-                and isinstance(v, str)
-            ]
-            if jogo.posicao_perseguidor in conexoes_jogador:
-                ui.exibir(
-                    f"\n{DOS_AMARELO}O chão vibra. Você ouve passos de metal maciço na sala ao lado...{RESET}"
-                )
+        elif jogo.turnos_mesma_sala >= jogo.turnos_perseguidor_morte:
+            ui.exibir(
+                f"\n{DOS_VERMELHO}Você ficou tempo demais parado. Algo ouviu você e está vindo...{RESET}"
+            )
+            jogo.turnos_mesma_sala = 0
+            jogo.ela_dormencia = 0
+            jogo.alterar_barulho(LIMIAR_CACA)
+            jogo.ai_alvo = jogo.sala_atual
+
+    processar_ela(jogo, ui, barulho_alto=jogo.nivel_barulho >= LIMIAR_ALERTA)
 
 
 def atualizar_eventos_de_tempo(jogo):
@@ -212,14 +171,7 @@ def atualizar_eventos_de_tempo(jogo):
             processar_perseguidores_por_tempo(jogo, ui)
         return
 
-    salas_iluminadas = [
-        "sala de fliperamas",
-        "hall de entrada",
-        "sala de refrigeração",
-        "01",
-        "balcão",
-        "mesas de jantar",
-    ]
+    from data import SALAS_ILUMINADAS as salas_iluminadas
 
     if getattr(jogo, "amanheceu", False) or jogo.sala_atual in salas_iluminadas:
         jogo.turnos_no_escuro = 0
@@ -255,9 +207,8 @@ def atualizar_eventos_de_tempo(jogo):
                     f"\n{DOS_VERMELHO}No escuro absoluto, você entra em pânico e esbarra nos móveis. O barulho ecoa pelo corredor!{RESET}"
                 )
             elif jogo.turnos_no_escuro >= 5:
-                jogo.hp -= 1
                 jogo.turnos_no_escuro = 0
-                if jogo.hp > 0:
+                if not jogo.aplicar_dano(1):
                     ui.exibir(
                         f"\n{DOS_VERMELHO}Você tenta andar no escuro, tropeça violentamente e se machuca! (-1 HP){RESET}"
                     )
@@ -265,7 +216,7 @@ def atualizar_eventos_de_tempo(jogo):
                     ui.exibir(
                         f"\n{DOS_VERMELHO}Você cai de mau jeito no escuro e bate a cabeça. Você não consegue mais levantar...{RESET}"
                     )
-                    jogo.sala_atual = "morte"
+                    jogo.causa_morte = "escuro"
 
     if getattr(jogo, "incendio", False):
         jogo.turnos_fuga -= 1
@@ -277,6 +228,7 @@ def atualizar_eventos_de_tempo(jogo):
                 f"\n{DOS_VERMELHO}O teto desaba sobre você. O fogo consome o que restou.{RESET}"
             )
             jogo.sala_atual = "morte"
+            jogo.causa_morte = "incendio"
 
     if jogo.turnos_enjoado > 0:
         ui.exibir(

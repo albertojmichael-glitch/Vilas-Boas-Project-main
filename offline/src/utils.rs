@@ -5,7 +5,6 @@ use crate::state::GameState;
 use crate::ui::{DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET};
 use crate::views;
 use crate::TerminalBuffer;
-use rand::seq::SliceRandom;
 use rand::Rng;
 
 #[derive(Debug, Clone)]
@@ -270,94 +269,44 @@ pub fn texto_cintilante(texto: &str) -> String {
     resultado
 }
 
-/// Port fiel de `processar_perseguidores_por_tempo` do utils.py
+/// Port fiel de `processar_perseguidores_por_tempo` do utils.py: o cronômetro de
+/// ficar parado (NORMAL) e a "Ela" (NORMAL e PESADELO, com IA por dificuldade).
 pub fn processar_perseguidores_por_tempo(jogo: &mut GameState, ui: &mut TerminalBuffer) {
-    let salas_seguras_ia = [
-        "saida",
-        "cama",
-        "final_bom",
-        "morte",
-        "tubo de ventilação",
-        "01",
-    ];
+    use crate::data::{LIMIAR_ALERTA, LIMIAR_CACA};
+    use crate::ela::{ela_ativa_no_modo, processar_ela, SALAS_SEGURAS_ELA};
 
-    if jogo.dificuldade_escolhida == "NORMAL" || jogo.dificuldade == "NORMAL" {
-        if !salas_seguras_ia.contains(&jogo.sala_atual.as_str()) {
-            jogo.turnos_mesma_sala += 1;
-            if jogo.turnos_mesma_sala == jogo.turnos_perseguidor_aviso {
-                ui.exibir(&format!(
-                    "\n{}Você escuta ruídos metálicos pesados ecoando no corredor próximo...{}",
-                    DOS_AMARELO, RESET
-                ));
-            } else if jogo.turnos_mesma_sala == jogo.turnos_perseguidor_morte {
-                ui.exibir(&format!(
-                    "\n{}\n{}Você ficou muito tempo parado. Algo entrou na sua sala...\n{}{}",
-                    "=".repeat(50),
-                    DOS_VERMELHO,
-                    RESET,
-                    "=".repeat(50)
-                ));
-                if jogo.dev_mode {
-                    ui.exibir(&format!(
-                        "{}[DEV] Cronômetro do corredor zerado: você seria morto aqui. Reiniciado.{}",
-                        DOS_AMARELO, RESET
-                    ));
-                    jogo.turnos_mesma_sala = 0;
-                } else {
-                    ui.pausa(4.0);
-                    jogo.sala_atual = "morte".to_string();
-                }
-            }
-        } else {
-            jogo.turnos_mesma_sala = 0;
-        }
-    } else if (jogo.dificuldade_escolhida == "PESADELO" || jogo.dificuldade == "PESADELO")
-        && jogo.posicao_perseguidor != "morte"
-        && !salas_seguras_ia.contains(&jogo.sala_atual.as_str())
-    {
-        let mut conexoes = Vec::new();
-        if let Some(sala_monstro) = jogo.mapa.get(&jogo.posicao_perseguidor) {
-            for (_d, dest) in sala_monstro.saidas_validas(&jogo.mapa) {
-                if !salas_seguras_ia.contains(&dest.as_str()) {
-                    conexoes.push(dest);
-                }
-            }
-        }
-        let mut rng = rand::thread_rng();
-        if !conexoes.is_empty() && rng.gen::<f64>() < 0.40 {
-            if let Some(escolhida) = conexoes.choose(&mut rng) {
-                jogo.posicao_perseguidor = escolhida.clone();
-            }
-        }
+    if !ela_ativa_no_modo(jogo) {
+        return;
+    }
+    let mut rng = rand::thread_rng();
+    if SALAS_SEGURAS_ELA.contains(&jogo.sala_atual.as_str()) {
+        // Ela não entra aqui e perde o rastro, mas continua andando (e audível).
+        jogo.turnos_mesma_sala = 0;
+        processar_ela(jogo, ui, false, &mut rng);
+        return;
+    }
 
-        if jogo.posicao_perseguidor == jogo.sala_atual && jogo.dev_mode {
+    if jogo.dificuldade_escolhida == "NORMAL" {
+        jogo.turnos_mesma_sala += 1;
+        if jogo.turnos_mesma_sala == jogo.turnos_perseguidor_aviso {
             ui.exibir(&format!(
-                "{}[DEV] 'Ela' te encontrou em {}: você seria morto. Ela recuou.{}",
-                DOS_AMARELO, jogo.sala_atual, RESET
+                "\n{}Você escuta ruídos metálicos pesados ecoando no corredor próximo...{}",
+                DOS_AMARELO, RESET
             ));
-            jogo.posicao_perseguidor = "palco".to_string();
-        } else if jogo.posicao_perseguidor == jogo.sala_atual {
-            ui.exibir(&format!("\n{}", "=".repeat(50)));
+        } else if jogo.turnos_mesma_sala >= jogo.turnos_perseguidor_morte {
             ui.exibir(&format!(
-                "{}A porta quebra. Ela te encontrou{}",
+                "\n{}Você ficou tempo demais parado. Algo ouviu você e está vindo...{}",
                 DOS_VERMELHO, RESET
             ));
-            ui.pausa(3.0);
-            jogo.sala_atual = "morte".to_string();
-        } else if let Some(sala_jog) = jogo.mapa.get(&jogo.sala_atual) {
-            let vizinhos: Vec<String> = sala_jog
-                .saidas_listadas()
-                .into_iter()
-                .map(|(_, dest)| dest)
-                .collect();
-            if vizinhos.contains(&jogo.posicao_perseguidor) {
-                ui.exibir(&format!(
-                    "\n{}O chão vibra. Você ouve passos de metal maciço na sala ao lado...{}",
-                    DOS_AMARELO, RESET
-                ));
-            }
+            jogo.turnos_mesma_sala = 0;
+            jogo.ela_dormencia = 0;
+            jogo.alterar_barulho(LIMIAR_CACA);
+            jogo.ai_alvo = Some(jogo.sala_atual.clone());
         }
     }
+
+    let barulho_alto = jogo.nivel_barulho >= LIMIAR_ALERTA;
+    processar_ela(jogo, ui, barulho_alto, &mut rng);
 }
 
 /// Port fiel de `atualizar_eventos_de_tempo` do utils.py
@@ -376,14 +325,7 @@ pub fn atualizar_eventos_de_tempo(
         return;
     }
 
-    let salas_iluminadas = [
-        "sala de fliperamas",
-        "hall de entrada",
-        "sala de refrigeração",
-        "01",
-        "balcão",
-        "mesas de jantar",
-    ];
+    let salas_iluminadas = crate::data::SALAS_ILUMINADAS;
 
     if jogo.amanheceu || salas_iluminadas.contains(&jogo.sala_atual.as_str()) {
         jogo.turnos_no_escuro = 0;
@@ -424,9 +366,8 @@ pub fn atualizar_eventos_de_tempo(
                 DOS_VERMELHO, RESET
             ));
         } else if jogo.turnos_no_escuro >= 5 {
-            jogo.hp -= 1;
             jogo.turnos_no_escuro = 0;
-            if jogo.hp > 0 {
+            if !jogo.aplicar_dano(1) {
                 ui.exibir(&format!(
                     "\n{}Você tenta andar no escuro, tropeça violentamente e se machuca! (-1 HP){}",
                     DOS_VERMELHO, RESET
@@ -436,7 +377,7 @@ pub fn atualizar_eventos_de_tempo(
                     "\n{}Você cai de mau jeito no escuro e bate a cabeça. Você não consegue mais levantar...{}",
                     DOS_VERMELHO, RESET
                 ));
-                jogo.sala_atual = "morte".to_string();
+                jogo.causa_morte = "escuro".to_string();
             }
         }
     }
@@ -453,6 +394,7 @@ pub fn atualizar_eventos_de_tempo(
                 DOS_VERMELHO, RESET
             ));
             jogo.sala_atual = "morte".to_string();
+            jogo.causa_morte = "incendio".to_string();
         }
     }
 

@@ -394,3 +394,71 @@ COFRE_SENHA = str(
 MAX_TENTATIVAS_COFRE = int(_exp_cfg.get("max_tentativas_cofre", 3))
 TEMPO_SPEEDRUN_VERDADEIRO = float(_exp_cfg.get("tempo_speedrun_verdadeiro_seg", 360.0))
 TEMPO_SPEEDRUN_NEUTRO = float(_exp_cfg.get("tempo_speedrun_neutro_seg", 300.0))
+TROPECO_PODE_MATAR = bool(_exp_cfg.get("tropeco_pode_matar", False))
+BARULHO_TROPECO_NAO_LETAL = int(_exp_cfg.get("barulho_tropeco_nao_letal", 30))
+SALAS_ESCONDERIJO = frozenset(
+    _exp_cfg.get(
+        "salas_esconderijo",
+        [
+            "balcão",
+            "mesas de jantar",
+            "sala de fliperamas",
+            "sala de pelucias",
+            "cozinha principal",
+            "04",
+        ],
+    )
+)
+MAX_ESCONDER_SEGUIDOS = int(_exp_cfg.get("max_esconder_seguidos", 3))
+
+# Salas com luz própria: não gastam lanterna e não provocam tropeços no escuro.
+SALAS_ILUMINADAS = frozenset(
+    {
+        "sala de fliperamas",
+        "hall de entrada",
+        "quarto de refrigeração",
+        "01",
+        "balcão",
+        "mesas de jantar",
+    }
+)
+
+# "Ela": a perseguidora. Os dutos de ventilação são atalhos exclusivos dela
+# (o mapa do jogador não muda); o perfil de IA varia por dificuldade.
+DUTOS_ELA = frozenset(
+    _ia_cfg.get(
+        "dutos_ela",
+        [
+            "palco",
+            "sala 1",
+            "sala 2",
+            "duas salas de festas",
+            "sala de jantar",
+            "corredor",
+            "entrada",
+            "hall de entrada",
+            "mesas de jantar",
+            "quarto de refrigeração",
+            "sala dos fundos",
+        ],
+    )
+)
+SALA_INICIAL_ELA = str(_ia_cfg.get("sala_inicial_ela", "palco"))
+
+PERFIL_ELA_PADRAO: dict[str, float | int] = {
+    "turnos_dormencia": 10,
+    "chance_mover": 0.30,
+    "chance_rastrear": 0.25,
+    "chance_usar_duto": 0.10,
+    "alcance_duto": 2,
+    "turnos_atordoada": 5,
+    "dano_fuga": 1,
+    "aviso_distancia": 2,
+}
+
+
+def perfil_ela(modo: str) -> dict[str, float | int]:
+    """Perfil de IA da 'Ela' para a dificuldade (cai no NORMAL se não houver)."""
+    presets = BALANCE_CFG.get("dificuldades", {})
+    cfg = presets.get(modo, {}).get("ela") or presets.get("NORMAL", {}).get("ela", {})
+    return {**PERFIL_ELA_PADRAO, **cfg}

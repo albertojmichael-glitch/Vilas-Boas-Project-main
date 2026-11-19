@@ -182,6 +182,12 @@ def imprimir_tutorial(ui, jogo=None):
         DOS_BRANCO,
         jogo,
     )
+    ui.animar(
+        f"   Ouça os passos e o ranger das grades. Para sumir, {DOS_VERDE}esconder{RESET}; para baixar o barulho, {DOS_VERDE}esperar{RESET}.",
+        0.01,
+        DOS_BRANCO,
+        jogo,
+    )
 
     ui.animar(
         f"\n{DOS_AMARELO}Caso precise, digite {DOS_VERDE}ajuda{DOS_AMARELO} para o guia completo novamente.{RESET}",
@@ -205,6 +211,7 @@ def imprimir_tutorial(ui, jogo=None):
 
 
 def dar_dica_jon(passo_certo, ui):
+    """Exibe a dica do passo; retorna True se a dica exibida foi falsa."""
     dicas = {
         "f": "Uma corrente de ar gelado bate direto no seu rosto.",
         "e": "Um som agudo de metal arranhando reverbera pela parede canhota do duto.",
@@ -214,8 +221,9 @@ def dar_dica_jon(passo_certo, ui):
         ui.exibir(
             f"\n{DOS_VERMELHO}[SENSÓRIO CONFUSO]: {random.choice([v for k, v in dicas.items() if k != passo_certo])}{RESET}"
         )
-    else:
-        ui.exibir(f"\n{DOS_AMARELO}[SENSÓRIO]: {dicas[passo_certo]}{RESET}")
+        return True
+    ui.exibir(f"\n{DOS_AMARELO}[SENSÓRIO]: {dicas[passo_certo]}{RESET}")
+    return False
 
 
 def falar_pianista(acertou, ui, jogo):

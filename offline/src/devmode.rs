@@ -401,6 +401,7 @@ pub fn processar_comando_dev(
         match dif.trim() {
             "normal" => {
                 jogo.dificuldade = "NORMAL".to_string();
+                jogo.dificuldade_escolhida = "NORMAL".to_string();
                 ui.exibir(&format!(
                     "{}[DEV] Dificuldade alterada para NORMAL.{}",
                     DOS_VERDE, RESET
@@ -408,6 +409,7 @@ pub fn processar_comando_dev(
             }
             "pesadelo" => {
                 jogo.dificuldade = "PESADELO".to_string();
+                jogo.dificuldade_escolhida = "PESADELO".to_string();
                 ui.exibir(&format!(
                     "{}[DEV] Dificuldade alterada para PESADELO.{}",
                     DOS_VERMELHO, RESET

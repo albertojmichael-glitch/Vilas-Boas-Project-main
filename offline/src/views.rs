@@ -233,6 +233,7 @@ pub fn imprimir_tutorial(ui: &mut TerminalBuffer, _jogo: &GameState) {
         0.01,
     );
     ui.animar_com_intervalo(&format!("   Ela escuta. Se precisar fugir de uma sala, digite {DOS_VERDE}correr [direção]{RESET}."), DOS_BRANCO, 0.01);
+    ui.animar_com_intervalo(&format!("   Ouça os passos e o ranger das grades. Para sumir, {DOS_VERDE}esconder{RESET}; para baixar o barulho, {DOS_VERDE}esperar{RESET}."), DOS_BRANCO, 0.01);
     ui.animar_com_intervalo(&format!("\n{DOS_AMARELO}Caso precise, digite {DOS_VERDE}ajuda{DOS_AMARELO} para o guia completo novamente.{RESET}"), DOS_BRANCO, 0.01);
     ui.animar_com_intervalo(
         &format!("{DOS_AMARELO}=================================================={RESET}\n"),
@@ -243,7 +244,8 @@ pub fn imprimir_tutorial(ui: &mut TerminalBuffer, _jogo: &GameState) {
 }
 
 /// Port 1:1 de `dar_dica_jon` do views.py
-pub fn dar_dica_jon(passo_certo: &str, ui: &mut TerminalBuffer) {
+/// Exibe a dica do passo; retorna `true` se a dica exibida foi falsa.
+pub fn dar_dica_jon(passo_certo: &str, ui: &mut TerminalBuffer) -> bool {
     let dicas = [
         ("f", "Uma corrente de ar gelado bate direto no seu rosto."),
         (
@@ -268,8 +270,12 @@ pub fn dar_dica_jon(passo_certo: &str, ui: &mut TerminalBuffer) {
                 DOS_VERMELHO, escolhida, RESET
             ));
         }
-    } else if let Some((_, certa)) = dicas.iter().find(|(k, _)| *k == passo_certo) {
-        ui.exibir(&format!("\n{}[SENSÓRIO]: {}{}", DOS_AMARELO, certa, RESET));
+        true
+    } else {
+        if let Some((_, certa)) = dicas.iter().find(|(k, _)| *k == passo_certo) {
+            ui.exibir(&format!("\n{}[SENSÓRIO]: {}{}", DOS_AMARELO, certa, RESET));
+        }
+        false
     }
 }
 

@@ -1,6 +1,12 @@
 import random
 
-from data import CHANCE_TROPECO_ESCURO_PCT, EVENTOS_ALEATORIOS
+from data import (
+    BARULHO_TROPECO_NAO_LETAL,
+    CHANCE_TROPECO_ESCURO_PCT,
+    EVENTOS_ALEATORIOS,
+    SALAS_ILUMINADAS,
+    TROPECO_PODE_MATAR,
+)
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, RESET, default_ui
 
 from villas_boas.utils import encontrar_melhor_match, extrair_argumentos
@@ -76,9 +82,11 @@ def cmd_ir(comando, jogo, mapa):
 
     ui.limpar()
     jogo.turnos_mesma_sala = 0
+    jogo.turnos_escondido = 0
 
     if (
         jogo.turnos_luz <= 0
+        and jogo.sala_atual not in SALAS_ILUMINADAS
         and not getattr(jogo, "god_mode", False)
         and getattr(jogo, "dificuldade_escolhida", "") != "DESAFIO_BREU"
         and random.randint(1, 100) <= CHANCE_TROPECO_ESCURO_PCT
@@ -86,10 +94,20 @@ def cmd_ir(comando, jogo, mapa):
         ui.exibir(
             "\n No escuro, você perde a noção da direção, e acaba tropeçando no proprio pé, e cai no chão"
         )
+        if jogo.hp <= 1 and not TROPECO_PODE_MATAR:
+            # O tropeço nunca é o golpe final: só faz barulho e custa o turno.
+            jogo.alterar_barulho(BARULHO_TROPECO_NAO_LETAL)
+            jogo.ai_alvo = jogo.sala_atual
+            ui.exibir(
+                f"{DOS_AMARELO} Você se segura nos móveis no último segundo. O estrondo ecoa pelo prédio.{RESET}"
+            )
+            ui.pausar(2)
+            return True
         morreu = jogo.aplicar_dano(1)
         ui.exibir(f" Você se machucou na queda. (HP: {jogo.hp})")
         ui.pausar(2)
         if morreu:
+            jogo.causa_morte = "tropeco"
             ui.exibir(
                 "\n Você cai no chão e quebra sua perna, você não consegue mais andar, e escuta barulhos vindo na sua direção"
             )
@@ -97,6 +115,8 @@ def cmd_ir(comando, jogo, mapa):
         return True
 
     jogo.sala_atual = destino
+    if destino == "morte":
+        jogo.causa_morte = "saida_mortal"
 
     if EVENTOS_ALEATORIOS and random.random() < 0.25:
         evento = random.choice(EVENTOS_ALEATORIOS)

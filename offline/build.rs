@@ -160,6 +160,100 @@ fn main() {
         // Atribuir o literal a um tipo Rust também valida o valor na compilação.
         writeln!(output, "pub const {name}: {ty} = {value};").expect("escrever constante");
     }
+    // Regras novas de balanceamento (issue #7): esconderijos, tropeço e a "Ela".
+    let exploracao = &balance["exploracao"];
+    let ia = &balance["barulho_e_ia"];
+    let texto = |v: &Value, chave: &str| -> String {
+        v.get(chave)
+            .unwrap_or_else(|| panic!("Configuração ausente: {chave}"))
+            .to_string()
+    };
+    let lista = |v: &Value, chave: &str| -> String {
+        let itens: Vec<String> = v[chave]
+            .as_array()
+            .unwrap_or_else(|| panic!("Lista ausente: {chave}"))
+            .iter()
+            .map(|s| format!("{:?}", s.as_str().expect("nome de sala")))
+            .collect();
+        format!("&[{}]", itens.join(", "))
+    };
+    let real = |v: &Value, chave: &str| -> String {
+        format!(
+            "{:?}",
+            v[chave]
+                .as_f64()
+                .unwrap_or_else(|| panic!("Número ausente: {chave}"))
+        )
+    };
+    writeln!(
+        output,
+        "pub const TROPECO_PODE_MATAR: bool = {};",
+        texto(exploracao, "tropeco_pode_matar")
+    )
+    .expect("escrever constante");
+    for (chave, nome) in [
+        ("barulho_tropeco_nao_letal", "BARULHO_TROPECO_NAO_LETAL"),
+        ("max_esconder_seguidos", "MAX_ESCONDER_SEGUIDOS"),
+    ] {
+        writeln!(
+            output,
+            "pub const {nome}: i32 = {};",
+            texto(exploracao, chave)
+        )
+        .expect("escrever constante");
+    }
+    writeln!(
+        output,
+        "pub const SALAS_ESCONDERIJO: &[&str] = {};",
+        lista(exploracao, "salas_esconderijo")
+    )
+    .expect("escrever constante");
+    writeln!(
+        output,
+        "pub const DUTOS_ELA: &[&str] = {};",
+        lista(ia, "dutos_ela")
+    )
+    .expect("escrever constante");
+    writeln!(
+        output,
+        "pub const SALA_INICIAL_ELA: &str = {};",
+        texto(ia, "sala_inicial_ela")
+    )
+    .expect("escrever constante");
+
+    for modo in ["NORMAL", "PESADELO"] {
+        let preset = &balance["dificuldades"][modo];
+        for (chave, sufixo) in [
+            ("furia_noite", "FURIA_NOITE"),
+            ("energia_min_noite", "ENERGIA_MIN_NOITE"),
+            ("energia_max_noite", "ENERGIA_MAX_NOITE"),
+        ] {
+            writeln!(
+                output,
+                "pub const {modo}_{sufixo}: i32 = {};",
+                texto(preset, chave)
+            )
+            .expect("escrever constante");
+        }
+        let ela = &preset["ela"];
+        writeln!(
+            output,
+            "pub const PERFIL_ELA_{modo}: PerfilEla = PerfilEla {{ \
+             turnos_dormencia: {}, chance_mover: {}, chance_rastrear: {}, \
+             chance_usar_duto: {}, alcance_duto: {}, turnos_atordoada: {}, \
+             dano_fuga: {}, aviso_distancia: {} }};",
+            texto(ela, "turnos_dormencia"),
+            real(ela, "chance_mover"),
+            real(ela, "chance_rastrear"),
+            real(ela, "chance_usar_duto"),
+            texto(ela, "alcance_duto"),
+            texto(ela, "turnos_atordoada"),
+            texto(ela, "dano_fuga"),
+            texto(ela, "aviso_distancia"),
+        )
+        .expect("escrever perfil da Ela");
+    }
+
     let out = PathBuf::from(env::var_os("OUT_DIR").expect("OUT_DIR"));
     fs::write(out.join("balance.rs"), output).expect("escrever balance.rs");
 }
