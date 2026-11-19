@@ -1,94 +1,90 @@
-# 📖 Villas-Boas Project: API Reference
+# API do Vilas Boas OS
 
-Esta documentação descreve os endpoints expostos pelo servidor Flask para comunicação com a interface Web MS-DOS.
+Endpoints do servidor Flask (`server/`). Em produção o front chama a API em `/api/...`; a Vercel reescreve `/api` para o projeto da API (veja `vercel.json`).
 
-## 🌐 Configurações Globais
-* **Autenticação:** Baseada em Sessões HTTP (Cookies). O ID da sessão (`sid`) gerencia o estado da `GameState` no servidor.
-* **Rate Limiting:** Implementado via `Flask-Limiter` baseado em IP.
+## Regras gerais
 
----
+- **Sessão:** cookie de sessão HTTP. O `sid` identifica o estado do jogo no servidor; o navegador nunca guarda o estado do jogo.
+- **Origem:** rotas que alteram estado exigem um header `Origin` permitido (`FRONTEND_URL` / `ALLOWED_ORIGINS`). Caso contrário respondem `403`.
+- **Limites:** `Flask-Limiter` por IP. Ao estourar o limite a resposta é `429`.
+- **Erros:** respostas de erro trazem `{"erro": "mensagem"}`.
 
-## 1. `POST /iniciar`
-Inicia uma nova sessão de jogo, destrói qualquer estado anterior atrelado ao usuário e retorna a tela de boot do sistema. Valida o header `Origin`.
+## Jogo
 
-* **Rate Limit:** 10 requisições por minuto.
-* **Parâmetros:** Nenhum.
+### `POST /iniciar` — 10/min
+Cria uma sessão nova e devolve a tela de boot. Não tem corpo.
 
-### Resposta de Sucesso (`200 OK`)
+### `POST /comando` — 120/min e 500/h
+Corpo:
+```json
+{"comando": "ir frente", "telemetria": true}
+```
+`comando` tem até 256 caracteres, e os caracteres `< > ; ``` ` são recusados. Corpo que não é um objeto JSON → `400`.
+
+Resposta `200`:
 ```json
 {
+  "linhas": ["@@TYPE@@verde@@15@@<span class=\"verde\">...</span>"],
   "estado": {
-    "hp": "...",
-    "inventario": [],
-    "luz_restante": "...",
-    "sala": "SISTEMA"
+    "hp": 3, "inventario": ["lanterna"], "luz_restante": 3,
+    "bolsas_coletadas": 0, "estado_jogo": "JOGO", "tempo_final": 0.0,
+    "som": 15, "sala": "HALL DE ENTRADA", "final_alcancado": "hall de entrada"
   },
-  "linhas": [
-    "@@TYPE@@branco@@15@@[ SISTEMA DE BOOT INICIADO ]",
-    "@@TYPE@@verde@@15@@Aguardando comando 'dir'..."
-  ]
+  "novas_conquistas": []
 }
 ```
+As `linhas` são instruções para o terminal: `@@TYPE@@cor@@ms@@texto` (texto já escapado para HTML), `@@CLEAR@@`, `@@PAUSE@@ms`, `@@JUMPSCARE@@` etc.
 
-## 2. `POST /comando`
-Recebe a string de comando do jogador, processa na Engine e retorna o novo estado do jogo juntamente com as linhas narrativas renderizadas.
+### `GET /achievements`
+Conquistas da sessão atual: `{"conquistas": [...], "total": n}`.
 
-Rate Limit: 60 requisições por minuto (Proteção Anti-DoS).
+## Saves
 
-Headers Necessários: Content-Type: application/json
+O progresso fica **cifrado no banco** (Fernet). O arquivo exportado é **legível e assinado** (HMAC-SHA256): o jogador pode ler, mas qualquer alteração invalida a assinatura. Todo estado recebido passa por `server/services/save_validacao.py`.
 
-Body (Request)
-
-JSON
+### `GET /save/export` — 5/min
+```json
 {
-  "comando": "usar isqueiro no gerador"
+  "formato": "vilas-boas-save", "versao": 2, "criado_em": "2026-11-19T15:00:00+00:00",
+  "resumo": {"sala": "balcão", "hp": 2, "dificuldade": "PESADELO", "inventario_tamanho": 3},
+  "estado": { "...estado completo do jogo...": "..." },
+  "assinatura": "<hex de 64 caracteres>"
 }
-Resposta de Sucesso (200 OK)
-JSON
-{
-  "estado": {
-    "hp": 3,
-    "inventario": ["lanterna", "isqueiro"],
-    "luz": 9,
-    "saidas": ["Corredor", "Sala 1"],
-    "sala": "SALA DE ENERGIA"
-  },
-  "linhas": [
-    "<span class=\"vermelho\"> VOCÊ APLICA O FOGO NOS FIOS DE ÓLEO DO GERADOR </span>",
-    "<span class=\"amarelo\">[ALARME]: VOCÊ TEM 7 TURNOS PARA CHEGAR À SAÍDA ANTES QUE TUDO DESABAPE!</span>"
-  ]
-}
+```
+Respostas: `404` sem jogo ativo; `409` se o jogo atual não puder ser exportado (por exemplo, no meio de um minigame).
 
-🛑 Tratamento de Erros
-A API utiliza códigos HTTP padrão para indicar falhas no processamento.
+### `POST /save/import` — 10/min
+Corpo: o arquivo exportado (v2) ou o formato antigo `{"dados_seguros": "<token Fernet>"}`.
 
-429 Too Many Requests
-Disparado quando o jogador/bot excede 60 comandos em menos de 1 minuto.
+| Código | Quando |
+| :---: | :--- |
+| `200` | Save importado. |
+| `400` | JSON malformado, formato desconhecido ou estado impossível; a mensagem diz a regra violada. |
+| `403` | Assinatura inválida (arquivo alterado) ou origem não permitida. |
+| `413` | Arquivo com mais de 200 KB. |
 
-Retorno Padrão HTML/JSON: Mensagem padrão do Flask-Limiter. A UI do jogo deve exibir "Conexão Instável" e pausar o input.
+Um import recusado nunca altera o save atual.
 
-400 Bad Request (Buffer Overflow)
-Disparado quando a string do campo comando excede 256 bytes. Tratado internamente para não quebrar a UI.
+### `POST /share/generate` — 5/h
+Gera um link temporário (1 hora) para clonar o save atual: `{"link": ".../share/<token>", "mensagem": "..."}`.
 
-Código Retornado: 200 OK (Com payload de erro para desenhar no terminal do jogador).
+### `GET|POST /share/<token>`
+`GET` mostra uma página de confirmação; ela existe para que bots de pré-visualização não consumam o link. `POST` valida o save original, clona-o para uma sessão nova e redireciona para `/`.
 
-JSON
-{
-  "estado": {},
-  "linhas": [
-    "@@TYPE@@vermelho@@15@@[ ERRO DE SISTEMA ] Buffer overflow detectado. Comando excede 256 bytes."
-  ]
-}
-500 Internal Server Error
-Disparado em caso de falha crítica na Engine Python (ex: Atributo não mapeado no Pydantic).
+## Conta e ranking
 
-Código Retornado: 200 OK (Impede o jogo de travar silenciosamente).
+- `GET /login/google` (5/min) e `GET /auth/google/callback`: login Google OAuth para o ranking. O e-mail só é guardado como hash SHA-256 (LGPD).
 
-JSON
-{
-  "estado": {},
-  "linhas": [
-    "@@TYPE@@vermelho@@0@@[ERRO INTERNO]: O servidor falhou ao processar a ação."
-  ]
-}
+## Administração
 
+Todas exigem o header `X-Admin-Token` com o valor de `ADMIN_TOKEN`; um token na query string é recusado.
+
+- `GET /admin/analytics`: métricas gerais e autópsia das mortes.
+- `GET /admin/auditoria-mortes`: mortes recentes.
+- `GET /admin/saves?page=n` (10/min): saves paginados.
+- `GET /admin/replay/<id>`: replay de uma partida.
+
+## Saúde
+
+- `GET /`: `{"status": "online"}`.
+- `GET /ping`: `Estou vivo!`.

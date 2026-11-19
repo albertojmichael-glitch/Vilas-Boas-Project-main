@@ -886,9 +886,10 @@ body.blackout-mode .prompt {
 
 
 .achievement-card.locked {
-    opacity: 0.5;
+    /* Sem opacidade reduzida: o texto bloqueado precisa manter contraste AA. */
     filter: grayscale(100%);
     border-color: #333;
+    border-style: dashed;
 }
 
 
@@ -913,7 +914,7 @@ body.blackout-mode .prompt {
 .achieve-card-info h3 {
     margin: 0 0 5px 0;
     font-size: 1.1rem;
-    color: #888;
+    color: #a6a6a6;
     font-family: 'Courier New', monospace;
     text-transform: uppercase;
 }
@@ -921,7 +922,7 @@ body.blackout-mode .prompt {
 .achieve-card-info p {
     margin: 0;
     font-size: 0.85rem;
-    color: #666;
+    color: #a6a6a6;
     line-height: 1.3;
     font-family: monospace;
 }
