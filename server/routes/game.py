@@ -9,6 +9,7 @@ from cryptography.fernet import InvalidToken
 from extensions import MEMORIA_SESSOES, db, limiter
 from flask import (
     Blueprint,
+    Response,
     jsonify,
     redirect,
     request,
@@ -54,12 +55,9 @@ game_bp = Blueprint("game", __name__)
 @limiter.limit("10 per minute")
 @requer_origem_valida
 def iniciar_jogo():
-    sid_antigo = session.get("sid")
-    if sid_antigo and sid_antigo in MEMORIA_SESSOES:
-        MEMORIA_SESSOES.pop(sid_antigo, None)
-
+    # O SID do cookie assinado identifica também o autosave, inclusive após importar.
+    sid = obter_sid_seguro() or str(uuid.uuid4())
     session.clear()
-    sid = str(uuid.uuid4())
     session["sid"] = sid
     session.permanent = True
 
@@ -82,7 +80,7 @@ def iniciar_jogo():
 @requer_origem_valida
 def receber_comando():
     sid = obter_sid_seguro()
-    if not sid or sid not in MEMORIA_SESSOES:
+    if not sid:
         sid = str(uuid.uuid4())
         session["sid"] = sid
         session.permanent = True
@@ -150,20 +148,21 @@ def exportar_save():
     except SaveInvalido as exc:
         return jsonify({"erro": f"O jogo atual não pode ser exportado: {exc}"}), 409
 
-    return jsonify(
-        {
-            "formato": FORMATO_SAVE,
-            "versao": VERSAO_SAVE,
-            "criado_em": datetime.now(UTC).isoformat(timespec="seconds"),
-            "resumo": {
-                "sala": jogo.sala_atual,
-                "hp": jogo.hp,
-                "dificuldade": jogo.dificuldade_escolhida,
-                "inventario_tamanho": len(jogo.inventario),
-            },
-            "estado": estado,
-            "assinatura": assinar_save(estado),
-        }
+    arquivo = {
+        "formato": FORMATO_SAVE,
+        "versao": VERSAO_SAVE,
+        "criado_em": datetime.now(UTC).isoformat(timespec="seconds"),
+        "resumo": {
+            "sala": jogo.sala_atual,
+            "hp": jogo.hp,
+            "dificuldade": jogo.dificuldade_escolhida,
+            "inventario_tamanho": len(jogo.inventario),
+        },
+        "estado": estado,
+        "assinatura": assinar_save(estado),
+    }
+    return Response(
+        json.dumps(arquivo, ensure_ascii=False, indent=2), mimetype="application/json"
     )
 
 

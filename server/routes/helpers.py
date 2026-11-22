@@ -134,6 +134,7 @@ def gerar_resposta_json(jogo):
                 "tempo_final": getattr(jogo, "tempo_total_segundos", 0.0),
                 "som": getattr(jogo, "nivel_barulho", 0),
                 "sala": sala_exibicao,
+                "nome_final": getattr(jogo, "nome_final", ""),
                 "final_alcancado": getattr(jogo, "sala_atual", "Desconhecido"),
             },
             "novas_conquistas": conquistas_enviadas,

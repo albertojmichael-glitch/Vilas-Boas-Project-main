@@ -125,7 +125,7 @@ ul li { margin-bottom: 5px; }
 
 
 .spinner-container {
-    display: none;
+    display: flex;
     color: #ffcc00;
     margin-top: 10px;
     align-items: center;

@@ -1,0 +1,533 @@
+{
+  "finais": {
+    "saida": {
+      "nome": "Medíocre",
+      "conquista": "mediocre",
+      "cena": [
+        {
+          "texto": "Você empurra as pesadas portas de vidro e foge do restaurante...",
+          "velocidade": 0.08,
+          "cor": "amarelo"
+        },
+        {
+          "texto": "Você acredita que vai conseguir superar tudo isso. Que pode recomeçar uma nova vida...",
+          "velocidade": 0.07,
+          "cor": "vermelho"
+        },
+        {
+          "pausa": 1.5
+        },
+        {
+          "texto": "Você entra no seu carro, liga o motor e acelera para longe dali.",
+          "velocidade": 0.08,
+          "cor": "branco"
+        },
+        {
+          "texto": "Você quer esquecer dela... Mesmo ela suplicando por ajuda no escuro.",
+          "velocidade": 0.08,
+          "cor": "vermelho"
+        },
+        {
+          "pausa": 2
+        },
+        {
+          "efeito": "GLITCH_LUZ"
+        },
+        {
+          "texto": "Você olha pelo retrovisor. Algo se mexe no banco de trás.",
+          "velocidade": 0.05,
+          "cor": "vermelho"
+        },
+        {
+          "pausa": 1
+        },
+        {
+          "efeito": "JUMPSCARE"
+        },
+        {
+          "pausa": 2
+        },
+        {
+          "efeito": "BLACKOUT"
+        },
+        {
+          "arte": "ARTE_FINAL_MEDIOCRE",
+          "espaco_fixo": true,
+          "velocidade": 0.015
+        },
+        {
+          "texto": "\n{vermelho}[ FINAL MEDÍOCRE: ALGO TE SEGUIU... ]{reset}"
+        }
+      ]
+    },
+    "cama": {
+      "nome": "Bons Sonhos",
+      "conquista": "bons_sonhos",
+      "cena": [
+        {
+          "texto": "Você deita na cama velha, ignorando o cheiro de mofo...",
+          "velocidade": 0.05,
+          "cor": "amarelo"
+        },
+        {
+          "pausa": 1
+        },
+        {
+          "efeito": "LOW_POWER"
+        },
+        {
+          "texto": "O corredor fica em silêncio. Você sente o trinco da porta girar lentamente...",
+          "velocidade": 0.09,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "Você finalmente sente ela, o seu cheiro, sua vibração... Seu dispositivo apita...",
+          "velocidade": 0.06,
+          "cor": "verde"
+        },
+        {
+          "pausa": 1.5
+        },
+        {
+          "texto": "PRESENÇA ULTERIOR DETECTADA DENTRO DO QUARTO.",
+          "velocidade": 0.05,
+          "cor": "vermelho"
+        },
+        {
+          "pausa": 2
+        },
+        {
+          "efeito": "BLACKOUT"
+        },
+        {
+          "texto": "Você fecha os olhos. Pensando em não acordar nunca mais.",
+          "velocidade": 0.1,
+          "cor": "branco"
+        },
+        {
+          "efeito": "JUMPSCARE"
+        },
+        {
+          "texto": "\n{branco}[ FINAL BONS SONHOS ]{reset}"
+        }
+      ]
+    },
+    "final_bom": {
+      "nome": "Neutro",
+      "conquista": "bom",
+      "cena": [
+        {
+          "limpar": true
+        },
+        {
+          "texto": "{verde} ======================================================================{reset}",
+          "velocidade": 0.03
+        },
+        {
+          "texto": "{verde}                             [ FINAL NEUTRO ]                               {reset}",
+          "velocidade": 0.04
+        },
+        {
+          "texto": "{verde} ======================================================================{reset}",
+          "velocidade": 0.03
+        },
+        {
+          "texto": "Você acende o isqueiro e ilumina o local. A luz do fogo traz calma...",
+          "velocidade": 0.04,
+          "cor": "verde"
+        },
+        {
+          "texto": "- Por que não deu certo? O que eu fiz de errado?",
+          "velocidade": 0.05,
+          "cor": "amarelo"
+        },
+        {
+          "texto": "- 'Ainda estou aqui...'",
+          "velocidade": 0.09,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "- Amor? É voce? Mesmo???",
+          "velocidade": 0.05,
+          "cor": "amarelo"
+        },
+        {
+          "texto": "- 'Eu espero que ainda seja eu...'",
+          "velocidade": 0.09,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "- 'eu Não SinTo maIS nADA...'",
+          "velocidade": 0.1,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "- 'Eu não consegui te salvar, me desculpa...'",
+          "velocidade": 0.09,
+          "cor": "amarelo"
+        },
+        {
+          "texto": "- 'Não consegui salvar ninguém, o que eu fiz.'",
+          "velocidade": 0.09,
+          "cor": "amarelo"
+        },
+        {
+          "texto": "- 'Me ajUde, EU SINTO FALTA DE CASA.'",
+          "velocidade": 0.1,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas,f eu não posso fazer mais nada.",
+          "velocidade": 0.05,
+          "cor": "amarelo"
+        },
+        {
+          "pausa": 2
+        },
+        {
+          "texto": "- ... *Caroline abraça Rogério*",
+          "velocidade": 0.09,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "- 'Eu esperO tE eNContrar Lá, meu bem.'",
+          "velocidade": 0.09,
+          "cor": "vermelho"
+        },
+        {
+          "pausa": 1.5
+        },
+        {
+          "efeito": "GLITCH_LUZ"
+        },
+        {
+          "pausa": 2
+        },
+        {
+          "efeito": "JUMPSCARE"
+        },
+        {
+          "pausa": 3
+        },
+        {
+          "texto": "Você começa a cuspir sangue. A mão metálica dela atravessou seu estômago.",
+          "velocidade": 0.05,
+          "cor": "vermelho"
+        },
+        {
+          "pausa": 1
+        },
+        {
+          "efeito": "LOW_POWER"
+        },
+        {
+          "texto": "Nada mais faz sentido, sua visão começa a tremer, mas pela última vez, você olha nos olhos dela.",
+          "velocidade": 0.04,
+          "cor": "vermelho"
+        },
+        {
+          "pausa": 1.5
+        },
+        {
+          "texto": "- 'Me Perdoe por isso.'",
+          "velocidade": 0.09,
+          "cor": "vermelho"
+        },
+        {
+          "pausa": 2
+        },
+        {
+          "efeito": "BLACKOUT"
+        },
+        {
+          "texto": "Seu corpo é deixado ao chão, e você se junta a todos os outros naquele lugar.",
+          "velocidade": 0.09,
+          "cor": "branco"
+        },
+        {
+          "pausa": 2
+        },
+        {
+          "arte": "ARTE_FINAL_NEUTRO",
+          "velocidade": 0.005
+        },
+        {
+          "texto": "\n{branco}[ FINAL NEUTRO: ESCURIDÃO ]{reset}"
+        }
+      ]
+    },
+    "verdadeiro": {
+      "nome": "Verdadeiro",
+      "conquista": "verdadeiro",
+      "cena": [
+        {
+          "limpar": true
+        },
+        {
+          "texto": "{vermelho}=================================================================={reset}",
+          "velocidade": 0.02
+        },
+        {
+          "texto": "{vermelho}                        [ FINAL VERDADEIRO ]                      {reset}",
+          "velocidade": 0.03
+        },
+        {
+          "texto": "{vermelho}=================================================================={reset}\n",
+          "velocidade": 0.02
+        },
+        {
+          "texto": "Você acende seu isqueiro...",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "efeito": "LOW_POWER"
+        },
+        {
+          "texto": "Com a chama ardente, você a joga nas cortinas do hall. O fogo sobe rapidamente.",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "Você tosse um pouco com a fumaça. Ao retomar o olhar para o fim da sala, você a vê, esperando.",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "O estalo das chamas consome a madeira podre. A fumaça preta e espessa cobre o teto do restaurante.",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "O calor é sufocante, mas você não corre para a saída ainda. Você caminha até o centro do hall.\n",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "Lá está a carcaça de pelúcia rosa, com o metal rangendo e o plástico derretendo.",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "Você se aproxima do animatrônico... dela. E encaixa os fios na sua fiação exposta...",
+          "velocidade": 0.05,
+          "cor": "branco"
+        },
+        {
+          "texto": "Os LEDs vermelhos piscam fracos. Ela tenta se mover... mas o mecanismo emperra.\n",
+          "velocidade": 0.05,
+          "cor": "branco"
+        },
+        {
+          "texto": "- Por que não deu certo? O que eu fiz de errado...?",
+          "velocidade": 0.05,
+          "cor": "amarelo"
+        },
+        {
+          "texto": "Sua voz treme. As lágrimas cortam a fuligem no seu rosto.",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "\nUm zumbido eletrônico arranhado sai do alto-falante no peito da carcaça:",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "- '... v-você... fez... dar... certo...'",
+          "velocidade": 0.08,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "- '... R-Rogério...?'",
+          "velocidade": 0.08,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "\n- Caro... Caroline? É você?",
+          "velocidade": 0.05,
+          "cor": "amarelo"
+        },
+        {
+          "texto": "*(Você abraça a carcaça de pelagem rosa)*",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "Mesmo com o calor das chamas se espalhando, o metal que te toca é frio e rígido.",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "Mas você não solta. Você a segura com toda a força que te resta.",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "- Meu corpo ficou em silêncio... O barulho da minha cabeça, simplesmente parou.",
+          "velocidade": 0.07,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "- A dor nas minhas costas... o ferro rasgando minha pele... sumiu.",
+          "velocidade": 0.07,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "- Eu não sinto mais raiva.",
+          "velocidade": 0.07,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "\n- Eu sinto muito, Caroline... Me desculpa por não ter chegado a tempo...",
+          "velocidade": 0.05,
+          "cor": "amarelo"
+        },
+        {
+          "texto": "- Eu... Eu li seus e-mails. Eu tenho te procurado em todo lugar...",
+          "velocidade": 0.05,
+          "cor": "amarelo"
+        },
+        {
+          "pausa": 1
+        },
+        {
+          "texto": "\n*(O fogo se alastra pelo restaurante, aquele lugar maldito vai arder em chamas)*",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "O crepitar do incêndio abafa os ruídos metálicos dos outros robôs gritando lá no fundo.",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "O filtro de luz vermelha dos olhos de plástico dela se apaga para sempre.",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "\nNa penumbra dourada pelas chamas, a voz não vem mais do alto-falante. Ela ecoa suave na sua mente:",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "- Não peça desculpas, meu amor... Você veio.",
+          "velocidade": 0.07,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "- Durante meses no escuro dessa máquina, eu queria fazer 'eles' pagarem pelo que me fizeram...",
+          "velocidade": 0.07,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "- Mas quando você me abraçou... a escuridão simplesmente evaporou.",
+          "velocidade": 0.07,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "\n- Não podia te deixar presa aqui, Caroline. Hoje todo esse terror feito de máquinas acaba.",
+          "velocidade": 0.06,
+          "cor": "amarelo"
+        },
+        {
+          "texto": "- A gente ainda vai viver juntos... Pena que seja em outra vida.",
+          "velocidade": 0.05,
+          "cor": "amarelo"
+        },
+        {
+          "texto": "\nUma brisa suave e fresca corta o ar quente do incêndio, envolvendo seu pescoço.",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "- Me sinta pela última vez.",
+          "velocidade": 0.07,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "\n*(Você sente mãos invisíveis e macias em seus ombros. Toda a dor e a paranoia desaparecem)*",
+          "velocidade": 0.04,
+          "cor": "branco"
+        },
+        {
+          "texto": "\n- Vai embora agora, viva por nós dois. Eu sempre estarei contigo.",
+          "velocidade": 0.07,
+          "cor": "vermelho"
+        },
+        {
+          "texto": "- Eu te amo.",
+          "velocidade": 0.06,
+          "cor": "amarelo"
+        },
+        {
+          "texto": "- Eu também te amo, amor. Pra sempre.",
+          "velocidade": 0.06,
+          "cor": "vermelho"
+        },
+        {
+          "pausa": 2
+        },
+        {
+          "texto": "\n*(O animatrônico cai no chão, a carcaça é consumida pelas chamas enquanto o teto cede)*",
+          "velocidade": 0.05,
+          "cor": "branco"
+        },
+        {
+          "texto": "\n{verde}[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.{reset}",
+          "velocidade": 0.05
+        },
+        {
+          "pausa": 1.5
+        },
+        {
+          "efeito": "NORMAL_POWER"
+        },
+        {
+          "texto": "\nVocê se levanta e empurra as portas de entrada, saindo para o ar frio da madrugada.",
+          "velocidade": 0.08,
+          "cor": "branco"
+        },
+        {
+          "texto": "Pela calçada de Curitiba, você vê a fumaça subindo ao amanhecer. O restaurante virou cinzas.",
+          "velocidade": 0.06,
+          "cor": "branco"
+        },
+        {
+          "arte": "ARTE_FINAL_VERDADEIRO",
+          "velocidade": 0.005
+        },
+        {
+          "texto": "\n{verde}[ FINAL VERDADEIRO: LIBERTAÇÃO ]{reset}"
+        }
+      ]
+    }
+  },
+  "desbloqueio": [
+    {
+      "texto": "\n{amarelo}=================================================={reset}"
+    },
+    {
+      "texto": "VOCÊ DESVENDOU TODAS AS VERDADES DESTA NOITE.",
+      "velocidade": 0.05,
+      "cor": "vermelho"
+    },
+    {
+      "texto": "{amarelo}DIGITE O ANO EM QUE TUDO ACABOU NA TELA DE MENU: {branco}2007{reset}"
+    },
+    {
+      "texto": "{amarelo}=================================================={reset}"
+    }
+  ],
+  "encerramento": [
+    {
+      "efeito": "NORMAL_POWER"
+    },
+    {
+      "texto": "\n=== APERTE F5 PARA REINICIAR ===",
+      "velocidade": 0.05,
+      "cor": "amarelo"
+    }
+  ]
+}

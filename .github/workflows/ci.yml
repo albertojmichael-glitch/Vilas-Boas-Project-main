@@ -4,7 +4,6 @@ on:
   push:
     branches: [ "main", "master" ]
   pull_request:
-    branches: [ "main", "master" ]
 
 jobs:
   backend-tests:
@@ -76,21 +75,28 @@ jobs:
         PYTHONPATH=server python -m villas_boas.simulacao --partidas 5000 \
           --dificuldade NORMAL PESADELO --estrategia competente aleatoria
 
-  frontend-build:
-    name: Frontend TypeScript Build
+  navegador:
+    name: Frontend e fluxos E2E (Chromium)
     runs-on: ubuntu-latest
-
     steps:
-    - name: Fazer checkout do código
-      uses: actions/checkout@v4
-
-    - name: Configurar Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: "20"
-
-    - name: Instalar TypeScript
-      run: npm install -g typescript
-
-    - name: Compilar Cliente (TypeScript)
-      run: tsc -p client/tsconfig.json
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: pip install -e .
+      - run: npm ci
+      - run: npx playwright install --with-deps --only-shell chromium
+      - run: npm run test:e2e
+      - name: Publicar relatório e traces de falha
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-e2e
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7

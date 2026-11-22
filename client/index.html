@@ -72,21 +72,22 @@
                         </div>
 
                         <div class="mobile-controls">
-                            <button onclick="executarAtalho('olhar')" aria-label="Olhar a sala">⏿ OLHAR</button>
-                            <button onclick="executarAtalho('inventario')" aria-label="Ver inventário"> INV</button>
-                            <button onclick="executarAtalho('ir frente')">▲</button>
-                            <button onclick="executarAtalho('ir esquerda')">◀</button>
-                            <button onclick="executarAtalho('ir trás')">▼</button>
-                            <button onclick="executarAtalho('ir direita')">▶</button>
+                            <button data-comando="olhar" aria-label="Olhar a sala">⏿ OLHAR</button>
+                            <button data-comando="inventario" aria-label="Ver inventário"> INV</button>
+                            <button data-comando="ir frente">▲</button>
+                            <button data-comando="ir esquerda">◀</button>
+                            <button data-comando="ir trás">▼</button>
+                            <button data-comando="ir direita">▶</button>
                         </div>
 
 
 
                         
-                        <div id="loading" class="spinner-container hidden" role="status" aria-label="Processando comando...">
+                        <div id="loading" class="spinner-container hidden" role="status">
                             <div class="spinner" aria-hidden="true"></div>
-                            <span class="sr-only">Carregando...</span>
+                            <span id="loading-label">Processando comando…</span>
                         </div>
+                        <button id="retry-boot" class="hidden">Tentar conectar novamente</button>
                     </main>
 
                     <aside class="sidebar">
@@ -100,6 +101,7 @@
                             <div class="inventory-box">
                                 <h3 id="hud-inv">INV:</h3>
                                 <ul id="inv-list"></ul>
+                                <div id="inv-slots-container" class="inv-slots-container"></div>
                             </div>
                         </div>
                     </aside>
@@ -110,16 +112,16 @@
 
                     
                 
-                <button id="help-btn" class="help-float" style="right: 20px;" onclick="openHelp()" aria-label="Abrir menu de ajuda">?</button>
-                <button id="settings-btn" class="help-float" style="right: 75px;" onclick="openSettings()" aria-label="Abrir configurações">⚙</button>
-                <button id="saves-btn" class="help-float" style="right: 130px;" onclick="openSaves()" aria-label="Gerenciar Saves">❏</button>
-                <button id="achievements-btn" class="help-float" style="right: 185px; color: #ffda33; border-color: #ffda33;" onclick="abrirModalConquistas()" aria-label="Ver Conquistas">♛</button>
+                <button id="help-btn" class="help-float" style="right: 20px;" data-acao="openHelp" aria-label="Abrir menu de ajuda">?</button>
+                <button id="settings-btn" class="help-float" style="right: 75px;" data-acao="openSettings" aria-label="Abrir configurações">⚙</button>
+                <button id="saves-btn" class="help-float" style="right: 130px;" data-acao="openSaves" aria-label="Gerenciar Saves">❏</button>
+                <button id="achievements-btn" class="help-float" style="right: 185px; color: #ffda33; border-color: #ffda33;" data-acao="abrirModalConquistas" aria-label="Ver Conquistas">♛</button>
                 
 
                 
                 <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true">
                     <div class="modal-content" style="max-width: 500px; border-color: #55ff55;">
-                        <span class="close-btn" onclick="closeHelp()">&times;</span>
+                        <span class="close-btn" data-acao="closeHelp">&times;</span>
                         <h2 style="color: #55ff55; text-align: center;">[ MANUAL DO SISTEMA ]</h2>
                         
                         <div style="text-align: left; margin-top: 20px; color: #fff; font-family: 'Courier New', monospace; font-size: 1rem; line-height: 1.6;">
@@ -142,7 +144,7 @@
                             <a href="/privacidade.html" target="_blank" style="color: #55ff55; text-decoration: none; border-bottom: 1px solid #55ff55;">Política de Privacidade</a>
                         </div>
 
-                        <button class="close-btn" onclick="closeHelp()" style="margin-top: 25px; width: 100%;">FECHAR (ESC)</button>
+                        <button class="close-btn" data-acao="closeHelp" style="margin-top: 25px; width: 100%;">FECHAR (ESC)</button>
                     </div>
                 </div>
             
@@ -184,13 +186,13 @@
                         </div>
                     </div>
 
-                    <button class="close-btn" onclick="closeSettings()" style="margin-top: 25px;">FECHAR (ESC)</button>
+                    <button class="close-btn" data-acao="closeSettings" style="margin-top: 25px;">FECHAR (ESC)</button>
                 </div>
 
                 
                 <div id="achievements-modal" class="modal hidden" aria-hidden="true">
                     <div class="modal-content achievements-content">
-                        <span class="close-btn" onclick="fecharModalConquistas()">&times;</span>
+                        <span class="close-btn" data-acao="fecharModalConquistas">&times;</span>
                         <h2 style="color: #ffda33; text-align: center; margin-bottom: 25px; font-family: 'Courier New', monospace; letter-spacing: 2px;" id="achievements-title">♛ SUAS CONQUISTAS ♛</h2>
                         <div id="achievements-grid" class="achievements-grid">
                             
@@ -213,11 +215,10 @@
                         
                         <div style="margin: 20px 0;">
                             <input type="text" id="arcade-initials" maxlength="3" placeholder="___" 
-                                style="font-size: 3rem; text-align: center; width: 120px; text-transform: uppercase; letter-spacing: 10px; background: #000; color: #ffda33; border: 2px solid #ffda33;"
-                                oninput="this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '')">
+                                style="font-size: 3rem; text-align: center; width: 120px; text-transform: uppercase; letter-spacing: 10px; background: #000; color: #ffda33; border: 2px solid #ffda33;">
                         </div>
 
-                        <button id="btn-login-submit" class="help-float" style="position: relative; right: 0; bottom: 0; width: 100%; border-radius: 4px; font-family: 'Courier New'; font-size: 1.2rem;" onclick="iniciarLoginESalvar()">
+                        <button id="btn-login-submit" class="help-float" style="position: relative; right: 0; bottom: 0; width: 100%; border-radius: 4px; font-family: 'Courier New'; font-size: 1.2rem;" data-acao="iniciarLoginESalvar">
                             CONECTAR COM GOOGLE
                         </button>
 
@@ -226,7 +227,7 @@
                             <a href="/termos.html" target="_blank" style="color: #55ff55;">Termos de Serviço</a> e <a href="/privacidade.html" target="_blank" style="color: #55ff55;">Política de Privacidade</a>.
                         </div>
 
-                        <p style="margin-top: 15px; font-size: 0.8rem; cursor: pointer; color: #888; text-decoration: underline;" onclick="fecharArcadeModal()">Pular (Não salvar na nuvem)</p>
+                        <p style="margin-top: 15px; font-size: 0.8rem; cursor: pointer; color: #888; text-decoration: underline;" data-acao="fecharArcadeModal">Pular (Não salvar na nuvem)</p>
                     </div>
                 </div>
 
@@ -236,14 +237,14 @@
                     
                     <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
                         
-                        <button onclick="exportarSave()" style="padding: 10px; background: #222; color: #4aff4a; border: 1px solid #4aff4a; cursor: pointer; font-family: monospace;">⬇ Exportar Save Atual (JSON)</button>
+                        <button data-acao="exportarSave" style="padding: 10px; background: #222; color: #4aff4a; border: 1px solid #4aff4a; cursor: pointer; font-family: monospace;">⬇ Exportar Save Atual (JSON)</button>
                         
                         
-                        <button onclick="document.getElementById('import-file').click()" style="padding: 10px; background: #222; color: #ffda33; border: 1px solid #ffda33; cursor: pointer; font-family: monospace;">⬆ Importar Save (JSON)</button>
-                        <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importarSave(event)">
+                        <button data-acao="escolherSave" style="padding: 10px; background: #222; color: #ffda33; border: 1px solid #ffda33; cursor: pointer; font-family: monospace;">⬆ Importar Save (JSON)</button>
+                        <input type="file" id="import-file" style="display: none;" accept=".json">
                         
                         
-                        <button onclick="gerarLinkCompartilhamentoUI()" style="padding: 10px; background: #222; color: #00ffff; border: 1px solid #00ffff; cursor: pointer; font-family: monospace;">🔗 Gerar Link de Compartilhamento</button>
+                        <button data-acao="gerarLinkCompartilhamentoUI" style="padding: 10px; background: #222; color: #00ffff; border: 1px solid #00ffff; cursor: pointer; font-family: monospace;">🔗 Gerar Link de Compartilhamento</button>
                         
                         <div id="share-link-container" class="hidden" style="margin-top: 10px; background: #111; padding: 10px; border: 1px dashed #00ffff;">
                             <input type="text" id="share-link-input" readonly style="width: 100%; background: transparent; color: #00ffff; border: none; outline: none; margin-bottom: 5px;">
@@ -251,7 +252,7 @@
                         </div>
                     </div>
                     
-                    <button class="close-btn" onclick="closeSaves()" style="margin-top: 20px;">FECHAR (ESC)</button>
+                    <button class="close-btn" data-acao="closeSaves" style="margin-top: 20px;">FECHAR (ESC)</button>
                 </div>
 
                 
@@ -273,7 +274,7 @@
         <img id="tv-overlay" src="./assets/images/tv.png" alt="TV Retro">
 
         
-        <button id="power-button" onclick="ligarTV()"></button>
+        <button id="power-button" aria-label="Ligar TV" data-acao="ligarTV"></button>
         <div id="power-led"></div>
         
     </div>
