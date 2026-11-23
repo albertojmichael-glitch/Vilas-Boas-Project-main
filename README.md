@@ -88,11 +88,15 @@ PYTHONPATH=server python server/cli.py
 
 ### 4. Executar o Frontend
 
-Sirva a pasta `client/` com qualquer servidor HTTP estático (por exemplo, `python -m http.server 8080 --directory client`) ou compile alterações do TypeScript com:
+Instale as dependências com `npm ci` e gere a versão para publicação com `npm run build`. A pasta `dist/` contém o cliente estático. Para jogar, o servidor HTTP também precisa encaminhar `/api/` para o Flask, como faz o rewrite em `vercel.json`.
 
-```bash
-tsc -p client/tsconfig.json
-```
+### Conteúdo narrativo
+
+- `server/data/game_data.json` contém o mapa, as descrições das salas e os itens.
+- `server/data/finais.pt-BR.json` define a sequência dos quatro finais. Cada etapa apresenta texto ou arte, faz uma pausa, limpa o terminal ou dispara um efeito. Uma etapa com `velocidade` anima o texto. A propriedade `conquista` mantém o identificador usado nos saves.
+- `server/data/minigames.pt-BR.json` define onde e como iniciar cada fliperama, os itens exigidos ou consumidos, as falas iniciais, as pistas do cofre e as escolhas do pianista. Para aceitar outro comando, inclua seu texto normalizado em `comandos`. Cada pergunta aponta para a próxima etapa por seu identificador.
+
+As edições web e CLI usam os mesmos catálogos. Ao traduzir, preserve IDs de estado, de sala, de item e de conquista usados pela engine.
 
 ---
 
@@ -138,6 +142,16 @@ Para rodar a suíte completa de testes automatizados com relatório de cobertura
 ```bash
 PYTHONPATH=server pytest tests/ --cov=server --cov-report=term-missing -v
 ```
+
+Com o ambiente Python do projeto ativo e Node.js 22, rode os fluxos do navegador a partir da raiz do repositório.
+
+```bash
+npm ci
+npx playwright install --only-shell chromium
+npm run test:e2e
+```
+
+O Playwright compila o cliente e inicia a API com um SQLite temporário. Os testes acompanham o arquivo de save da exportação até a restauração, os quatro finais, a fuga em combate, o inventário e os seis minigames. Para reproduzir etapas avançadas, a suíte prepara um autosave e o carrega pelo menu do jogo. Cada PR executa a suíte em Chromium e publica o relatório HTML com os traces das falhas.
 
 Para verificar formatação, lint (`ruff`) e checagem estática de tipos (`mypy`):
 

@@ -16,6 +16,7 @@ export interface EstadoJogo {
     inventario?: string[];
     estado_jogo?: string;
     tempo_final?: number;
+    nome_final?: string;
     final_alcancado?: string;
     sala?: string;
 }

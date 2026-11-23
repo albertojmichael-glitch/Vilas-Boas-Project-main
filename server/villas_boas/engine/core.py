@@ -3,14 +3,12 @@ import random
 import time
 
 from data import (
-    ARTE_PIANO,
-    ARTE_PORCO,
-    ARTE_ROBO,
     BARULHO_ACAO_COMUM,
     BARULHO_CORRER,
     BARULHO_ERROS_CONSECUTIVOS,
     BARULHO_IR_ABRIR,
     CHANCE_PERDER_ITEM_CORRER,
+    COFRE_SENHA,
     LIMITE_BARULHO_FANTASMA,
     LIMITE_ERROS_DICA,
     MAX_INVENTARIO,
@@ -41,6 +39,7 @@ from views import (
 
 from villas_boas.actions import processar_comando
 from villas_boas.actions.parser import ATALHOS_DIRECAO, COMANDOS_ESCONDER, normalizar
+from villas_boas.conteudo import FLIPERAMAS, MINIGAMES, PERGUNTAS, colorir, exibir_cena
 from villas_boas.engine import devmode
 from villas_boas.engine.minigames.minotauro import MinigameMinotauro
 from villas_boas.engine.minigames.seguranca import MinigameSeguranca
@@ -195,17 +194,11 @@ ARTE_COFRE_TENSO = r"""
  \__________________________/
 """
 
-_PISTAS_COFRE = [
-    "[1º dígito] Um único ponto de luz acende sozinho na unidade, o primeiro som da noite.",
-    "[2º e 3º dígitos] Nove marcas de unha, em 2 vezes, na fileira da lateral do metal.",
-    "[4º dígito] Quatro cadeiras na sala do piano. Só uma nunca foi ocupada de novo.",
-]
-
 
 def gerar_charada_cofre(jogo):
     """Monta o texto de pistas embaralhando a ordem de exibição a cada
     tentativa, mas mantendo a integridade das frases."""
-    pistas = _PISTAS_COFRE.copy()
+    pistas = MINIGAMES["cofre"]["pistas"].copy()
     random.shuffle(pistas)
 
     linhas = []
@@ -276,12 +269,6 @@ def verificar_final_de_jogo(jogo):
         desbloquear_conquista(jogo, "primeira_morte")
         return True
 
-    if (
-        jogo.sala_atual in SALAS_TERMINAIS
-        and getattr(jogo, "estado_atual", "") != "FIM"
-    ):
-        jogo.tempo_total_segundos = time.time() - jogo.tempo_inicio
-
     if jogo.sala_atual == "saida":
         registrar_telemetria_segura(
             "VITORIA",
@@ -345,6 +332,43 @@ def verificar_final_de_jogo(jogo):
                 desbloquear_conquista(jogo, "speedrun")
         return True
     return False
+
+
+def mostrar_escolha_peca(estado, ui):
+    etapa = MINIGAMES["montagem"][estado]
+    opcoes = " | ".join(f"{tecla}- {nome}" for tecla, nome in etapa["opcoes"].items())
+    ui.exibir(colorir(etapa["fase"]))
+    ui.exibir(f"{etapa['pergunta']} ({opcoes}): ")
+
+
+def iniciar_fliperama(maquina, jogo):
+    ui = jogo.ui_handler
+    item = maquina.get("requer")
+    if item and item not in jogo.inventario:
+        ui.exibir(colorir(maquina["bloqueado"]))
+        return
+    if maquina.get("consumir"):
+        jogo.inventario.remove(item)
+    jogo.estado_atual = maquina["estado"]
+    ui.limpar()
+    exibir_cena([{"arte": maquina["arte"], "velocidade": 0.015}], jogo)
+    ui.animar(maquina["titulo"], 0.03, DOS_VERDE, jogo)
+    for texto in maquina["introducao"]:
+        ui.exibir(colorir(texto))
+    if jogo.estado_atual == "MINIGAME_JON":
+        jogo.jon_passos_dados = 0
+        jogo.jon_caminho_certo = [random.choice(["f", "e", "d"]) for _ in range(4)]
+        jogo.jon_dica_falsa = dar_dica_jon(jogo.jon_caminho_certo[0], ui)
+        ui.exibir(maquina["primeiro_passo"])
+    elif jogo.estado_atual in MINIGAMES["montagem"]:
+        jogo.web_consertos = {}
+        mostrar_escolha_peca(jogo.estado_atual, ui)
+    elif jogo.estado_atual in PERGUNTAS:
+        jogo.web_julgamento = {
+            "pontos": 0,
+            "vitimas": MINIGAMES["vitimas"]["nomes"].copy(),
+        }
+        ui.exibir(colorir(PERGUNTAS[jogo.estado_atual]["texto"]))
 
 
 def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save=None):
@@ -554,89 +578,38 @@ def _processar_fluxo_jogo_normal(
             ui.limpar()
             imprimir_contexto_sala(jogo)
 
-        elif jogo.sala_atual == "sala de energia" and not getattr(
+        elif jogo.sala_atual == MINIGAMES["minotauro"]["sala"] and not getattr(
             jogo, "fios_cortados_inventario", False
         ):
             jogo.minigame_atual = MinigameMinotauro(jogo)
             jogo.estado_atual = "MINIGAME_MINOTAURO"
             jogo.minigame_atual.imprimir_status()
 
-        elif comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"]:
-            if jogo.sala_atual != "01":
-                ui.exibir("Não há nenhuma cadeira de segurança aqui.")
+        elif comando in MINIGAMES["seguranca"]["comandos"]:
+            cadeira = MINIGAMES["seguranca"]
+            if jogo.sala_atual != cadeira["sala"]:
+                ui.exibir(cadeira["fora_da_sala"])
             elif getattr(jogo, "noite_vencida", False):
-                ui.exibir(f"{DOS_AMARELO}A mesa de controle está desligada.{RESET}")
-            elif "cartao de seguranca" not in jogo.inventario and not getattr(
+                ui.exibir(colorir(cadeira["noite_vencida"]))
+            elif cadeira["requer"] not in jogo.inventario and not getattr(
                 jogo, "god_mode", False
             ):
-                ui.exibir(
-                    f"{DOS_VERMELHO}Os monitores e o computador estão bloqueados. O sistema exige a inserção de um 'Cartão de Segurança Nível IV'.{RESET}"
-                )
+                ui.exibir(colorir(cadeira["bloqueado"]))
             else:
-                jogo.sala_atual = "01"
                 jogo.minigame_atual = MinigameSeguranca(jogo)
                 jogo.estado_atual = "MINIGAME_SEGURANCA"
                 jogo.minigame_atual.imprimir_status()
 
-        elif comando == "abrir cofre" and jogo.sala_atual == "01":
+        elif (
+            comando in MINIGAMES["cofre"]["comandos"]
+            and jogo.sala_atual == MINIGAMES["cofre"]["sala"]
+        ):
             jogo.estado_atual = "MINIGAME_COFRE"
             jogo.cofre_tentativas = 0
             imprimir_painel_cofre(jogo, primeira_vez=True)
 
-        elif (
-            comando == "jogar jon" or comando == "jogar fome de jon"
-        ) and jogo.sala_atual == "sala de fliperamas":
-            jogo.estado_atual = "MINIGAME_JON"
-            jogo.jon_passos_dados = 0
-            jogo.jon_caminho_certo = [random.choice(["f", "e", "d"]) for _ in range(4)]
-            ui.limpar()
-            ui.animar(f"{DOS_BRANCO}{ARTE_PORCO}{RESET}", 0.015, jogo=jogo)
-            ui.animar("--- A FOME DE JON ---", 0.03, DOS_VERDE, jogo)
-            ui.exibir(
-                f"{DOS_BRANCO}Guie o Porco Jon pelos dutos baseando-se nos seus sentidos.{RESET}"
-            )
-            ui.exibir("Comandos: [F] Frente | [E] Esquerda | [D] Direita")
-            jogo.jon_dica_falsa = dar_dica_jon(jogo.jon_caminho_certo[0], ui)
-            ui.exibir("Passo 1/4 - Direção (F/E/D): ")
-
-        elif comando == "jogar consertos" and jogo.sala_atual == "sala de fliperamas":
-            if "moeda velha" not in jogo.inventario:
-                ui.exibir(
-                    "A máquina 'Consertos & Sorrisos' exige uma ficha (moeda velha) para iniciar."
-                )
-            else:
-                jogo.inventario.remove("moeda velha")
-                jogo.estado_atual = "MINIGAME_CONSERTOS_CABECA"
-                jogo.web_consertos = {}
-                ui.limpar()
-                ui.animar(f"{DOS_BRANCO}{ARTE_ROBO}{RESET}", 0.015, jogo=jogo)
-                ui.animar("--- CONSERTOS & SORRISOS ---", 0.03, DOS_VERDE, jogo)
-                ui.exibir("Bem-vindo, novo Mecânico. Vamos montar nosso novo Festeiro.")
-                ui.exibir(f"\n{DOS_AMARELO}[ FASE 1: SELEÇÃO DE PEÇAS ]{RESET}")
-                ui.exibir("Escolha a Cabeça (1- Urso | 2- Coelho): ")
-
-        elif (
-            comando == "jogar adivinha" or comando == "jogar julgamento"
-        ) and jogo.sala_atual == "sala de fliperamas":
-            if "partitura rasgada" not in jogo.inventario:
-                ui.exibir(
-                    f"{DOS_AMARELO}O animatronico está mudo, parece aguardar algo... talvez um item."
-                )
-            else:
-                jogo.estado_atual = "MINIGAME_JULGAMENTO_Q1"
-                jogo.web_julgamento = {
-                    "pontos": 0,
-                    "vitimas": ["angela", "joao", "renato"],
-                }
-                ui.limpar()
-                ui.animar(f"{DOS_BRANCO}{ARTE_PIANO}{RESET}", 0.015, jogo=jogo)
-                ui.animar("--- O JULGAMENTO DO PIANISTA ---", 0.03, DOS_VERDE, jogo)
-                ui.exibir(
-                    f"{DOS_BRANCO}O animatrônico desperta. Ele detém todas as respostas.{RESET}"
-                )
-                ui.exibir(
-                    f"\n{DOS_AMARELO}PERGUNTA 1: Em que ano a nossa música parou para sempre?{RESET}"
-                )
+        elif maquina := FLIPERAMAS.get((jogo.sala_atual, comando)):
+            iniciar_fliperama(maquina, jogo)
 
         else:
             jogador_correu = False
@@ -805,7 +778,7 @@ def _processar_fluxo_jogo_normal(
             ui.limpar()
             imprimir_painel_cofre(jogo, primeira_vez=True)
 
-        elif comando == "1994":
+        elif comando == COFRE_SENHA:
             ui.exibir(
                 f"{DOS_VERDE} Um som de 'click'. A pesada porta de metal se abre.{RESET}"
             )
@@ -876,12 +849,7 @@ def _processar_fluxo_jogo_normal(
     elif jogo.estado_atual == "MINIGAME_JON":
         passo = getattr(jogo, "jon_passos_dados", 0)
 
-        frases_progresso = [
-            "Jon rasteja em silêncio pelos dutos...",
-            "O metal range baixinho sob o peso de Jon.",
-            "Jon para, fareja o ar, e continua adiante.",
-            "Quase lá. Jon acelera o passo nos dutos apertados.",
-        ]
+        frases_progresso = MINIGAMES["fliperamas"]["jon"]["frases_progresso"]
 
         if comando in ["f", "e", "d", "frente", "esquerda", "direita"]:
             letra = comando[0]
@@ -913,11 +881,7 @@ def _processar_fluxo_jogo_normal(
                         f"Passo {jogo.jon_passos_dados + 1}/4 - Direção (F/E/D): "
                     )
             else:
-                frases_erro = [
-                    "Jon caiu num triturador ativo, você leva um choque!",
-                    "Errado. Um fio desencapado solta faísca — você sente o choque na mão.",
-                    "Jon trava numa curva fechada, e a máquina te dá um aviso doloroso.",
-                ]
+                frases_erro = MINIGAMES["fliperamas"]["jon"]["frases_erro"]
                 erro_idx = min(getattr(jogo, "jon_erros", 0), len(frases_erro) - 1)
                 jogo.jon_erros = getattr(jogo, "jon_erros", 0) + 1
                 jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
@@ -950,35 +914,19 @@ def _processar_fluxo_jogo_normal(
         else:
             ui.exibir("Direção inválida. Use F, E ou D.")
 
-    elif jogo.estado_atual == "MINIGAME_CONSERTOS_CABECA":
-        jogo.web_consertos["cabeca"] = comando
-        jogo.estado_atual = "MINIGAME_CONSERTOS_TRONCO"
-        nome_cabeca = "Urso" if comando == "1" else "Coelho"
-        ui.exibir(
-            f"{DOS_VERDE}Você encaixa a cabeça de {nome_cabeca}. Os olhos de vidro piscam uma vez, sozinhos.{RESET}"
-        )
-        ui.exibir(f"\n{DOS_AMARELO}[ FASE 2: SELEÇÃO DE PEÇAS ]{RESET}")
-        ui.exibir("Escolha o Tronco (1- Fino | 2- Robusto): ")
+    elif jogo.estado_atual in MINIGAMES["montagem"]:
+        etapa = MINIGAMES["montagem"][jogo.estado_atual]
+        jogo.web_consertos[etapa["peca"]] = comando
+        opcoes = etapa["opcoes"]
+        nome_peca = opcoes.get(comando, opcoes[etapa["padrao"]])
+        ui.exibir(DOS_VERDE + etapa["resultado"].replace("{peca}", nome_peca) + RESET)
+        if "proxima" in etapa:
+            jogo.estado_atual = etapa["proxima"]
+            mostrar_escolha_peca(jogo.estado_atual, ui)
+            return
 
-    elif jogo.estado_atual == "MINIGAME_CONSERTOS_TRONCO":
-        jogo.web_consertos["tronco"] = comando
-        jogo.estado_atual = "MINIGAME_CONSERTOS_PERNAS"
-        nome_tronco = "Robusto" if comando == "2" else "Fino"
-        ui.exibir(
-            f"{DOS_VERDE}O tronco {nome_tronco} se encaixa com um estalo metálico.{RESET}"
-        )
-        ui.exibir(f"\n{DOS_AMARELO}[ FASE 3: SELEÇÃO DE PEÇAS ]{RESET}")
-        ui.exibir("Escolha as Pernas (1- Aço | 2- Pelúcia): ")
-
-    elif jogo.estado_atual == "MINIGAME_CONSERTOS_PERNAS":
         cabeca = jogo.web_consertos.get("cabeca", "1")
-        pernas = comando
-        item_secreto = "remedio" if (cabeca == "2" and pernas == "2") else None
-
-        nome_pernas = "Pelúcia" if pernas == "2" else "Aço"
-        ui.exibir(
-            f"{DOS_VERDE}As pernas de {nome_pernas} travam no lugar. A montagem está completa.{RESET}"
-        )
+        item_secreto = "remedio" if (cabeca == "2" and comando == "2") else None
         ui.exibir(
             f"\n{DOS_VERDE}CONSERTO CONCLUÍDO. O ANIMATRÔNICO SORRI PARA VOCÊ!{RESET}"
         )
@@ -1021,44 +969,23 @@ def _processar_fluxo_jogo_normal(
         jogo.estado_atual = "JOGO"
         imprimir_contexto_sala(jogo)
 
-    elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q1":
-        if comando == "1995":
-            jogo.web_julgamento["pontos"] += 1
-            falar_pianista(True, ui, jogo)
-        else:
-            falar_pianista(False, ui, jogo)
-        jogo.estado_atual = "MINIGAME_JULGAMENTO_Q2"
-        ui.exibir(
-            f"\n{DOS_AMARELO}PERGUNTA 2: Qual animatrônico está atrás de você agora?{RESET}"
+    elif jogo.estado_atual in PERGUNTAS:
+        pergunta = PERGUNTAS[jogo.estado_atual]
+        respostas = pergunta["respostas"]
+        acertou = (
+            comando in respostas
+            if pergunta["comparacao"] == "exata"
+            else any(resposta in comando for resposta in respostas)
         )
-
-    elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q2":
-        if "caroline" in comando or "ela" in comando:
+        if acertou:
             jogo.web_julgamento["pontos"] += 1
-            falar_pianista(True, ui, jogo)
-        else:
-            falar_pianista(False, ui, jogo)
-        jogo.estado_atual = "MINIGAME_JULGAMENTO_Q3"
-        ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 3: Em que ano tudo isso começou?{RESET}")
-
-    elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q3":
-        if comando == "1982":
-            jogo.web_julgamento["pontos"] += 1
-            falar_pianista(True, ui, jogo)
-        else:
-            falar_pianista(False, ui, jogo)
-        jogo.estado_atual = "MINIGAME_JULGAMENTO_Q4"
-        ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 4: Quem é você?{RESET}")
-
-    elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q4":
-        if "rogerio" in comando:
-            jogo.web_julgamento["pontos"] += 1
-            falar_pianista(True, ui, jogo)
-        else:
-            falar_pianista(False, ui, jogo)
-        jogo.estado_atual = "MINIGAME_JULGAMENTO_V1"
+        falar_pianista(acertou, ui, jogo)
+        jogo.estado_atual = pergunta["proxima"]
+        proxima = PERGUNTAS.get(jogo.estado_atual)
         ui.exibir(
-            f"\n{DOS_AMARELO}PERGUNTA 5: Quem são as três vítimas? Digite o 1º nome:{RESET}"
+            colorir(
+                proxima["texto"] if proxima else MINIGAMES["vitimas"]["perguntas"][0]
+            )
         )
 
     elif jogo.estado_atual in [
@@ -1079,17 +1006,17 @@ def _processar_fluxo_jogo_normal(
 
         if jogo.estado_atual == "MINIGAME_JULGAMENTO_V1":
             jogo.estado_atual = "MINIGAME_JULGAMENTO_V2"
-            ui.exibir("Digite o 2º nome: ")
+            ui.exibir(MINIGAMES["vitimas"]["perguntas"][1])
 
         elif jogo.estado_atual == "MINIGAME_JULGAMENTO_V2":
             jogo.estado_atual = "MINIGAME_JULGAMENTO_V3"
-            ui.exibir("Digite o 3º nome: ")
+            ui.exibir(MINIGAMES["vitimas"]["perguntas"][2])
 
         else:
             if len(jogo.web_julgamento["vitimas"]) == 0:
                 jogo.web_julgamento["pontos"] += 1
 
-            if jogo.web_julgamento["pontos"] == 5:
+            if jogo.web_julgamento["pontos"] == len(PERGUNTAS) + 1:
                 ui.animar(
                     "Obrigado por voltar pela gente, Rogério...", 0.08, DOS_VERDE, jogo
                 )

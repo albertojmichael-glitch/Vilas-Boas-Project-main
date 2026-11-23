@@ -46,3 +46,7 @@ node_modules/
 
 # Metadados gerados pelo pip install -e
 *.egg-info/
+/dist/
+/test-results/
+/playwright-report/
+.coverage

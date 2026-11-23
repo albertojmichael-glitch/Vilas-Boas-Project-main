@@ -164,6 +164,7 @@ class GameState(BaseModel):
     novas_conquistas_turno: list[dict] = Field(default_factory=list)
     tempo_inicio: float = Field(default_factory=time.time)
     tempo_total_segundos: float = 0.0
+    nome_final: str = ""
     mapa: dict[str, Any] = Field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
 
     _ui_handler: Any = PrivateAttr(default=None)

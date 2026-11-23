@@ -1,0 +1,194 @@
+{
+  "fliperamas": {
+    "jon": {
+      "comandos": [
+        "jogar jon",
+        "jogar fome de jon"
+      ],
+      "estado": "MINIGAME_JON",
+      "arte": "ARTE_PORCO",
+      "titulo": "--- A FOME DE JON ---",
+      "introducao": [
+        "{branco}Guie o Porco Jon pelos dutos baseando-se nos seus sentidos.{reset}",
+        "Comandos: [F] Frente | [E] Esquerda | [D] Direita"
+      ],
+      "primeiro_passo": "Passo 1/4 - Direção (F/E/D): ",
+      "sala": "sala de fliperamas",
+      "pistas": {
+        "f": "Uma corrente de ar gelado bate direto no seu rosto.",
+        "e": "Um som agudo de metal arranhando reverbera pela parede canhota do duto.",
+        "d": "O cheiro podre de carne estragada fica mais forte no caminho destro."
+      },
+      "frases_progresso": [
+        "Jon rasteja em silêncio pelos dutos...",
+        "O metal range baixinho sob o peso de Jon.",
+        "Jon para, fareja o ar, e continua adiante.",
+        "Quase lá. Jon acelera o passo nos dutos apertados."
+      ],
+      "frases_erro": [
+        "Jon caiu num triturador ativo, você leva um choque!",
+        "Errado. Um fio desencapado solta faísca — você sente o choque na mão.",
+        "Jon trava numa curva fechada, e a máquina te dá um aviso doloroso."
+      ]
+    },
+    "consertos": {
+      "comandos": [
+        "jogar consertos"
+      ],
+      "estado": "MINIGAME_CONSERTOS_CABECA",
+      "requer": "moeda velha",
+      "consumir": true,
+      "bloqueado": "A máquina 'Consertos & Sorrisos' exige uma ficha (moeda velha) para iniciar.",
+      "arte": "ARTE_ROBO",
+      "titulo": "--- CONSERTOS & SORRISOS ---",
+      "introducao": [
+        "Bem-vindo, novo Mecânico. Vamos montar nosso novo Festeiro."
+      ],
+      "sala": "sala de fliperamas"
+    },
+    "julgamento": {
+      "comandos": [
+        "jogar adivinha",
+        "jogar julgamento"
+      ],
+      "estado": "MINIGAME_JULGAMENTO_Q1",
+      "requer": "partitura rasgada",
+      "bloqueado": "{amarelo}O animatronico está mudo, parece aguardar algo... talvez um item.",
+      "arte": "ARTE_PIANO",
+      "titulo": "--- O JULGAMENTO DO PIANISTA ---",
+      "introducao": [
+        "{branco}O animatrônico desperta. Ele detém todas as respostas.{reset}"
+      ],
+      "sala": "sala de fliperamas",
+      "acerto": {
+        "nota": "A máquina toca uma nota suave e agradável.",
+        "falas": [
+          "Você lembra bem,",
+          "Você ainda tem ouvido para isso.",
+          "Correto. Nós sempre soubemos que você voltaria.",
+          "Sim... como aconteceu."
+        ]
+      },
+      "erro": {
+        "nota": "Acorde dissonante.",
+        "falas": [
+          "Errado. Eles não perdoam mentiras.",
+          "Você deveria lembrar melhor do que isso, Rogério.",
+          "Uma nota fora do lugar... como você.",
+          "Isso não é o que consta no registro."
+        ]
+      }
+    }
+  },
+  "perguntas": {
+    "MINIGAME_JULGAMENTO_Q1": {
+      "texto": "\n{amarelo}PERGUNTA 1: Em que ano a nossa música parou para sempre?{reset}",
+      "comparacao": "exata",
+      "respostas": [
+        "1995"
+      ],
+      "proxima": "MINIGAME_JULGAMENTO_Q2"
+    },
+    "MINIGAME_JULGAMENTO_Q2": {
+      "texto": "\n{amarelo}PERGUNTA 2: Qual animatrônico está atrás de você agora?{reset}",
+      "comparacao": "contem",
+      "respostas": [
+        "caroline",
+        "ela"
+      ],
+      "proxima": "MINIGAME_JULGAMENTO_Q3"
+    },
+    "MINIGAME_JULGAMENTO_Q3": {
+      "texto": "\n{amarelo}PERGUNTA 3: Em que ano tudo isso começou?{reset}",
+      "comparacao": "exata",
+      "respostas": [
+        "1982"
+      ],
+      "proxima": "MINIGAME_JULGAMENTO_Q4"
+    },
+    "MINIGAME_JULGAMENTO_Q4": {
+      "texto": "\n{amarelo}PERGUNTA 4: Quem é você?{reset}",
+      "comparacao": "contem",
+      "respostas": [
+        "rogerio"
+      ],
+      "proxima": "MINIGAME_JULGAMENTO_V1"
+    }
+  },
+  "vitimas": {
+    "nomes": [
+      "angela",
+      "joao",
+      "renato"
+    ],
+    "perguntas": [
+      "\n{amarelo}PERGUNTA 5: Quem são as três vítimas? Digite o 1º nome:{reset}",
+      "Digite o 2º nome: ",
+      "Digite o 3º nome: "
+    ]
+  },
+  "montagem": {
+    "MINIGAME_CONSERTOS_CABECA": {
+      "peca": "cabeca",
+      "fase": "\n{amarelo}[ FASE 1: SELEÇÃO DE PEÇAS ]{reset}",
+      "pergunta": "Escolha a Cabeça",
+      "opcoes": {
+        "1": "Urso",
+        "2": "Coelho"
+      },
+      "padrao": "2",
+      "resultado": "Você encaixa a cabeça de {peca}. Os olhos de vidro piscam uma vez, sozinhos.",
+      "proxima": "MINIGAME_CONSERTOS_TRONCO"
+    },
+    "MINIGAME_CONSERTOS_TRONCO": {
+      "peca": "tronco",
+      "fase": "\n{amarelo}[ FASE 2: SELEÇÃO DE PEÇAS ]{reset}",
+      "pergunta": "Escolha o Tronco",
+      "opcoes": {
+        "1": "Fino",
+        "2": "Robusto"
+      },
+      "padrao": "1",
+      "resultado": "O tronco {peca} se encaixa com um estalo metálico.",
+      "proxima": "MINIGAME_CONSERTOS_PERNAS"
+    },
+    "MINIGAME_CONSERTOS_PERNAS": {
+      "peca": "pernas",
+      "fase": "\n{amarelo}[ FASE 3: SELEÇÃO DE PEÇAS ]{reset}",
+      "pergunta": "Escolha as Pernas",
+      "opcoes": {
+        "1": "Aço",
+        "2": "Pelúcia"
+      },
+      "padrao": "1",
+      "resultado": "As pernas de {peca} travam no lugar. A montagem está completa."
+    }
+  },
+  "seguranca": {
+    "sala": "01",
+    "comandos": [
+      "cadeira",
+      "sentar",
+      "sentar na cadeira",
+      "usar cadeira"
+    ],
+    "requer": "cartao de seguranca",
+    "fora_da_sala": "Não há nenhuma cadeira de segurança aqui.",
+    "noite_vencida": "{amarelo}A mesa de controle está desligada.{reset}",
+    "bloqueado": "{vermelho}Os monitores e o computador estão bloqueados. O sistema exige a inserção de um 'Cartão de Segurança Nível IV'.{reset}"
+  },
+  "cofre": {
+    "sala": "01",
+    "comandos": [
+      "abrir cofre"
+    ],
+    "pistas": [
+      "[1º dígito] Um único ponto de luz acende sozinho na unidade, o primeiro som da noite.",
+      "[2º e 3º dígitos] Nove marcas de unha, em 2 vezes, na fileira da lateral do metal.",
+      "[4º dígito] Quatro cadeiras na sala do piano. Só uma nunca foi ocupada de novo."
+    ]
+  },
+  "minotauro": {
+    "sala": "sala de energia"
+  }
+}
