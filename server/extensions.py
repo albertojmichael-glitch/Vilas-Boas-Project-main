@@ -14,14 +14,15 @@ from state import GameState
 
 logger = logging.getLogger(__name__)
 
-REDIS_URL = os.environ.get("REDIS_URL")
+REDIS_URL = os.environ.get("REDIS_URL") or os.environ.get("KV_URL")
 
 db = SQLAlchemy()
 migrate = Migrate()
 cors = CORS()
 limiter = Limiter(
     key_func=get_remote_address,
-    storage_uri=REDIS_URL or "memory://",
+    default_limits=[os.environ.get("API_RATE_LIMIT", "120 per minute")],
+    application_limits=[os.environ.get("API_GLOBAL_RATE_LIMIT", "1200 per hour")],
 )
 oauth = OAuth()
 
@@ -77,6 +78,10 @@ if REDIS_URL and redis is not None:
         MEMORIA_SESSOES = RedisSessionStore(redis_client)
         logger.info("Conectado ao Redis com sucesso.")
     except Exception:
+        from config import is_production
+
+        if is_production():
+            raise RuntimeError("Redis indisponível em produção.") from None
         logger.exception("Falha ao conectar no Redis — caindo para TTLCache.")
         MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
 else:

@@ -79,7 +79,7 @@ def test_admin_rejeita_token_na_query_string_e_aceita_header(app_ctx, cliente):
 
     # Token na query string deve ser negado
     resp_query = cliente.get(f"/admin/analytics?token={token}")
-    assert resp_query.status_code == 403
+    assert resp_query.status_code == 400
 
     # Sem token deve ser negado
     assert cliente.get("/admin/analytics").status_code == 403
@@ -140,9 +140,9 @@ def test_rotas_admin_auditoria_saves_e_replay(app_ctx, cliente):
 
 
 def test_fluxo_share_generate_e_expiracao(app_ctx, cliente):
-    # GET em /share/generate não gera link: cai em /share/<token> com token inexistente e retorna 404
+    # A geração de links exige POST.
     antes = Compartilhamento.query.count()
-    assert cliente.get("/share/generate").status_code == 404
+    assert cliente.get("/share/generate").status_code == 405
     assert Compartilhamento.query.count() == antes
 
     # Sem sessão ativa retorna 401
@@ -174,7 +174,8 @@ def test_auth_login_e_callback_sem_vazar_traceback(app_ctx, cliente, monkeypatch
         "authorize_redirect",
         lambda redirect_uri: ("redirecionado", 302),
     )
-    r_login = cliente.get("/login/google?iniciais=abcde")
+    assert cliente.get("/login/google?iniciais=abcde").status_code == 400
+    r_login = cliente.get("/login/google?iniciais=abc")
     assert r_login.status_code == 302
     with cliente.session_transaction() as sess:
         assert sess["arcade_initials"] == "ABC"
@@ -196,7 +197,7 @@ def test_auth_login_e_callback_sem_vazar_traceback(app_ctx, cliente, monkeypatch
         raise ValueError("Segredo interno SQL / caminho /server/routes/auth.py")
 
     monkeypatch.setattr(oauth.google, "authorize_access_token", _falhar_token)
-    r_erro = cliente.get("/auth/google/callback")
+    r_erro = cliente.get("/auth/google/callback?code=teste&state=teste")
     assert r_erro.status_code == 500
     texto_erro = r_erro.get_data(as_text=True)
     assert "Traceback" not in texto_erro
@@ -210,9 +211,11 @@ def test_auth_login_e_callback_sem_vazar_traceback(app_ctx, cliente, monkeypatch
     monkeypatch.setattr(
         oauth.google,
         "authorize_access_token",
-        lambda: {"userinfo": {"email": "campeao@vilasboas.local"}},
+        lambda: {
+            "userinfo": {"email": "campeao@vilasboas.local", "email_verified": True}
+        },
     )
-    r_ok = cliente.get("/auth/google/callback")
+    r_ok = cliente.get("/auth/google/callback?code=teste&state=teste")
     assert r_ok.status_code == 302
     assert "leaderboard=sucesso" in r_ok.headers["Location"]
     email_hash = hash_identificador_email("campeao@vilasboas.local")

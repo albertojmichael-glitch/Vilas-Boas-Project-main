@@ -117,7 +117,7 @@ Configure as variáveis abaixo em um arquivo `.env` (desenvolvimento) ou no pain
 | `SESSION_COOKIE_DOMAIN` | Não | Domínio compartilhado do cookie de sessão (ex.: `.seudominio.com` para `jogo.seudominio.com` e `api.seudominio.com`). |
 | `DATABASE_URL` | **Sim** | URI de conexão com o banco de dados (`postgresql://...` em produção; usa SQLite local como fallback em desenvolvimento). |
 | `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` / `DB_POOL_RECYCLE` / `DB_POOL_TIMEOUT` | Não | Parâmetros de pool de conexões do SQLAlchemy para PostgreSQL. |
-| `REDIS_URL` | Não | URI do Redis (`redis://...`) compartilhada entre os workers do Gunicorn para sessões (`RedisSessionStore`) e rate limiting (`Flask-Limiter`). |
+| `REDIS_URL` | **Sim em produção** | URI do Redis (`redis://...`) compartilhada entre os workers do Gunicorn para sessões (`RedisSessionStore`) e rate limiting (`Flask-Limiter`). |
 | `GOOGLE_CLIENT_ID` | Não | Client ID do Google OAuth 2.0 para registro de recordes no Leaderboard. |
 | `GOOGLE_CLIENT_SECRET` | Não | Client Secret do Google OAuth 2.0. |
 | `DEV_MODE_ENABLED` | Não | Define se o modo desenvolvedor pode ser ativado (`1` / `true`). Ignorado e bloqueado automaticamente quando `IS_PRODUCTION` é verdadeiro. |
@@ -231,3 +231,13 @@ Distribuído sob a licença Apache 2.0. Veja o arquivo [LICENSE](LICENSE) para m
 
 
 ---
+
+## Operação em produção
+
+O CI executa Ruff, Mypy, Pytest, o build TypeScript, os testes Chromium e o balanceamento. Em um push na main, a edição offline também precisa passar em Windows e Linux. Com todos os jobs aprovados, o GitHub Actions publica o mesmo SHA na Vercel, primeiro a API e depois o cliente. Os dois projetos desativam o deploy automático pelo Git.
+
+No ambiente GitHub Actions **production**, configure o secret VERCEL_TOKEN e as variáveis VERCEL_ORG_ID, VERCEL_BACKEND_PROJECT e VERCEL_FRONTEND_PROJECT. As duas últimas aceitam os nomes ou IDs de projetos Vercel existentes vinculados ao repositório, com diretórios raiz server e raiz do repositório, respectivamente. O token precisa de acesso de deploy aos dois. Configure as variáveis da API na Vercel antes do primeiro deploy. Preserve as chaves usadas pelos saves existentes. Para persistência entre reinícios em desenvolvimento, defina SECRET_KEY estável.
+
+Em produção, FRONTEND_URL deve usar HTTPS. REDIS_URL (ou KV_URL) compartilha sessões e contadores de requisições. API_RATE_LIMIT e API_GLOBAL_RATE_LIMIT configuram os limites padrão por cliente e o acumulado entre rotas. TRUSTED_PROXY_HOPS inicia em 0. Configure o número de proxies confiáveis da implantação apenas quando eles controlam o cabeçalho encaminhado. OAUTH_REDIRECT_URI permite configurar o callback registrado no Google.
+
+O gerenciador de saves permite retomar o autosave, desfazer a última ação salva, voltar ao início de um capítulo alcançado e reiniciar no menu de dificuldade. Escolher uma nova dificuldade substitui os marcos da partida anterior. O indicador confirma gravações e sinaliza falhas. As preferências de efeitos visuais e sons de susto ficam disponíveis antes de ligar a TV e nas configurações durante a partida.

@@ -13,6 +13,8 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 def is_production() -> bool:
     """Detecta de forma centralizada se a aplicação está em produção."""
+    if os.environ.get("VERCEL_ENV") == "production":
+        return True
     app_env = os.environ.get("APP_ENV", "").strip().lower()
     if app_env:
         return app_env == "production"
@@ -30,7 +32,7 @@ def _obter_database_url() -> str | None:
     return None
 
 
-CHAVE_DEV_INSEGURA = "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
+CHAVE_LOCAL_TEMPORARIA = secrets.token_urlsafe(48)
 
 
 def _derivar_chave(raiz: str, rotulo: str) -> str:
@@ -85,9 +87,9 @@ class Config:
                     "(ou FLASK_SECRET_KEY) antes de iniciar o servidor."
                 )
             logging.getLogger(__name__).warning(
-                "SECRET_KEY ausente: usando chave de desenvolvimento insegura."
+                "SECRET_KEY ausente: saves locais usam uma chave temporária deste processo."
             )
-            segredo = CHAVE_DEV_INSEGURA
+            segredo = CHAVE_LOCAL_TEMPORARIA
         cls.SECRET_KEY = segredo
 
         # Saves: cifrados em repouso no servidor (Fernet) e assinados (HMAC) quando
@@ -107,6 +109,14 @@ class Config:
         cls.REDIS_URL = os.environ.get("REDIS_URL") or os.environ.get("KV_URL")
         cls.SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN") or None
         cls.SESSION_COOKIE_SAMESITE = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax")
+
+        if cls.IS_PRODUCTION:
+            if not cls.DATABASE_URL or not cls.REDIS_URL:
+                raise RuntimeError(
+                    "Configure DATABASE_URL e REDIS_URL (ou KV_URL) em produção."
+                )
+            if not cls.FRONTEND_URL.startswith("https://"):
+                raise RuntimeError("Configure FRONTEND_URL com HTTPS em produção.")
 
         if not cls.DATABASE_URL:
             cls.DATABASE_URL = (

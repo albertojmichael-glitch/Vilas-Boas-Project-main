@@ -152,7 +152,7 @@ def test_import_rejeita_lixo(cliente):
     resp = cliente.post(
         "/save/import", data="isto nao e json", headers=ORIGEM, content_type="text"
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 415
 
 
 # ------------------------------------------------------------ persistência

@@ -120,7 +120,54 @@ def _migrar_se_legado(registro, jogo):
             logger.exception("Falha ao migrar save legado; o original foi mantido.")
 
 
-def salvar_save_web(jogo, sid):
+CAPITULOS = {
+    "entrada": "Entrada",
+    "sala de fliperamas": "Fliperamas",
+    "01": "Sala 01",
+    "amanhecer": "Amanhecer",
+}
+
+
+def progresso_web(sid):
+    try:
+        chave = to_uuid(sid)
+        registro = db.session.get(SaveJogo, chave) if chave else None
+        meta = (registro.metadados or {}) if registro else {}
+        return {
+            "tem_save": registro is not None,
+            "pode_voltar": bool(meta.get("anterior")),
+            "capitulos": [
+                {"id": k, "nome": v}
+                for k, v in CAPITULOS.items()
+                if k in meta.get("capitulos", {})
+            ],
+        }
+    except SQLAlchemyError:
+        db.session.rollback()
+        return {"tem_save": False, "pode_voltar": False, "capitulos": []}
+
+
+def restaurar_marco(sid, capitulo=None):
+    chave = to_uuid(sid)
+    if not chave:
+        return None
+    registro = db.session.get(SaveJogo, chave, with_for_update=True)
+    if not registro:
+        return None
+    meta = dict(registro.metadados or {})
+    dados = (
+        meta.get("capitulos", {}).get(capitulo) if capitulo else meta.get("anterior")
+    )
+    jogo = carregar_estado_validado(dados, permitir_dev=True)
+    if jogo:
+        meta.pop("anterior", None)
+        registro.dados = dados
+        registro.metadados = meta
+        db.session.commit()
+    return jogo
+
+
+def salvar_save_web(jogo, sid, nova_partida=False):
     """Persiste o progresso. Se o estado não for válido, mantém o último save bom."""
     chave = to_uuid(sid)
     if not chave:
@@ -134,12 +181,22 @@ def salvar_save_web(jogo, sid):
 
     try:
         dados_encriptados = CIPHER_SUITE.encrypt(texto.encode("utf-8")).decode("utf-8")
-        registro = db.session.get(SaveJogo, chave)
-
-        if registro:
-            registro.dados = dados_encriptados
-        else:
-            db.session.add(SaveJogo(sid=chave, dados=dados_encriptados))
+        registro = db.session.get(SaveJogo, chave, with_for_update=True)
+        if registro is None:
+            registro = SaveJogo(sid=chave)
+            db.session.add(registro)
+        meta = dict(registro.metadados or {})
+        capitulos = {} if nova_partida else dict(meta.get("capitulos", {}))
+        if nova_partida:
+            meta.pop("anterior", None)
+        elif registro.dados:
+            meta["anterior"] = registro.dados
+        for marco in (jogo.sala_atual, "amanhecer" if jogo.noite_vencida else None):
+            if marco in CAPITULOS:
+                capitulos.setdefault(marco, dados_encriptados)
+        meta["capitulos"] = capitulos
+        registro.dados = dados_encriptados
+        registro.metadados = meta
 
         db.session.commit()
         return True

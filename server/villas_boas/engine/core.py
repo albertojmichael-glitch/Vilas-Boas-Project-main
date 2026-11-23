@@ -18,6 +18,7 @@ from data import (
     TEMPO_SPEEDRUN_NEUTRO,
     TEMPO_SPEEDRUN_VERDADEIRO,
     TURNOS_ENJOADO_CORRER,
+    VIDA_GOD_MODE,
     VIDA_NORMAL,
 )
 from state import (  # noqa: F401 (re-exportados)
@@ -545,7 +546,7 @@ def _processar_fluxo_jogo_normal(
         elif comando == "2007":
             if not devmode.modo_dev_habilitado():
                 ui.animar(
-                    f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}",
+                    f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UM NÚMERO DO MENU (1 A {7 if tem_save else 6}).{RESET}",
                     0.04,
                     jogo=jogo,
                 )
@@ -568,7 +569,7 @@ def _processar_fluxo_jogo_normal(
             return
         else:
             ui.animar(
-                f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}",
+                f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UM NÚMERO DO MENU (1 A {7 if tem_save else 6}).{RESET}",
                 0.04,
                 jogo=jogo,
             )
@@ -733,7 +734,11 @@ def _processar_fluxo_jogo_normal(
 
     elif jogo.estado_atual == "MENU_CUSTOM_BAT":
         try:
-            jogo.turnos_luz = int(comando)
+            valor = int(comando)
+            if not 0 <= valor <= VIDA_GOD_MODE:
+                ui.exibir(f"Escolha inválida. Use um inteiro de 0 a {VIDA_GOD_MODE}.")
+                return
+            jogo.turnos_luz = valor
             jogo.estado_atual = "MENU_CUSTOM_INV"
             ui.exibir(
                 "\n2. Bônus de Espaço na Mochila Inicial (Digite um número, ex: 0, 3, 6):"
@@ -745,7 +750,13 @@ def _processar_fluxo_jogo_normal(
 
     elif jogo.estado_atual == "MENU_CUSTOM_INV":
         try:
-            jogo.bolsas_coletadas = int(comando) // 3
+            valor = int(comando)
+            if not 0 <= valor <= 3000 or valor % 3 != 0:
+                ui.exibir(
+                    f"Escolha inválida. Use um inteiro de 0 a {3000} em múltiplos de 3."
+                )
+                return
+            jogo.bolsas_coletadas = valor // 3
             jogo.estado_atual = "MENU_CUSTOM_HP"
             ui.exibir("\n3. Pontos de Vida (HP) Iniciais (ex: 1, 3, 10):")
         except ValueError:
@@ -755,7 +766,11 @@ def _processar_fluxo_jogo_normal(
 
     elif jogo.estado_atual == "MENU_CUSTOM_HP":
         try:
-            jogo.hp = int(comando)
+            valor = int(comando)
+            if not 1 <= valor <= VIDA_GOD_MODE:
+                ui.exibir(f"Escolha inválida. Use um inteiro de 1 a {VIDA_GOD_MODE}.")
+                return
+            jogo.hp = valor
             jogo.dificuldade_escolhida = "CUSTOM"
             jogo.estado_atual = "JOGO"
             jogo.tempo_inicio = time.time()
@@ -916,9 +931,13 @@ def _processar_fluxo_jogo_normal(
 
     elif jogo.estado_atual in MINIGAMES["montagem"]:
         etapa = MINIGAMES["montagem"][jogo.estado_atual]
-        jogo.web_consertos[etapa["peca"]] = comando
         opcoes = etapa["opcoes"]
-        nome_peca = opcoes.get(comando, opcoes[etapa["padrao"]])
+        if comando not in opcoes:
+            ui.exibir("Escolha inválida. Digite uma das opções: " + ", ".join(opcoes))
+            mostrar_escolha_peca(jogo.estado_atual, ui)
+            return
+        jogo.web_consertos[etapa["peca"]] = comando
+        nome_peca = opcoes[comando]
         ui.exibir(DOS_VERDE + etapa["resultado"].replace("{peca}", nome_peca) + RESET)
         if "proxima" in etapa:
             jogo.estado_atual = etapa["proxima"]

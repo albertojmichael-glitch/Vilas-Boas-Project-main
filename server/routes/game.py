@@ -10,6 +10,7 @@ from extensions import MEMORIA_SESSOES, db, limiter
 from flask import (
     Blueprint,
     Response,
+    current_app,
     jsonify,
     redirect,
     request,
@@ -22,13 +23,17 @@ from security import (
     VERSAO_SAVE,
     assinar_save,
     requer_origem_valida,
+    validar_origem_request,
     verificar_assinatura_save,
 )
 from services.save_service import (
+    CAPITULOS,
     CIPHER_SUITE,
     carregar_estado_validado,
     carregar_save_web,
     obter_ou_recuperar_jogo,
+    progresso_web,
+    restaurar_marco,
     salvar_save_web,
     save_existe,
     serializar_estado,
@@ -36,7 +41,7 @@ from services.save_service import (
 )
 from services.save_validacao import SaveInvalido, validar_estado_save
 from state import GameState
-from views import imprimir_tela_boot
+from views import imprimir_contexto_sala, imprimir_menu_dificuldade, imprimir_tela_boot
 from villas_boas.engine.core import processar_fluxo_jogo
 
 from routes.helpers import (
@@ -69,7 +74,7 @@ def iniciar_jogo():
     jogo.ui_handler.limpar()
     imprimir_tela_boot(jogo.ui_handler)
 
-    resposta = gerar_resposta_json(jogo)
+    resposta = gerar_resposta_json(jogo, progresso=progresso_web(sid))
     resposta.headers["Cache-Control"] = "no-store"
     return resposta
 
@@ -79,13 +84,17 @@ def iniciar_jogo():
 @limiter.limit("500 per hour")
 @requer_origem_valida
 def receber_comando():
+    try:
+        requisicao = ComandoRequest.model_validate(request.get_json())
+    except ValidationError:
+        mensagem = "Envie um comando de 1 a 256 caracteres e telemetria booleana."
+        return jsonify(erro=mensagem, linhas=["[ ERRO DE SEGURANÇA ] " + mensagem]), 400
     sid = obter_sid_seguro()
     if not sid:
         sid = str(uuid.uuid4())
         session["sid"] = sid
         session.permanent = True
-        MEMORIA_SESSOES[sid] = GameState()
-        MEMORIA_SESSOES[sid].estado_atual = "AGUARDANDO_DIR"
+        MEMORIA_SESSOES[sid] = GameState(estado_atual="AGUARDANDO_DIR")
 
     jogo = obter_ou_recuperar_jogo(sid, MEMORIA_SESSOES)
     if not jogo:
@@ -94,20 +103,14 @@ def receber_comando():
         ), 404
 
     jogo.ui_handler = WebUIHandler()
-    try:
-        requisicao = ComandoRequest(**(request.json or {}))
-        comando = requisicao.comando
-        session["permite_telemetria"] = requisicao.telemetria
-    except ValidationError:
-        jogo.ui_handler.buffer.append(
-            "@@TYPE@@vermelho@@0@@[ ERRO DE SEGURANÇA ]: Payload inválido."
-        )
-        return gerar_resposta_json(jogo), 400
-
+    comando = requisicao.comando
+    session["permite_telemetria"] = requisicao.telemetria
     if comando:
         jogo.registrar_comando(comando)
 
+    autosave = None
     try:
+        estado_antes = jogo.estado_atual
         snapshot_antes = jogo.snapshot_persistencia()
         processar_fluxo_jogo(
             comando,
@@ -117,18 +120,74 @@ def receber_comando():
         )
         if (
             getattr(jogo, "estado_atual", "") in ["JOGO", "COMBATE_ANIMATRONICO"]
+            and not (estado_antes == "MENU" and comando == "7")
             and snapshot_antes != jogo.snapshot_persistencia()
         ):
-            salvar_save_web(jogo, sid)
+            nova = estado_antes.startswith("MENU")
+            autosave = (
+                "salvo" if salvar_save_web(jogo, sid, nova_partida=nova) else "falhou"
+            )
 
         MEMORIA_SESSOES[sid] = jogo
     except Exception:
         logger.exception("Erro crítico na Engine")
-        jogo.ui_handler.buffer.append(
-            "@@TYPE@@vermelho@@0@@[ERRO INTERNO]: Falha ao processar a ação."
-        )
+        return jsonify(erro="Não foi possível processar a ação."), 500
 
-    return gerar_resposta_json(jogo)
+    return gerar_resposta_json(jogo, autosave=autosave, progresso=progresso_web(sid))
+
+
+@game_bp.post("/navegar")
+@limiter.limit("30 per minute")
+@requer_origem_valida
+def navegar():
+    corpo = request.get_json()
+    acao = corpo.get("acao")
+    capitulo = corpo.get("capitulo")
+    if acao == "capitulo":
+        valido = (
+            set(corpo) == {"acao", "capitulo"}
+            and isinstance(capitulo, str)
+            and capitulo in CAPITULOS
+        )
+    else:
+        valido = set(corpo) == {"acao"} and acao in ("reiniciar", "voltar", "continuar")
+    if not valido:
+        return jsonify(erro="Selecione uma ação ou um capítulo válido."), 400
+    sid = obter_sid_seguro()
+    if not sid:
+        return jsonify(erro="Inicie uma sessão antes de navegar."), 401
+    if acao == "reiniciar":
+        anterior = obter_ou_recuperar_jogo(sid, MEMORIA_SESSOES)
+        jogo = GameState(conquistas=list(anterior.conquistas) if anterior else [])
+        jogo.estado_atual = "MENU"
+    elif acao == "continuar":
+        jogo = GameState()
+        if not carregar_save_web(jogo, sid):
+            return jsonify(erro="Nenhum autosave disponível."), 409
+    else:
+        jogo = restaurar_marco(sid, capitulo)
+        if jogo is None:
+            return jsonify(
+                erro="Este ponto ainda não está disponível nesta partida."
+            ), 409
+    jogo.ui_handler = WebUIHandler()
+    jogo.ui_handler.limpar()
+    if acao == "reiniciar":
+        imprimir_menu_dificuldade(
+            jogo.ui_handler, tem_autosave=save_existe(sid), jogo=jogo
+        )
+    elif jogo.estado_atual == "COMBATE_ANIMATRONICO":
+        jogo.ui_handler.exibir(
+            f"Combate retomado em {jogo.sala_atual}. Escolha como enfrentar ou fugir de {jogo.atacante_combate}."
+        )
+    else:
+        imprimir_contexto_sala(jogo)
+    MEMORIA_SESSOES[sid] = jogo
+    return gerar_resposta_json(
+        jogo,
+        progresso=progresso_web(sid),
+        autosave="salvo" if acao in ("capitulo", "voltar") else None,
+    )
 
 
 @game_bp.route("/save/export", methods=["GET"])
@@ -217,7 +276,7 @@ def importar_save():
     sid = obter_sid_seguro() or str(uuid.uuid4())
     session["sid"], session.permanent = sid, True
     novo_jogo.ui_handler = WebUIHandler()
-    if not salvar_save_web(novo_jogo, sid):
+    if not salvar_save_web(novo_jogo, sid, nova_partida=True):
         return jsonify({"erro": "Falha ao gravar o save importado."}), 500
     MEMORIA_SESSOES[sid] = novo_jogo
     return jsonify({"sucesso": True, "mensagem": "Save importado."})
@@ -230,19 +289,25 @@ def gerar_link():
     sid = obter_sid_seguro()
     if not sid:
         return jsonify({"erro": "Sem save ativo"}), 401
+    if not save_existe(sid):
+        return jsonify(erro="Inicie uma partida antes de compartilhar."), 409
     share = Compartilhamento(original_sid=sid, expires_at=time.time() + 3600)
     db.session.add(share)
     db.session.commit()
     return jsonify(
         {
-            "link": f"{request.host_url}share/{share.share_token}",
+            "link": f"{current_app.config['FRONTEND_URL'].rstrip('/')}/api/share/{share.share_token}",
             "mensagem": "Link válido por 1 hora.",
         }
     )
 
 
-@game_bp.route("/share/<share_token>", methods=["GET", "POST"])
+@game_bp.route("/share/<uuid:share_token>", methods=["GET", "POST"])
+@limiter.limit("15 per minute")
 def carregar_compartilhado(share_token):
+    if request.method == "POST" and not validar_origem_request():
+        return jsonify(erro="Origem não autorizada."), 403
+    share_token = str(share_token)
     share = db.session.execute(
         db.select(Compartilhamento).filter_by(share_token=share_token)
     ).scalar_one_or_none()
@@ -254,7 +319,7 @@ def carregar_compartilhado(share_token):
         if request.method == "POST":
             db.session.delete(share)
             db.session.commit()
-        return "Este link temporário expirou e foi removido do sistema.", 410
+        return "Este link temporário expirou.", 410
 
     chave_original = to_uuid(share.original_sid)
     original = db.session.get(SaveJogo, chave_original) if chave_original else None
@@ -274,17 +339,12 @@ def carregar_compartilhado(share_token):
                 "<body style='background:#000;color:#0f0;font-family:monospace;padding:2rem;'>"
                 "<h1>[ VILAS BOAS OS - SAVE COMPARTILHADO ]</h1>"
                 "<p>Confirme abaixo para carregar este save na sua sessão atual.</p>"
-                f"<form method='POST' action='/share/{token_seguro}'>"
+                f"<form method='POST' action='{token_seguro}'>"
                 "<button type='submit' style='background:#0f0;color:#000;border:0;padding:0.5rem 1rem;font-family:monospace;cursor:pointer;'>"
                 "CARREGAR SAVE</button></form></body></html>"
             ),
             200,
         )
-
-    from security import validar_origem_request
-
-    if not validar_origem_request():
-        return jsonify({"erro": "Origem não autorizada."}), 403
 
     try:
         novo_jogo = carregar_estado_validado(original.dados, permitir_dev=False)
@@ -299,7 +359,7 @@ def carregar_compartilhado(share_token):
         session.permanent = True
         MEMORIA_SESSOES[str(novo_sid)] = novo_jogo
 
-        return redirect("/")
+        return redirect(current_app.config["FRONTEND_URL"].rstrip("/") + "/")
     except Exception:
         db.session.rollback()
         logger.exception(
@@ -309,6 +369,7 @@ def carregar_compartilhado(share_token):
 
 
 @game_bp.route("/achievements", methods=["GET"])
+@limiter.limit("30 per minute")
 def listar_conquistas():
     jogo = obter_ou_recuperar_jogo(obter_sid_seguro(), MEMORIA_SESSOES)
     conquistas = getattr(jogo, "conquistas", []) if jogo else []

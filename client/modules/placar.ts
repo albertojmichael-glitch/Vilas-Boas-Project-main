@@ -1,6 +1,6 @@
 import { API_URL, getEl } from './constants.js';
 
-export function mostrarTelaDePontuacao(segundosTotais: number, nomeDoFinal?: string): void {
+export function mostrarTelaDePontuacao(segundosTotais: number, nomeDoFinal?: string, tipo?: string): void {
     const modal = getEl<HTMLDivElement>('arcade-score-modal');
     const display = getEl<HTMLHeadingElement>('score-time-display');
     const textoFinal = getEl<HTMLParagraphElement>('score-ending-text');
@@ -14,19 +14,23 @@ export function mostrarTelaDePontuacao(segundosTotais: number, nomeDoFinal?: str
             `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}:${String(ms).padStart(2, '0')}`;
     }
 
+    const titulo = getEl('score-title');
+    if (titulo) titulo.textContent = nomeDoFinal ? (tipo === 'alternativo' ? 'FINAL ALTERNATIVO' : 'VITÓRIA') : 'FIM DE JOGO';
+    getEl('score-registration')?.classList.toggle('hidden', !nomeDoFinal);
+    if (textoFinal && !nomeDoFinal) textoFinal.textContent = 'Você morreu. Retome o último autosave para tentar outra escolha.';
     if (textoFinal && nomeDoFinal) {
         textoFinal.innerText = nomeDoFinal.replace(/_/g, ' ').toUpperCase();
     }
 
     if (modal) {
         modal.classList.remove('hidden');
-        getEl<HTMLInputElement>('arcade-initials')?.focus();
+        titulo?.focus();
     }
 }
 
 export function fecharArcadeModal(): void {
     getEl<HTMLDivElement>('arcade-score-modal')?.classList.add('hidden');
-    window.location.reload();
+    getEl('comando')?.focus();
 }
 
 export function iniciarLoginESalvar(): void {

@@ -2,7 +2,7 @@ import { configurarEntrada } from './modules/entrada.js';
 import { getEl } from './modules/constants.js';
 import { reproduzirBeep } from './modules/audio.js';
 import { abrirModalConquistas, fecharModalConquistas } from './modules/conquistas.js';
-import { iniciarJogo, executarAtalho } from './modules/jogo.js';
+import { configurarNavegacao, iniciarJogo, executarAtalho } from './modules/jogo.js';
 import { openHelp, closeHelp, openSettings, closeSettings, openSaves, closeSaves } from './modules/modais.js';
 import { fecharArcadeModal, iniciarLoginESalvar } from './modules/placar.js';
 import { carregarPreferencias } from './modules/preferencias.js';
@@ -15,6 +15,7 @@ import { retryBoot, shortcuts } from './modules/dom.js';
 
 configurarLoggerStorage(adicionarLinhaTerminal);
 configurarEntrada();
+configurarNavegacao();
 
 const importFile = getEl<HTMLInputElement>('import-file');
 const initials = getEl<HTMLInputElement>('arcade-initials');

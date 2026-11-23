@@ -155,18 +155,20 @@
                         
                         
                         <div>
-                            <label style="color: #fff;">Velocidade do Texto: <span id="speed-val-display" class="amarelo">Atual (1x)</span></label>
+                            <label for="speed-slider" style="color: #fff;">Velocidade do Texto: <span id="speed-val-display" class="amarelo">Atual (1x)</span></label>
                             <input type="range" id="speed-slider" min="0" max="2" step="0.5" value="1" style="width: 100%; margin-top: 5px;">
                         </div>
 
                         <div style="margin-top: 10px;">
-                            <label style="color: #fff;">Volume Principal: <span id="volume-val-display" class="verde">100%</span></label>
+                            <label><input type="checkbox" data-pref="visual"> Reduzir efeitos visuais</label>
+                            <label><input type="checkbox" data-pref="som"> Silenciar sons de susto</label>
+                            <label for="volume-slider" style="color: #fff;">Volume Principal: <span id="volume-val-display" class="verde">100%</span></label>
                             <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1" style="width: 100%; margin-top: 5px;">
                         </div>
 
                         
                         <div style="margin-top: 10px;">
-                            <label style="color: #fff;">Volume do Jumpscare: <span id="volume-jump-val-display" class="vermelho">100%</span></label>
+                            <label for="volume-jump-slider" style="color: #fff;">Volume do Jumpscare: <span id="volume-jump-val-display" class="vermelho">100%</span></label>
                             <input type="range" id="volume-jump-slider" min="0" max="1" step="0.1" value="1" style="width: 100%; margin-top: 5px;">
                         </div>
 
@@ -201,12 +203,12 @@
                 </div>
 
                 
-                <div id="arcade-score-modal" class="modal hidden">
+                <div id="arcade-score-modal" class="modal hidden" role="dialog" aria-labelledby="score-title">
                     <div class="modal-content" style="border-color: #55ff55; text-align: center; max-width: 450px;">
-                        <h2 style="color: #55ff55; font-size: 2rem; margin-bottom: 5px;">VITÓRIA</h2>
+                        <h2 id="score-title" tabindex="-1" style="color: #55ff55; font-size: 2rem; margin-bottom: 5px;">VITÓRIA</h2>
                         <p id="score-ending-text" style="color: #ffda33; font-size: 1.2rem;">Final Verdadeiro</p>
                         
-                        <div style="margin: 20px 0; padding: 15px; border: 1px dashed #fff; background: #222;">
+                        <div id="score-registration"><div style="margin: 20px 0; padding: 15px; border: 1px dashed #fff; background: #222;">
                             <p style="color: #fff; margin: 0; font-size: 1.2rem;">TEMPO TOTAL</p>
                             <h1 id="score-time-display" style="color: #55ff55; font-size: 3rem; margin: 10px 0;">00:00:00</h1>
                         </div>
@@ -227,7 +229,10 @@
                             <a href="/termos.html" target="_blank" style="color: #55ff55;">Termos de Serviço</a> e <a href="/privacidade.html" target="_blank" style="color: #55ff55;">Política de Privacidade</a>.
                         </div>
 
-                        <p style="margin-top: 15px; font-size: 0.8rem; cursor: pointer; color: #888; text-decoration: underline;" data-acao="fecharArcadeModal">Pular (Não salvar na nuvem)</p>
+                        </div>
+                        <button data-nav="continuar">Retomar último autosave</button>
+                        <button data-nav="reiniciar">Reiniciar partida</button>
+                        <button data-acao="fecharArcadeModal">Fechar resultado</button>
                     </div>
                 </div>
 
@@ -237,6 +242,12 @@
                     
                     <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
                         
+                        <button data-nav="continuar" disabled>Retomar último autosave</button>
+                        <button data-nav="voltar" disabled>Voltar uma ação salva</button>
+                        <label for="capitulo">Capítulo alcançado</label>
+                        <select id="capitulo" disabled></select>
+                        <button data-nav="capitulo" disabled>Carregar capítulo</button>
+                        <button data-nav="reiniciar">Reiniciar no menu de dificuldade</button>
                         <button data-acao="exportarSave" style="padding: 10px; background: #222; color: #4aff4a; border: 1px solid #4aff4a; cursor: pointer; font-family: monospace;">⬇ Exportar Save Atual (JSON)</button>
                         
                         
@@ -259,7 +270,7 @@
                     
 
 
-                <div id="save-indicator" class="hidden">[ SALVANDO NA BIOS... ]</div>
+                <div id="save-indicator" role="status" aria-live="polite"></div>
                 
                 
 
@@ -274,6 +285,10 @@
         <img id="tv-overlay" src="./assets/images/tv.png" alt="TV Retro">
 
         
+        <div id="ajustes-iniciais">
+            <label><input type="checkbox" data-pref="visual"> Reduzir efeitos visuais</label>
+            <label><input type="checkbox" data-pref="som"> Silenciar sons de susto</label>
+        </div>
         <button id="power-button" aria-label="Ligar TV" data-acao="ligarTV"></button>
         <div id="power-led"></div>
         

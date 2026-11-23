@@ -7,13 +7,7 @@ on:
       - 'client/assets/**'
       - 'server/data/**'
       - '.github/workflows/build_offline.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'offline/**'
-      - 'client/assets/**'
-      - 'server/data/**'
-      - '.github/workflows/build_offline.yml'
+  workflow_call:
   workflow_dispatch:
 
 permissions:

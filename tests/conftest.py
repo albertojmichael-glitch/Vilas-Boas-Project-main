@@ -6,6 +6,8 @@ import pytest
 
 # 1. FORÇA AS VARIÁVEIS DE AMBIENTE ANTES DE IMPORTAR QUALQUER COISA DO JOGO
 os.environ["DATABASE_URL"] = "sqlite://"
+os.environ.pop("REDIS_URL", None)
+os.environ.pop("KV_URL", None)
 os.environ["DEV_MODE_ENABLED"] = "1"
 os.environ["DEV_MODE_CODE"] = "sudo admin 1982"
 os.environ["ADMIN_TOKEN"] = "token-admin-teste-seguro"
@@ -32,9 +34,10 @@ class DummyUI:
 def app_ctx():
     # Importações locais: O Ruff não reclama e garante que o ambiente já está configurado
     from app import app
-    from extensions import db
+    from extensions import db, limiter
 
     with app.app_context():
+        limiter.reset()
         db.create_all()
         yield
         db.session.remove()

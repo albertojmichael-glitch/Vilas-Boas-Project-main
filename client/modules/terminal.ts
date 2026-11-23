@@ -2,7 +2,7 @@ import { trechosTerminal } from './texto.js';
 import { reproduzirBeep, tocarPassoMetalico, tocarPorta, tocarSomDigito } from './audio.js';
 import { getEl, LIMITE_LINHAS } from './constants.js';
 import { outputDiv, terminal } from './dom.js';
-import { ativarBSOD, ativarJumpscare, play1980Slideshow, startFlashingSecrets, stopFlashingSecrets } from './effects.js';
+import { visualReduzido, ativarBSOD, ativarJumpscare, play1980Slideshow, startFlashingSecrets, stopFlashingSecrets } from './effects.js';
 import { atualizarSidebar } from './hud.js';
 import { prefMultiplicadorVelocidade } from './preferencias.js';
 import type { CorTerminal, EstadoJogo } from './types.js';
@@ -69,10 +69,12 @@ function novaLinha(linhaBruta: string): Promise<void> {
 
         if (linha.startsWith("@@CLEAR@@")) {
             document.body.classList.remove("glitch-mode", "low-power-mode", "blackout-mode", "kernel-panic-mode");
+            getEl("panic-img-id")?.remove();
             if (outputDiv) outputDiv.textContent = "";
             if (terminal) terminal.scrollTop = terminal.scrollHeight;
             resolve();
         } else if (linha.includes("@@PANIC@@")) {
+            if (visualReduzido()) { adicionarLinhaTerminal("Falha crítica do sistema."); resolve(); return; }
             document.body.classList.add("kernel-panic-mode");
             reproduzirBeep('erro');
 
@@ -84,15 +86,18 @@ function novaLinha(linhaBruta: string): Promise<void> {
             terminal?.appendChild(imgPanic);
             resolve();
         } else if (linha.includes("@@GLITCH_LUZ@@")) {
+            if (visualReduzido()) { adicionarLinhaTerminal("A luz oscilou."); resolve(); return; }
             document.body.classList.add("glitch-mode");
             reproduzirBeep('erro');
             setTimeout(() => document.body.classList.remove("glitch-mode"), 1500);
             resolve();
         } else if (linha.includes("@@LOW_POWER@@")) {
+            if (visualReduzido()) { adicionarLinhaTerminal("Energia baixa."); resolve(); return; }
             document.body.classList.remove("blackout-mode");
             document.body.classList.add("low-power-mode");
             resolve();
         } else if (linha.includes("@@BLACKOUT@@")) {
+            if (visualReduzido()) { adicionarLinhaTerminal("A energia acabou."); resolve(); return; }
             document.body.classList.remove("low-power-mode");
             document.body.classList.add("blackout-mode");
             resolve();

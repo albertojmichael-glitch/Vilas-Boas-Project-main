@@ -4,15 +4,16 @@ import re
 import uuid
 
 from flask import jsonify, session
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET, UIHandler
 
 logger = logging.getLogger(__name__)
 
 
 class ComandoRequest(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid")
     comando: str = Field(
-        default="",
+        min_length=1,
         max_length=256,
     )
     telemetria: bool = Field(default=True)
@@ -21,11 +22,14 @@ class ComandoRequest(BaseModel):
     @classmethod
     def limpar_e_normalizar_comando(cls, v):
         if not isinstance(v, str):
-            return ""
-        limpo = v.replace("\x00", "").replace("\0", "")
-        if re.search(r"[<>;`]", limpo):
+            return v  # O campo estrito rejeita tipos diferentes de str.
+        if not v.isprintable() and any(
+            not c.isprintable() and c not in "\r\n\t" for c in v
+        ):
+            raise ValueError("O comando contém caracteres de controle.")
+        if re.search(r"[<>;`]", v):
             raise ValueError("Caracteres não permitidos no comando.")
-        limpo = re.sub(r"[\r\n\t]+", " ", limpo)
+        limpo = re.sub(r"[\r\n\t]+", " ", v)
         return limpo.strip()
 
 
@@ -98,7 +102,7 @@ def ansi_para_html(texto_ansi):
     return "".join(html_out)
 
 
-def gerar_resposta_json(jogo):
+def gerar_resposta_json(jogo, **extras):
     linhas = (
         [
             ansi_para_html(linha)
@@ -124,6 +128,7 @@ def gerar_resposta_json(jogo):
 
     return jsonify(
         {
+            **extras,
             "linhas": linhas,
             "estado": {
                 "hp": getattr(jogo, "hp", 0),
@@ -134,6 +139,7 @@ def gerar_resposta_json(jogo):
                 "tempo_final": getattr(jogo, "tempo_total_segundos", 0.0),
                 "som": getattr(jogo, "nivel_barulho", 0),
                 "sala": sala_exibicao,
+                "tipo_final": getattr(jogo, "tipo_final", ""),
                 "nome_final": getattr(jogo, "nome_final", ""),
                 "final_alcancado": getattr(jogo, "sala_atual", "Desconhecido"),
             },

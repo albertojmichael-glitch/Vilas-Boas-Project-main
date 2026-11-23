@@ -1,5 +1,5 @@
-import { definirVolume, definirVolumeJumpscare, obterVolume, obterVolumeJumpscare } from './audio.js';
-import { aplicarEfeitoCRT } from './effects.js';
+import { definirVolume, definirVolumeJumpscare, definirSustosSilenciados } from './audio.js';
+import { aplicarEfeitoCRT, stopFlashingSecrets } from './effects.js';
 import { getEl } from './constants.js';
 
 export let prefTelemetria = true;
@@ -12,6 +12,31 @@ function atualizarLabelVelocidade(val: number): void {
 }
 
 export function carregarPreferencias(): void {
+    for (const tipo of ['visual', 'som']) {
+        const controles = document.querySelectorAll<HTMLInputElement>('[data-pref="' + tipo + '"]');
+        const chave = 'vilasBoasTerror-' + tipo;
+        function aplicar(valor: boolean) {
+            controles.forEach(controle => { controle.checked = valor; });
+            if (tipo === 'som') definirSustosSilenciados(valor);
+            else {
+                document.body.classList.toggle('terror-reduzido', valor);
+                if (valor) {
+                    stopFlashingSecrets();
+                    document.body.classList.remove('blackout-mode', 'low-power-mode', 'kernel-panic-mode', 'glitch-mode');
+                }
+            }
+        }
+        const salvo = localStorage.getItem(chave);
+        const movimento = window.matchMedia('(prefers-reduced-motion: reduce)');
+        aplicar(salvo === null ? tipo === 'visual' && movimento.matches : salvo === 'true');
+        if (tipo === 'visual') movimento.addEventListener('change', () => {
+            if (localStorage.getItem(chave) === null) aplicar(movimento.matches);
+        });
+        controles.forEach(controle => controle.addEventListener('change', () => {
+            localStorage.setItem(chave, String(controle.checked));
+            aplicar(controle.checked);
+        }));
+    }
     const teleCheckbox = getEl<HTMLInputElement>('telemetry-checkbox');
     const speedSlider = getEl<HTMLInputElement>('speed-slider');
     const crtCheckbox = getEl<HTMLInputElement>('crt-checkbox');
@@ -83,9 +108,5 @@ export function carregarPreferencias(): void {
         localStorage.setItem('vilasBoasVolumeJump', String(volJump));
         if (displayJump) displayJump.innerText = `${Math.round(volJump * 100)}%`;
 
-        const testeSusto = new Audio('./assets/audio/grito.mp3');
-        testeSusto.volume = obterVolume() * obterVolumeJumpscare();
-        testeSusto.play().catch(() => {});
-        setTimeout(() => testeSusto.pause(), 300);
     });
 }

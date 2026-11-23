@@ -19,8 +19,8 @@ export function atualizarSidebar(estado?: EstadoJogo): void {
         } else {
             const hpAtual = parseInt(String(estado.hp), 10) || 0;
             const maxHp = 3;
-            const blocosCheios = "█".repeat(Math.max(0, hpAtual));
-            const blocosVazios = "░".repeat(Math.max(0, maxHp - hpAtual));
+            const blocosCheios = "█".repeat(Math.min(20, Math.max(0, hpAtual)));
+            const blocosVazios = "░".repeat(Math.min(maxHp, Math.max(0, maxHp - hpAtual)));
 
             hpVal.textContent = `[${blocosCheios}${blocosVazios}]`;
             hpVal.className = hpAtual <= 1 ? "vermelho" : "verde";
@@ -70,7 +70,7 @@ export function atualizarSidebar(estado?: EstadoJogo): void {
 
         if (slotsContainer) {
             slotsContainer.textContent = "";
-            for (let i = 0; i < limiteMaximo; i++) {
+            for (let i = 0; i < Math.min(30, limiteMaximo); i++) {
                 const slotBox = document.createElement("div");
                 slotBox.className = `inv-slot ${i < qtdAtual ? "cheio" : "vazio"}`;
                 slotsContainer.appendChild(slotBox);

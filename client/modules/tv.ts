@@ -1,4 +1,4 @@
-import { iniciarSomAmbiente, obterAudioContext, reproduzirBeep } from './audio.js';
+import { sustosAtivos, conectarSaida, iniciarSomAmbiente, obterAudioContext, reproduzirBeep } from './audio.js';
 import { getEl } from './constants.js';
 import { iniciarJogo } from './jogo.js';
 
@@ -9,7 +9,7 @@ export function ligarTV(): void {
     powerLed?.classList.add("led-on");
 
     iniciarSomAmbiente();
-    reproduzirBeep('erro');
+    if (sustosAtivos()) reproduzirBeep('erro');
 
     const layerStatic = getEl<HTMLDivElement>("layer-static");
     const layerColorBars = getEl<HTMLDivElement>("layer-color-bars");
@@ -27,11 +27,11 @@ export function ligarTV(): void {
         layerColorBars?.classList.remove("hidden");
 
         const ctx = obterAudioContext();
-        if (ctx) {
+        if (ctx && sustosAtivos()) {
             window.colorBarOsc = ctx.createOscillator();
             window.colorBarOsc.type = 'sine';
             window.colorBarOsc.frequency.value = 1000;
-            window.colorBarOsc.connect(ctx.destination);
+            conectarSaida(window.colorBarOsc);
             window.colorBarOsc.start();
         }
     }, 1500);

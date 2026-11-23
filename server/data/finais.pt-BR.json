@@ -2,6 +2,7 @@
   "finais": {
     "saida": {
       "nome": "Medíocre",
+      "tipo": "alternativo",
       "conquista": "mediocre",
       "cena": [
         {
@@ -62,6 +63,7 @@
     },
     "cama": {
       "nome": "Bons Sonhos",
+      "tipo": "alternativo",
       "conquista": "bons_sonhos",
       "cena": [
         {
@@ -114,6 +116,7 @@
     },
     "final_bom": {
       "nome": "Neutro",
+      "tipo": "vitoria",
       "conquista": "bom",
       "cena": [
         {
@@ -258,6 +261,7 @@
     },
     "verdadeiro": {
       "nome": "Verdadeiro",
+      "tipo": "vitoria",
       "conquista": "verdadeiro",
       "cena": [
         {
