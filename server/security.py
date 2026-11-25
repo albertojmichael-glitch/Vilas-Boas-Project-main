@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import json
 import logging
+import re
 import sys
 
 from config import Config, is_production
@@ -63,7 +64,13 @@ def assinar_save(estado: dict) -> str:
 def verificar_assinatura_save(estado: dict, assinatura: str) -> bool:
     if not isinstance(estado, dict) or not isinstance(assinatura, str):
         return False
-    return hmac.compare_digest(assinar_save(estado), assinatura)
+    if not re.fullmatch(r"[a-f0-9]{64}", assinatura):
+        return False
+    try:
+        calculada = assinar_save(estado)
+    except (ValueError, UnicodeError, RecursionError):
+        return False
+    return hmac.compare_digest(calculada, assinatura)
 
 
 def requer_admin(f):
@@ -76,7 +83,8 @@ def requer_admin(f):
         if (
             not token
             or not admin_token
-            or not hmac.compare_digest(str(token), str(admin_token))
+            or len(token) > 1024
+            or not hmac.compare_digest(token.encode(), str(admin_token).encode())
         ):
             logger.warning(
                 f"TENTATIVA INVASÃO ADMIN: IP {ip_origem} tentou acessar {request.path}"
@@ -96,7 +104,7 @@ def validar_origem_request():
         origens_config = [o.strip() for o in origens_config.split(",") if o.strip()]
 
     permitidas = {o.rstrip("/") for o in origens_config if o}
-    if request.host_url:
+    if not current_app.config.get("IS_PRODUCTION") and request.host_url:
         permitidas.add(request.host_url.rstrip("/"))
     frontend_url = current_app.config.get("FRONTEND_URL")
     if frontend_url:

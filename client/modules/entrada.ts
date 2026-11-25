@@ -1,6 +1,7 @@
 import { iniciarSomAmbiente, reproduzirBeep, tocarBipEntrada } from './audio.js';
 import { fecharModalConquistas, modal } from './conquistas.js';
 import { inputField as campoComando, outputDiv, terminal } from './dom.js';
+import { getEl } from './constants.js';
 import { enviarComando } from './jogo.js';
 import { closeHelp, closeSaves, closeSettings, openHelp } from './modais.js';
 import { adicionarLinhaTerminal, anexarLinha } from './terminal.js';
@@ -105,7 +106,7 @@ export function configurarEntrada(): void {
 
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
             e.preventDefault();
-            adicionarLinhaTerminal("[SISTEMA] O progresso do jogo é salvo automaticamente quando o estado muda.", "verde");
+            adicionarLinhaTerminal(getEl("save-indicator")?.textContent || "Aguardando primeiro autosave.");
             reproduzirBeep('sucesso');
         }
 

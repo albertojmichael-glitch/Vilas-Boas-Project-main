@@ -54,7 +54,7 @@ def handle_unexpected_error(e):
     if isinstance(e, HTTPException):
         return e
     logger.exception("Erro interno não tratado na requisição:")
-    return jsonify({"erro": "Erro interno no servidor.", "detalhe": str(e)}), 500
+    return jsonify({"erro": "Erro interno no servidor."}), 500
 
 
 if __name__ == "__main__":

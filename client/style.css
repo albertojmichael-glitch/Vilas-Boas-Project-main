@@ -968,3 +968,10 @@ body.blackout-mode .prompt {
     opacity: 1 !important;
     transition: opacity 0.5s ease-in-out !important; 
 }
+#ajustes-iniciais { position: fixed; z-index: 500; top: .5rem; left: .5rem; padding: .65rem; background: #111; color: #fff; }
+#ajustes-iniciais label, #settings-modal label { display: block; }
+.terror-reduzido *, .terror-reduzido *::before, .terror-reduzido *::after { animation: none !important; transition: none !important; }
+.terror-reduzido #tela-jumpscare, .terror-reduzido #secret-image-overlay, .terror-reduzido #tela-bsod,
+.terror-reduzido .panic-img-overlay, .terror-reduzido #layer-static, .terror-reduzido #layer-color-bars { display: none !important; }
+#saves-modal { max-height: 80vh; overflow-y: auto; }
+#save-indicator { animation: none; pointer-events: none; }

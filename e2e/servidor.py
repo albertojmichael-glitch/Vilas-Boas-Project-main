@@ -37,6 +37,12 @@ def executar():
         site = Flask(__name__, static_folder=str(RAIZ / "dist"), static_url_path="")
         site.secret_key = api.secret_key
         cenarios = {
+            "morte": {
+                "sala_atual": "entrada",
+                "estado_atual": "COMBATE_ANIMATRONICO",
+                "atacante_combate": "ela",
+                "hp": 1,
+            },
             "combate": {
                 "sala_atual": "entrada",
                 "estado_atual": "COMBATE_ANIMATRONICO",

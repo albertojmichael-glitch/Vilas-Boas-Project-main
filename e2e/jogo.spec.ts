@@ -92,6 +92,7 @@ for (const [nome, cenario, acao, final] of [
         await expect(saida(page)).toContainText(final);
         await page.clock.fastForward(5100);
         await expect(page.locator('#arcade-score-modal')).toBeVisible();
+        await expect(page.locator('#score-title')).toHaveText(['Medíocre', 'Bons Sonhos'].includes(nome) ? 'FINAL ALTERNATIVO' : 'VITÓRIA');
         await expect(page.locator('#score-ending-text')).toHaveText(nome.toUpperCase());
         await expect(page.locator('#score-time-display')).toHaveText(/^\d+:\d{2}:\d{2}$/);
     });
@@ -119,6 +120,8 @@ test('consertos consome a moeda e libera o julgamento e sua recompensa', async (
     await jogar(page, 'arcade');
     await comando(page, 'jogar consertos');
     await expect(page.locator('#inv-list')).not.toContainText('moeda velha');
+    await comando(page, '9');
+    await expect(saida(page)).toContainText('Escolha inválida');
     for (const [pergunta, escolha] of [['Escolha a Cabeça', '1'], ['Escolha o Tronco', '2'], ['Escolha as Pernas', '1']]) {
         await expect(saida(page)).toContainText(pergunta);
         await comando(page, escolha);
@@ -217,3 +220,39 @@ for (const modo of ['instantâneo', 'animado']) {
         await expect(visual.locator('[title]')).toHaveCount(0);
     });
 }
+
+test('autosave confirmado permite desfazer, reiniciar e carregar o capítulo alcançado', async ({ page }) => {
+    await jogar(page);
+    const status = page.locator('#save-indicator');
+    await expect(status).toContainText('Autosave confirmado');
+    const saves = page.getByRole('button', {name: 'Gerenciar Saves'});
+    await comando(page, 'pegar tabua pequena de madeira');
+    await saves.click();
+    await page.getByRole('button', {name: 'Voltar uma ação salva'}).click();
+    await expect(page.locator('#inv-list')).not.toContainText('tabua pequena de madeira');
+    await saves.click();
+    await expect(page.getByRole('button', {name: 'Voltar uma ação salva'})).toBeDisabled();
+    await page.getByRole('button', {name: 'Reiniciar no menu de dificuldade'}).click();
+    await expect(saida(page)).toContainText('SELECIONE UMA OPÇÃO');
+    await saves.click();
+    await page.getByLabel('Capítulo alcançado').selectOption('entrada');
+    await page.getByRole('button', {name: 'Carregar capítulo'}).click();
+    await expect(saida(page)).toContainText('VOCÊ ESTÁ EM: ENTRADA');
+});
+
+test('preferências antes do boot e retomada após a morte', async ({ page }) => {
+    await page.emulateMedia({reducedMotion: 'reduce'});
+    await page.goto('/cenario/morte');
+    await expect(page.getByLabel('Reduzir efeitos visuais').filter({visible:true})).toBeChecked();
+    await page.getByLabel('Silenciar sons de susto').filter({visible:true}).check();
+    await page.reload();
+    await expect(page.getByLabel('Silenciar sons de susto').filter({visible:true})).toBeChecked();
+    await menu(page);
+    await comando(page, '7');
+    await comando(page, 'correr direita');
+    await expect(page.locator('#score-title')).toHaveText('FIM DE JOGO');
+    await expect(page.locator('#score-ending-text')).toContainText('Você morreu');
+    await page.getByRole('button', {name:'Retomar último autosave'}).click();
+    await expect(page.locator('#arcade-score-modal')).toBeHidden();
+    await expect(page.locator('#hp-val')).toHaveText('[█░░]');
+});

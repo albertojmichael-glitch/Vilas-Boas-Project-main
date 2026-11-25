@@ -5,6 +5,9 @@ on:
     branches: [ "main", "master" ]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   backend-tests:
     name: Backend Lint & Test
@@ -100,3 +103,34 @@ jobs:
           path: playwright-report/
           if-no-files-found: ignore
           retention-days: 7
+
+  offline:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/build_offline.yml
+
+  publicar:
+    name: Publicar API e cliente na Vercel
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend-tests, balance, navegador, offline]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    concurrency:
+      group: deploy-producao
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Publicar o commit aprovado se ainda estiver na ponta da main
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_BACKEND_PROJECT: ${{ vars.VERCEL_BACKEND_PROJECT }}
+          VERCEL_FRONTEND_PROJECT: ${{ vars.VERCEL_FRONTEND_PROJECT }}
+        run: |
+          ponta=$(git ls-remote --exit-code origin refs/heads/main)
+          if [[ "${ponta%%[[:space:]]*}" == "$GITHUB_SHA" ]]; then
+            node scripts/deploy-vercel.mjs
+          fi

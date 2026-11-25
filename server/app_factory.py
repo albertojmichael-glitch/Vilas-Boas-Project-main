@@ -21,7 +21,8 @@ def create_app():
         SESSION_COOKIE_SECURE=is_prod,
         SESSION_COOKIE_HTTPONLY=True,
         PERMANENT_SESSION_LIFETIME=timedelta(days=30),
-        MAX_CONTENT_LENGTH=1 * 1024 * 1024,
+        MAX_CONTENT_LENGTH=200_000,
+        RATELIMIT_HEADERS_ENABLED=True,
         RATELIMIT_STORAGE_URI=app.config.get("REDIS_URL") or "memory://",
     )
 
@@ -33,7 +34,12 @@ def create_app():
         }
 
     app.secret_key = app.config.get("SECRET_KEY")
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=int(os.getenv("TRUSTED_PROXY_HOPS", "0")),
+        x_proto=1,
+        x_host=0,
+    )
 
     db.init_app(app)
     migrate.init_app(app, db)
@@ -64,6 +70,9 @@ def create_app():
     )
 
     limiter.init_app(app)
+    from routes.entrada import validar_requisicao
+
+    app.before_request(validar_requisicao)
     oauth.init_app(app)
 
     oauth.register(

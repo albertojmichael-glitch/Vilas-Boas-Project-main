@@ -25,6 +25,7 @@ def _ranking(coluna, evento, limite=None):
 
 
 @admin_bp.route("/analytics", methods=["GET"])
+@limiter.limit("20 per minute")
 @requer_admin
 def ver_telemetria():
     mortes = Telemetria.query.filter_by(evento="MORTE").count()
@@ -51,6 +52,7 @@ def ver_telemetria():
 
 
 @admin_bp.route("/auditoria-mortes", methods=["GET"])
+@limiter.limit("20 per minute")
 @requer_admin
 def auditoria_mortes():
     resultados = (
@@ -80,7 +82,15 @@ def auditoria_mortes():
 @limiter.limit("10 per minute")
 @requer_admin
 def listar_saves_paginados():
-    page = max(request.args.get("page", 1, type=int), 1)
+    page = request.args.get("page", default="1")
+    if (
+        not page.isascii()
+        or not page.isdecimal()
+        or len(page) > 5
+        or not 1 <= int(page) <= 10000
+    ):
+        return jsonify(erro="Página inválida. Use um número entre 1 e 10000."), 400
+    page = int(page)
     paginacao = SaveJogo.query.order_by(SaveJogo.atualizado_em.desc()).paginate(
         page=page, per_page=10, error_out=False
     )
@@ -99,8 +109,11 @@ def listar_saves_paginados():
 
 
 @admin_bp.route("/replay/<int:id_replay>", methods=["GET"])
+@limiter.limit("20 per minute")
 @requer_admin
 def obter_replay(id_replay):
+    if not 1 <= id_replay <= 2_147_483_647:
+        return jsonify(erro="Identificador de replay inválido."), 400
     try:
         doc = db.session.get(Telemetria, id_replay)
         if not doc:

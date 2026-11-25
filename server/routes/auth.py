@@ -1,8 +1,10 @@
 import logging
+import os
+import re
 
 from authlib.integrations.base_client.errors import OAuthError
 from extensions import MEMORIA_SESSOES, db, limiter, oauth
-from flask import Blueprint, current_app, redirect, request, session, url_for
+from flask import Blueprint, current_app, jsonify, redirect, request, session, url_for
 from models import Jogador, SaveJogo
 from security import hash_identificador_email
 from services.save_service import obter_ou_recuperar_jogo, to_uuid
@@ -15,14 +17,27 @@ auth_bp = Blueprint("auth", __name__)
 @auth_bp.route("/login/google")
 @limiter.limit("5 per minute")
 def login_google():
-    session["arcade_initials"] = request.args.get("iniciais", "???").upper()[:3]
+    iniciais = request.args.get("iniciais", "")
+    if not re.fullmatch(r"[A-Za-z]{3}", iniciais):
+        return jsonify(erro="Informe três letras de A a Z."), 400
+    session["arcade_initials"] = iniciais.upper()
     return oauth.google.authorize_redirect(
-        url_for("auth.auth_google_callback", _external=True)
+        os.getenv("OAUTH_REDIRECT_URI")
+        or (
+            current_app.config["FRONTEND_URL"].rstrip("/") + "/api/auth/google/callback"
+            if current_app.config["IS_PRODUCTION"]
+            else url_for("auth.auth_google_callback", _external=True)
+        )
     )
 
 
 @auth_bp.route("/auth/google/callback")
+@limiter.limit("15 per minute")
 def auth_google_callback():
+    if request.args.get("error"):
+        return jsonify(erro="Autorização cancelada pelo provedor."), 400
+    if not request.args.get("state") or not request.args.get("code"):
+        return jsonify(erro="Resposta OAuth incompleta."), 400
     sid = session.get("sid")
     if not sid or sid not in MEMORIA_SESSOES:
         return "Sessão de jogo não encontrada.", 400
@@ -42,7 +57,12 @@ def auth_google_callback():
             jogo, "dev_usado", False
         ):
             email_jogador = user_info.get("email")
-            if not email_jogador:
+            if (
+                not isinstance(email_jogador, str)
+                or len(email_jogador) > 254
+                or not re.fullmatch(r"[^\s@]+@[^\s@]+", email_jogador)
+                or user_info.get("email_verified") is not True
+            ):
                 raise ValueError("E-mail do jogador não retornado pelo provedor OAuth.")
 
             identificador_anonimo = hash_identificador_email(email_jogador)
@@ -83,7 +103,9 @@ def auth_google_callback():
             f"{current_app.config.get('FRONTEND_URL')}/?leaderboard=sucesso"
         )
 
-    except (SQLAlchemyError, OAuthError, ValueError):
+    except OAuthError:
+        return jsonify(erro="Autorização expirada ou inválida."), 400
+    except (SQLAlchemyError, ValueError):
         db.session.rollback()
         logger.exception("Erro no OAuth do Google")
         return (

@@ -1,6 +1,28 @@
 import { getEl } from './constants.js';
 import type { TipoBeep } from './types.js';
 
+let silenciarSustos = false;
+let sustoAtual: HTMLAudioElement | null = null;
+
+export const sustosAtivos = () => !silenciarSustos;
+
+export function definirSustosSilenciados(valor: boolean): void {
+    silenciarSustos = valor;
+    if (valor) sustoAtual?.pause();
+}
+
+export function tocarSusto(arquivo: string): void {
+    if (silenciarSustos || !prefVolume || !prefVolumeJumpscare) return;
+    sustoAtual?.pause();
+    sustoAtual = new Audio(arquivo);
+    sustoAtual.volume = prefVolume * prefVolumeJumpscare;
+    void sustoAtual.play().catch(() => {});
+}
+
+export function conectarSaida(no: AudioNode): void {
+    if (masterGainNode) no.connect(masterGainNode);
+}
+
 let prefVolume = 1.0;
 let prefVolumeJumpscare = 1.0;
 let legendaTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -15,7 +37,8 @@ export function obterVolume(): number {
 }
 
 export function definirVolume(val: number): void {
-    prefVolume = val;
+    prefVolume = Number.isFinite(val) ? Math.max(0, Math.min(1, val)) : 0;
+    if (sustoAtual) sustoAtual.volume = prefVolume * prefVolumeJumpscare;
     if (masterGainNode) masterGainNode.gain.value = prefVolume;
     if (audioAmbienteLoop) audioAmbienteLoop.volume = prefVolume * 0.6;
 }
@@ -25,7 +48,8 @@ export function obterVolumeJumpscare(): number {
 }
 
 export function definirVolumeJumpscare(val: number): void {
-    prefVolumeJumpscare = val;
+    prefVolumeJumpscare = Number.isFinite(val) ? Math.max(0, Math.min(1, val)) : 0;
+    if (sustoAtual) sustoAtual.volume = prefVolume * prefVolumeJumpscare;
 }
 
 export function obterAudioContext(): AudioContext | null {
@@ -112,10 +136,7 @@ function tocarSonsAssustadoresAleatorios(): void {
         const audios = ['./assets/audio/sonsrandomicos.mp3', './assets/audio/sonsrandomicos2.mp3'];
         const escolhido = audios[Math.floor(Math.random() * audios.length)];
 
-        const audioSusto = new Audio(escolhido);
-        audioSusto.volume = prefVolume * 0.8;
-        audioSusto.play().catch(e => console.log("Erro som randomico:", e));
-
+        tocarSusto(escolhido);
         tocarSonsAssustadoresAleatorios();
     }, tempoAleatorio);
 }

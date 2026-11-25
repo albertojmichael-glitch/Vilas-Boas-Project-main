@@ -16,6 +16,7 @@ export interface EstadoJogo {
     inventario?: string[];
     estado_jogo?: string;
     tempo_final?: number;
+    tipo_final?: string;
     nome_final?: string;
     final_alcancado?: string;
     sala?: string;
@@ -23,6 +24,8 @@ export interface EstadoJogo {
 
 export interface RespostaServidor {
     linhas: string[];
+    autosave?: 'salvo' | 'falhou' | null;
+    progresso?: { tem_save: boolean; pode_voltar: boolean; capitulos: {id: string; nome: string}[] };
     estado?: EstadoJogo;
     novas_conquistas?: Conquista[];
     erro?: string;

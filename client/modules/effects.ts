@@ -1,13 +1,15 @@
-import { obterVolume, obterVolumeJumpscare, reproduzirBeep } from './audio.js';
+import { mostrarLegendaDeAudio, tocarSusto, reproduzirBeep } from './audio.js';
 import { getEl, SECRET_IMAGES, sleep } from './constants.js';
 
 let flashInterval: ReturnType<typeof setInterval> | null = null;
 let flashTimeout: ReturnType<typeof setTimeout> | null = null;
 
+export const visualReduzido = () => document.body.classList.contains('terror-reduzido');
+
 export function startFlashingSecrets(): void {
     const overlay = getEl<HTMLDivElement>("secret-image-overlay");
     const img = getEl<HTMLImageElement>("secret-img-display");
-    if (!overlay || !img) return;
+    if (!overlay || !img || visualReduzido()) return;
 
     stopFlashingSecrets();
     overlay.classList.remove("hidden", "slideshow-mode");
@@ -38,12 +40,13 @@ export function stopFlashingSecrets(): void {
 export async function play1980Slideshow(): Promise<void> {
     const overlay = getEl<HTMLDivElement>("secret-image-overlay");
     const img = getEl<HTMLImageElement>("secret-img-display");
-    if (!overlay || !img) return;
+    if (!overlay || !img || visualReduzido()) return;
 
     overlay.classList.remove("hidden");
     overlay.classList.add("slideshow-mode");
 
     for (const src of SECRET_IMAGES) {
+        if (visualReduzido()) break;
         img.src = `assets/secret images/${src}`;
         img.classList.add("slideshow-active");
         await sleep(2000);
@@ -63,10 +66,9 @@ export function ativarJumpscare(): void {
     const imagens = ['./assets/static/images/JUMPSCARE1.jpg', './assets/static/images/JUMPSCARE2.jpg'];
     img.src = imagens[Math.floor(Math.random() * imagens.length)];
 
-    const audioSusto = new Audio('./assets/audio/grito.mp3');
-    audioSusto.volume = obterVolume() * obterVolumeJumpscare();
-    audioSusto.play().catch(err => console.log("Erro de áudio do jumpscare:", err));
-
+    tocarSusto('./assets/audio/grito.mp3');
+    mostrarLegendaDeAudio('Grito repentino');
+    if (visualReduzido()) return;
     tela.style.display = 'flex';
     setTimeout(() => {
         tela.style.display = 'none';
@@ -76,7 +78,7 @@ export function ativarJumpscare(): void {
 export function ativarBSOD(): void {
     const tela = getEl<HTMLDivElement>('tela-bsod');
     const imgCreepy = getEl<HTMLImageElement>('img-bsod-creepy');
-    if (!tela || !imgCreepy) return;
+    if (!tela || !imgCreepy || visualReduzido()) return;
 
     const imagens = [
         './assets/static/images/JAPONESMEDO.jpg',

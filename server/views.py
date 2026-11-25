@@ -419,6 +419,7 @@ def rodar_final(tipo_final, jogo):
     if final:
         jogo.tempo_total_segundos = max(0.0, time.time() - jogo.tempo_inicio)
         jogo.nome_final = final["nome"]
+        jogo.tipo_final = final["tipo"]
         exibir_cena(final["cena"], jogo)
         if registrar_final(final["conquista"]):
             exibir_cena(FINAIS["desbloqueio"], jogo)
