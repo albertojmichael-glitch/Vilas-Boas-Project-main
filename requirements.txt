@@ -19,7 +19,7 @@ psycopg2-binary>=2.9.9
 
 # Dependências de desenvolvimento e testes
 pytest>=8.0.0
-pytest-cov>=5.0.0
+pytest-cov>=7.1.0
 fakeredis>=2.21.0
 ruff>=0.11.0
 mypy>=1.9.0
